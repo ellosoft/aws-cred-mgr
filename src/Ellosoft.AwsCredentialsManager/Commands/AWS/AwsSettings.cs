@@ -7,9 +7,9 @@ namespace Ellosoft.AwsCredentialsManager.Commands.AWS;
 
 public class AwsSettings : CommonSettings
 {
-    [TypeConverter(typeof(AwsRegionConverter))]
     [CommandOption("-r|--region <REGION>")]
     [Description("Sets or overrides the AWS region (e.g. us-east-2)")]
+    [TypeConverter(typeof(AwsRegionConverter))]
     public RegionEndpoint? Region { get; set; }
 
     public class AwsRegionConverter : TypeConverter

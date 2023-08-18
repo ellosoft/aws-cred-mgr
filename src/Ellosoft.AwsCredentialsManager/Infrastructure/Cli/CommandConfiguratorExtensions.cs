@@ -53,7 +53,7 @@ public static class CommandConfiguratorExtensions
     {
         var getFirstAlias = commandType.GetCustomAttribute<AliasAttribute>()?.Aliases.FirstOrDefault();
 
-        var aliasSuffix = getFirstAlias is not null ? $"[green italic] (alias: {getFirstAlias}[/])" : string.Empty;
+        var aliasSuffix = getFirstAlias is not null ? $"[green italic] (alias: {getFirstAlias})[/]" : string.Empty;
 
         GetDescription(commandType, description => commandConfigurator.WithDescription(description + aliasSuffix));
     }

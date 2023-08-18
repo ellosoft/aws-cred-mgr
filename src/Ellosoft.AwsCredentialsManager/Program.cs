@@ -47,7 +47,7 @@ app.Configure(config =>
 
 if (Debugger.IsAttached)
 {
-    args = "cred get".Split(' ');
+    args = "rds pwd prod_db".Split(' ');
 }
 
 return app.Run(args);
