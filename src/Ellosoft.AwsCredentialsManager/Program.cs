@@ -8,10 +8,14 @@ using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Commands.RDS;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Microsoft.Extensions.DependencyInjection;
 
 var services = new ServiceCollection()
     .AddAppLogging();
+
+services
+    .AddSingleton<IOktaLoginService, OktaLoginService>();
 
 var registrar = new TypeRegistrar(services);
 var app = new CommandApp(registrar);

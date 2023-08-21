@@ -1,10 +1,10 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using System.Text.Json;
-using Ellosoft.AwsCredentialsManager.Services.ConfigManager.Models;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Encryption;
 
-namespace Ellosoft.AwsCredentialsManager.Services.ConfigManager;
+namespace Ellosoft.AwsCredentialsManager.Services.Configuration;
 
 public class UserCredentialsManager
 {

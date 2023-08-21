@@ -6,6 +6,5 @@ namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
 public static class OktaAuthExtensions
 {
-    public static FactorResult GetFactorResult(this IAuthenticationResponse authResponse)
-        => authResponse.GetProperty<FactorResult>("factorResult");
+    public static FactorResult GetFactorResult(this IAuthenticationResponse authResponse) => authResponse.GetProperty<FactorResult>("factorResult");
 }

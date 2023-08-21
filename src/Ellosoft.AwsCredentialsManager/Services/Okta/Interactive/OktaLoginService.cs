@@ -1,26 +1,40 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using System.Runtime.InteropServices;
-using Ellosoft.AwsCredentialsManager.Services.ConfigManager;
-using Ellosoft.AwsCredentialsManager.Services.ConfigManager.Models;
+using Ellosoft.AwsCredentialsManager.Services.Configuration;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
 
-namespace Ellosoft.AwsCredentialsManager.Services.Okta;
+namespace Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
-public class OktaLoginService
+public interface IOktaLoginService
+{
+    Task<string?> InteractiveLogin(string oktaDomain, string? preferredMfaType, string userProfileKey);
+
+    Task<string?> Login(string oktaDomain, UserCredentials userCredentials,
+        string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = "default");
+}
+
+public class OktaLoginService : IOktaLoginService
 {
     private static readonly bool RunningOnWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
     private readonly UserCredentialsManager _userCredentialsManager = new();
+    private readonly OktaClassicAuthenticator _oktaAuth = new();
 
-    public async Task<string?> Login(string oktaDomain, string userProfileKey, string? preferredMfaType)
+    public Task<string?> InteractiveLogin(string oktaDomain, string? preferredMfaType, string userProfileKey)
     {
-        var oktaAuth = new OktaClassicAuthenticator();
         var userCredentials = GetUserCredentials(userProfileKey, out var savedCredentials);
 
+        return Login(oktaDomain, userCredentials, preferredMfaType, savedCredentials, userProfileKey);
+    }
+
+    public async Task<string?> Login(string oktaDomain, UserCredentials userCredentials,
+        string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = "default")
+    {
         try
         {
-            var sessionToken = await oktaAuth.Authenticate(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
+            var sessionToken = await _oktaAuth.Authenticate(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
 
             SaveUserCredentials(userProfileKey, userCredentials, savedCredentials);
 

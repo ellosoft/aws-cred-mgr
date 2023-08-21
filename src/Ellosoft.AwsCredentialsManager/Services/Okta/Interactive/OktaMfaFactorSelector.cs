@@ -2,7 +2,7 @@
 
 using Okta.Auth.Sdk;
 
-namespace Ellosoft.AwsCredentialsManager.Services.Okta;
+namespace Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
 public class OktaMfaFactorSelector
 {
@@ -25,6 +25,17 @@ public class OktaMfaFactorSelector
         return selectedFactor.Factor;
     }
 
+    public static string GetOktaMfaFactorCode(string simplifiedMfaName)
+    {
+        return simplifiedMfaName switch
+        {
+            "push" => "push",
+            "totp" => "token:software:totp",
+            "code" => "token:software:totp",
+            _ => throw new NotSupportedException($"MFA type '{simplifiedMfaName}' is not yet supported")
+        };
+    }
+
     private static UserFriendlyFactor GetUserFriendlyMfaFactor(Factor factor)
     {
         return factor.Type switch
@@ -34,6 +45,5 @@ public class OktaMfaFactorSelector
             _ => new UserFriendlyFactor($"[grey]{factor.Type} (Unsupported)[/]", factor)
         };
     }
-
     private sealed record UserFriendlyFactor(string Name, Factor Factor);
 }

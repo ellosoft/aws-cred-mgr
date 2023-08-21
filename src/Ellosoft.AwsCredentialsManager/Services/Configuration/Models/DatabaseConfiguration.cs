@@ -1,8 +1,8 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-namespace Ellosoft.AwsCredentialsManager.Services.ConfigManager.Models;
+namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
-public class DatabaseConfiguration
+public class DatabaseConfiguration : ResourceConfiguration
 {
     public string? Hostname { get; set; }
 

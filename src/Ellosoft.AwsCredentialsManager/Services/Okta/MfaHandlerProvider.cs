@@ -13,7 +13,7 @@ public class MfaHandlerProvider
         {
             "push" => new OktaPushFactorHandler(authClient),
             "token:software:totp" => new OktaTotpFactorHandler(authClient),
-            _ => throw new NotSupportedException($"Factor type '{factorType}' is not supported")
+            _ => throw new NotSupportedException($"MFA type '{factorType}' is not yet supported")
         };
     }
 }

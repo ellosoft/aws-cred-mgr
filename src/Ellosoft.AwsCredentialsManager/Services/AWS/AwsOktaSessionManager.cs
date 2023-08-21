@@ -2,6 +2,7 @@
 
 using Ellosoft.AwsCredentialsManager.Services.AWS.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
@@ -14,7 +15,7 @@ public class AwsOktaSessionManager
 
     public async Task<bool> CreateSession(CreateOktaAwsSessionRequest request)
     {
-        var sessionToken = await _oktaLoginService.Login(request.OktaDomain, request.UserProfileKey, request.PreferredMfaType);
+        var sessionToken = await _oktaLoginService.InteractiveLogin(request.OktaDomain, request.PreferredMfaType, request.UserProfileKey);
 
         if (sessionToken is null)
             return false;

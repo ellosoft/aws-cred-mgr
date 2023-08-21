@@ -2,6 +2,7 @@
 
 using AngleSharp.Html.Parser;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 using Okta.Auth.Sdk;
 using Okta.Sdk.Abstractions;
