@@ -14,27 +14,27 @@ public class GetRdsPassword : Command<GetRdsPassword.Settings>
 {
     public class Settings : AwsSettings
     {
-        [CommandArgument(0, "[profile]")]
+        [CommandArgument(0, "[PROFILE]")]
         [Description("RDS profile name (see: [italic blue]rds create[/], for instructions on how to create a new profile)")]
         public string? Profile { get; set; }
 
-        [CommandOption("-h|--host <host>")]
+        [CommandOption("-h|--host <HOST>")]
         [Description("DB instance endpoint")]
         public string? Hostname { get; set; }
 
-        [CommandOption("-p|--port <port>")]
+        [CommandOption("-p|--port <PORT>")]
         [Description("Port number used for connecting to your DB instance")]
         public int Port { get; set; }
 
-        [CommandOption("-u|--user <username>")]
+        [CommandOption("-u|--user <USER>")]
         [Description("Database account that you want to access")]
         public string? UserId { get; set; }
 
-        [CommandOption("-d|--database <database>")]
+        [CommandOption("-d|--database <DATABASE>")]
         [Description("Database name")]
         public string? Database { get; set; }
 
-        [CommandOption("--ttl <ttl>")]
+        [CommandOption("--ttl <TTL>")]
         [Description("Password lifetime in minutes (max recommended: 15 minutes)")]
         [DefaultValue(15)]
         public int PasswordLifetime { get; set; }

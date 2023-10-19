@@ -1,5 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
@@ -12,7 +13,7 @@ public class TypeRegistrar : ITypeRegistrar
 
     public ITypeResolver Build() => new TypeResolver(_builder.BuildServiceProvider());
 
-    public void Register(Type service, Type implementation) => _builder.AddSingleton(service, implementation);
+    public void Register(Type service, Type implementation) => _builder.AddSingleton(service, new TypeWithPublicConstructors(implementation).Type);
 
     public void RegisterInstance(Type service, object implementation) => _builder.AddSingleton(service, implementation);
 
@@ -20,6 +21,14 @@ public class TypeRegistrar : ITypeRegistrar
     {
         ArgumentNullException.ThrowIfNull(factory);
         _builder.AddSingleton(service, _ => factory());
+    }
+
+    private sealed class TypeWithPublicConstructors
+    {
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        public Type Type { get; }
+
+        public TypeWithPublicConstructors(Type type) => Type = type;
     }
 
     private sealed class TypeResolver : ITypeResolver, IDisposable

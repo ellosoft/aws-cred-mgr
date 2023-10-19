@@ -12,6 +12,11 @@ public class AwsSettings : CommonSettings
     [TypeConverter(typeof(AwsRegionConverter))]
     public RegionEndpoint? Region { get; set; }
 
+    [CommandOption("--okta-profile <OKTA_PROFILE>")]
+    [Description("Local Okta profile name (Useful if you need to authenticate in multiple Okta domains)")]
+    [DefaultValue("default")]
+    public virtual string OktaUserProfile { get; set; } = "default";
+
     public class AwsRegionConverter : TypeConverter
     {
         private const string INVALID_REGION = "Invalid AWS region";

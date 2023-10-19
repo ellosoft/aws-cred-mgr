@@ -8,6 +8,8 @@ using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Commands.RDS;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
+using Ellosoft.AwsCredentialsManager.Services.AWS;
+using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,7 +17,9 @@ var services = new ServiceCollection()
     .AddAppLogging();
 
 services
-    .AddSingleton<IOktaLoginService, OktaLoginService>();
+    .AddSingleton<IOktaLoginService, OktaLoginService>()
+    .AddSingleton<IConfigManager, ConfigManager>()
+    .AddSingleton<AwsOktaSessionManager, AwsOktaSessionManager>();
 
 var registrar = new TypeRegistrar(services);
 var app = new CommandApp(registrar);
@@ -26,7 +30,7 @@ app.Configure(config =>
     config.SetInterceptor(new LogInterceptor());
 
     config
-        .AddBranch<CredentialsBranch, CommonSettings>(cred =>
+        .AddBranch<CredentialsBranch, AwsSettings>(cred =>
         {
             cred.AddCommand<GetCredentials>();
             cred.AddCommand<ListCredentialsProfiles>();
@@ -44,14 +48,14 @@ app.Configure(config =>
         });
 
 #if DEBUG
-    config.PropagateExceptions();
+    //config.PropagateExceptions();
     //config.ValidateExamples();
 #endif
 });
 
 if (Debugger.IsAttached)
 {
-    args = "rds pwd prod_db".Split(' ');
+    args = "cred new prod".Split(' ');
 }
 
 return app.Run(args);

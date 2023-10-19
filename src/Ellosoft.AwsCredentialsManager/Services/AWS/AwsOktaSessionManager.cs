@@ -1,40 +1,50 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using Ellosoft.AwsCredentialsManager.Services.AWS.Models;
-using Ellosoft.AwsCredentialsManager.Services.Okta;
-using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
 public class AwsOktaSessionManager
 {
-    private readonly AwsSamlService _awsSamlService = new();
+    //private readonly IOktaLoginService _oktaLoginService;
+    //private readonly IConfigManager _configManager;
+
     private readonly AwsCredentialsService _awsCredentialsService = new();
-    private readonly OktaLoginService _oktaLoginService = new();
-    private readonly OktaClassicAuthenticator _oktaAuth = new();
+    //private readonly AwsSamlService _awsSamlService = new();
+    //private readonly OktaClassicAuthenticator _oktaAuth = new();
 
-    public async Task<bool> CreateSession(CreateOktaAwsSessionRequest request)
+    //public AwsOktaSessionManager(IOktaLoginService loginService, IConfigManager configManager)
+    //{
+    //    _oktaLoginService = loginService;
+    //    _configManager = configManager;
+    //}
+
+    public Task<bool> CreateSession(CreateOktaAwsSessionRequest request)
     {
-        var sessionToken = await _oktaLoginService.InteractiveLogin(request.OktaDomain, request.PreferredMfaType, request.UserProfileKey);
+        //var appSettings = _configManager.AppConfig.
 
-        if (sessionToken is null)
-            return false;
+        //var sessionToken = await _oktaLoginService.InteractiveLogin(request.OktaUserProfile);
 
-        var samlData = await _oktaAuth.GetAppSamlData(request.OktaDomain, sessionToken, request.AwsAppLink);
+        //if (sessionToken is null)
+        //    return false;
 
-        var roles = _awsSamlService.GetAwsRolesAndIdpFromSamlAssertion(samlData.SamlAssertion);
+        //var samlData = await _oktaAuth.GetAppSamlData(request.OktaDomain, sessionToken, request.AwsAppLink);
 
-        var idp = roles[request.RoleArn];
-        var credentials = await _awsCredentialsService.GetAwsCredentials(samlData.SamlAssertion, request.RoleArn, idp, request.Region);
+        //var roles = _awsSamlService.GetAwsRolesAndIdpFromSamlAssertion(samlData.SamlAssertion);
 
-        _awsCredentialsService.StoreCredentials(request.AwsProfile, credentials, request.Region);
+        //var idp = roles[request.RoleArn];
+        //var credentials = await _awsCredentialsService.GetAwsCredentials(samlData.SamlAssertion, request.RoleArn, idp, request.Region);
 
-        return true;
+        //_awsCredentialsService.StoreCredentials(request.AwsProfile, credentials, request.Region);
+
+        //return true;
+
+        throw new NotImplementedException();
     }
 
-    public bool TryResumeSession(string profile, out AwsCredentialsData? credentials)
+    public bool TryResumeSession(string awsProfile, out AwsCredentialsData? credentials)
     {
-        credentials = _awsCredentialsService.GetCredentialsFromStore(profile);
+        credentials = _awsCredentialsService.GetCredentialsFromStore(awsProfile);
 
         if (credentials is null)
             return false;

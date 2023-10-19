@@ -12,7 +12,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
 public class AwsCredentialsService
 {
-    private sealed record ProfileMetadata(string AccessKey, DateTime Expiration);
+    internal sealed record ProfileMetadata(string AccessKey, DateTime Expiration);
 
     /// <summary>
     ///     Assume AWS role and retrieve its credentials by using the SAML authentication assertion
@@ -63,10 +63,10 @@ public class AwsCredentialsService
     /// <summary>
     ///     Store AWS credentials for a specific profile in the AWS credentials file.
     /// </summary>
-    /// <param name="profileName">The name of the AWS profile where the credentials should be stored.</param>
+    /// <param name="awsProfileName">The name of the AWS profile where the credentials should be stored.</param>
     /// <param name="credentials">AWS credentials to be stored.</param>
     /// <param name="region">The region where the credentials should be stored.</param>
-    public void StoreCredentials(string profileName, AwsCredentialsData credentials, RegionEndpoint region)
+    public void StoreCredentials(string awsProfileName, AwsCredentialsData credentials, RegionEndpoint region)
     {
         //TODO: Check if the region is really needed here
 
@@ -77,33 +77,33 @@ public class AwsCredentialsService
             Token = credentials.SessionToken
         };
 
-        var profile = new CredentialProfile(profileName, options);
+        var profile = new CredentialProfile(awsProfileName, options);
 
         var sharedFile = new SharedCredentialsFile();
         sharedFile.RegisterProfile(profile);
 
-        SaveProfileMetadata(profileName, new ProfileMetadata(credentials.AccessKeyId, credentials.ExpirationDateTime));
+        SaveProfileMetadata(awsProfileName, new ProfileMetadata(credentials.AccessKeyId, credentials.ExpirationDateTime));
     }
 
     /// <summary>
     ///     Retrieve AWS credentials for a specific profile from the AWS credentials file.
     /// </summary>
-    /// <param name="profileName">The name of the AWS profile where the credentials should be retrieved.</param>
+    /// <param name="awsProfileName">The name of the AWS profile where the credentials should be retrieved.</param>
     /// <returns>
     ///     AwsCredentialsData containing retrieved AWS credentials or
     ///     null if the profile isn't found or if the credential is about expire (15 min threshold).
     /// </returns>
-    public AwsCredentialsData? GetCredentialsFromStore(string profileName)
+    public AwsCredentialsData? GetCredentialsFromStore(string awsProfileName)
     {
         var sharedFile = new CredentialProfileStoreChain();
 
-        if (!sharedFile.TryGetProfile(profileName, out var profile) || !profile.CanCreateAWSCredentials)
+        if (!sharedFile.TryGetProfile(awsProfileName, out var profile) || !profile.CanCreateAWSCredentials)
             return null;
 
         var awsCredentials = profile.GetAWSCredentials(sharedFile);
         var immutableCredentials = awsCredentials.GetCredentials();
 
-        var profileMetadata = GetProfileMetadata(profileName);
+        var profileMetadata = GetProfileMetadata(awsProfileName);
 
         if (profileMetadata is null || profileMetadata.AccessKey != immutableCredentials.AccessKey || profileMetadata.Expiration < DateTime.Now.AddMinutes(15))
             return null;
@@ -117,14 +117,13 @@ public class AwsCredentialsService
 
     private static void SaveProfileMetadata(string profileName, ProfileMetadata metadata)
     {
-        File.WriteAllBytes(GetProfileMetadataFilePath(profileName), JsonSerializer.SerializeToUtf8Bytes(metadata));
+        File.WriteAllBytes(GetProfileMetadataFilePath(profileName), JsonSerializer.SerializeToUtf8Bytes(metadata, SourceGenerationContext.Default.ProfileMetadata));
     }
 
     private static ProfileMetadata? GetProfileMetadata(string profileName)
     {
         var bytes = File.ReadAllBytes(GetProfileMetadataFilePath(profileName));
-
-        return JsonSerializer.Deserialize<ProfileMetadata>(bytes);
+        return JsonSerializer.Deserialize(bytes, SourceGenerationContext.Default.ProfileMetadata);
     }
 
     private static string GetProfileMetadataFilePath(string profileName) => AppDataDirectory.GetPath($"aws_profiles\\{profileName}");

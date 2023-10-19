@@ -6,5 +6,5 @@ public class EnvironmentConfiguration : ResourceConfiguration
 {
     public string Credential { get; set; } = String.Empty;
 
-    public Dictionary<string, DatabaseConfiguration>? Rds { get; set; }
+    public Dictionary<string, DatabaseConfiguration>? Rds { get; set; } = new();
 }

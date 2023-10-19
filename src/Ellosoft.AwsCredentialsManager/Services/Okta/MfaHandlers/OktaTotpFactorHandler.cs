@@ -1,32 +1,32 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using Okta.Auth.Sdk;
+using Okta.Auth.Sdk.Models;
 using Okta.Sdk.Abstractions;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 
-public class OktaTotpFactorHandler : IOktaMfaHandler
+public class OktaTotpFactorHandler : OktaFactorHandler
 {
-    private readonly IAuthenticationClient _authClient;
+    public OktaTotpFactorHandler(HttpClient httpClient) : base(httpClient)
+    {
+    }
 
-    public OktaTotpFactorHandler(IAuthenticationClient authClient) => _authClient = authClient;
-
-    public async Task<IAuthenticationResponse?> VerifyFactor(string factorId, string stateToken)
+    public override async Task<IAuthenticationResponse> VerifyFactor(Uri oktaDomain, Factor factor, string stateToken)
     {
         try
         {
             var passCode = AnsiConsole.Ask<int>("Enter the code displaying on your authenticator app:");
 
-            var verifyFactorOptions = new VerifyTotpFactorOptions
+            var verifyFactorRequest = new VerifyTotpFactorRequest
             {
-                FactorId = factorId,
                 StateToken = stateToken,
                 PassCode = passCode.ToString()
             };
 
             AnsiConsole.Write("Validating... ");
 
-            var authResponse = await _authClient.VerifyFactorAsync(verifyFactorOptions);
+            var authResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, SourceGenerationContext.Default.VerifyTotpFactorRequest);
 
             AnsiConsole.MarkupLine("[green]Ok![/]");
 
@@ -37,7 +37,7 @@ public class OktaTotpFactorHandler : IOktaMfaHandler
             AnsiConsole.MarkupLine("[red]Failed![/]");
             AnsiConsole.MarkupLine("[red]Your passcode doesn't match our records. Please try again.[/]");
 
-            return await VerifyFactor(factorId, stateToken);
+            return await VerifyFactor(oktaDomain, factor, stateToken);
         }
     }
 }

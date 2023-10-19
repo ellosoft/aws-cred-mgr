@@ -15,14 +15,14 @@ public class ConfigReader
 
     public AppConfig Read(string filePath)
     {
-        using var fileReader = new StreamReader(filePath);
-
         var hasVariables = false;
         VariablesSection? variableConfig = null;
         Dictionary<string, object>? formattedVariables = null;
 
         var yamlContent = new StringBuilder();
         var formattedYamlContent = new StringBuilder();
+
+        using var fileReader = new StreamReader(filePath);
 
         while (fileReader.ReadLine() is { } line)
         {

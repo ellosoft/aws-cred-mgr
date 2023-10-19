@@ -6,17 +6,11 @@ namespace Ellosoft.AwsCredentialsManager.Services.AWS.Models;
 
 public record CreateOktaAwsSessionRequest
 {
-    public required string OktaDomain { get; set; }
-
-    public required string AwsAppLink { get; set; }
-
-    public required string RoleArn { get; set; }
-
     public required RegionEndpoint Region { get; set; }
-
-    public string? PreferredMfaType { get; set; }
 
     public string AwsProfile { get; set; } = "default";
 
-    public string UserProfileKey { get; set; } = "default";
+    public string OktaUserProfile { get; set; } = "default";
+
+    public string? PreferredMfaType { get; set; }
 }

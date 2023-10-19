@@ -10,7 +10,7 @@ public class UserCredentialsManager
 {
     public void SaveUserCredentials(string key, UserCredentials userCredentials)
     {
-        var encryptedData = DataProtection.Encrypt(JsonSerializer.SerializeToUtf8Bytes(userCredentials));
+        var encryptedData = DataProtection.Encrypt(JsonSerializer.SerializeToUtf8Bytes(userCredentials, SourceGenerationContext.Default.UserCredentials));
 
         File.WriteAllBytes(GetUserCredentialsFilePath(key), encryptedData);
     }
@@ -33,7 +33,7 @@ public class UserCredentialsManager
         var data = File.ReadAllBytes(userProfileFilePath);
         var decryptedData = DataProtection.Decrypt(data);
 
-        return JsonSerializer.Deserialize<UserCredentials>(decryptedData);
+        return JsonSerializer.Deserialize(decryptedData, SourceGenerationContext.Default.UserCredentials);
     }
 
     private static string GetUserCredentialsFilePath(string key) => AppDataDirectory.GetPath($"{key}_profile.bin");

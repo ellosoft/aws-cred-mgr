@@ -1,66 +1,72 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using System.Text;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
-using YamlDotNet.Core;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using YamlDotNet.Serialization.TypeInspectors;
 using YamlDotNet.Serialization;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Configuration;
 
-public sealed class ResourceConfigurationMetadataInspector : TypeInspectorSkeleton
+public class ConfigWriter
 {
-    private readonly ITypeInspector _innerTypeDescriptor;
+    private static readonly ISerializer Serializer = new SerializerBuilder()
+        .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
+        .WithNamingConvention(UnderscoredNamingConvention.Instance)
+        .WithTypeInspector(inner => new ResourceConfigurationInspector(inner))
+        .Build();
 
-    public ResourceConfigurationMetadataInspector(ITypeInspector innerTypeDescriptor) => _innerTypeDescriptor = innerTypeDescriptor;
-
-    public override IEnumerable<IPropertyDescriptor> GetProperties(Type type, object? container)
+    public void Write(string fileName, AppConfig config)
     {
-        var resourceConfiguration = container as ResourceConfiguration;
-        var hasVariables = resourceConfiguration?.Metadata.Count > 0;
+        var writer = new StringBuilder();
 
-        return _innerTypeDescriptor.GetProperties(type, container)
-            .Select(prop =>
-            {
-                if (!hasVariables || !resourceConfiguration!.Metadata.TryGetValue(GetPropertyName(prop.Name), out var configMetadata))
-                    return prop;
-
-                return new VariablePropertyDescription(prop, configMetadata.VariableContent);
-            });
-    }
-
-    private static string GetPropertyName(string name) => PascalCaseNamingConvention.Instance.Apply(name);
-
-    private sealed class VariablePropertyDescription : IPropertyDescriptor
-    {
-        private readonly IPropertyDescriptor _baseDescriptor;
-        private readonly string? _variableValue;
-
-        public VariablePropertyDescription(IPropertyDescriptor baseDescriptor, string? variableValue)
+        if (config.Variables is not null)
         {
-            _baseDescriptor = baseDescriptor;
-            _variableValue = variableValue;
-
-            Order = baseDescriptor.Order;
-            ScalarStyle = baseDescriptor.Type == Type ? ScalarStyle.DoubleQuoted : ScalarStyle.Plain;
+            writer.AppendLine(Serializer.Serialize(config.Variables));
+            writer.AppendLine("---");
+            writer.AppendLine();
         }
 
-        public string Name => _baseDescriptor.Name;
+        WriteProperty(writer, nameof(AppConfig.Authentication), config.Authentication);
+        WriteProperty(writer, nameof(AppConfig.Templates), config.Templates);
+        WriteProperty(writer, nameof(AppConfig.Credentials), config.Credentials);
+        WriteProperty(writer, nameof(AppConfig.Environments), config.Environments);
 
-        public bool CanWrite => false;
+        CreateBackupFile(fileName);
+        File.WriteAllText(fileName, writer.ToString(), Encoding.UTF8);
+        DeleteBackupSafe(fileName);
+    }
 
-        public Type Type => typeof(string);
+    private static void WriteProperty(StringBuilder writer, string propertyName, object? value)
+    {
+        if (value is null)
+            return;
 
-        public Type? TypeOverride { get; set; } = typeof(string);
+        var yamlPropertyContainer = new Dictionary<object, object?>
+        {
+            [GetYamlPropertyName(propertyName)] = value
+        };
 
-        public ScalarStyle ScalarStyle { get; set; }
+        writer.AppendLine(Serializer.Serialize(yamlPropertyContainer));
+    }
 
-        public int Order { get; set; }
+    private static string GetYamlPropertyName(string name) => UnderscoredNamingConvention.Instance.Apply(name);
 
-        public IObjectDescriptor Read(object target) => new ObjectDescriptor(_variableValue, Type, Type, ScalarStyle);
+    private static void CreateBackupFile(string fileName)
+    {
+        if (File.Exists(fileName))
+            File.Copy(fileName, $"{fileName}.bak", overwrite: true);
+    }
 
-        public void Write(object target, object? value) => throw new NotSupportedException();
-
-        public T? GetCustomAttribute<T>() where T : Attribute => _baseDescriptor.GetCustomAttribute<T>();
+    private static void DeleteBackupSafe(string fileName)
+    {
+        try
+        {
+            File.Delete($"{fileName}.bak");
+        }
+        catch (Exception e)
+        {
+            AnsiConsole.MarkupLine($"[yellow]Warning: Unable to delete backup file: {e.Message}[/]");
+        }
     }
 }

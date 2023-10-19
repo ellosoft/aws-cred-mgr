@@ -1,12 +1,17 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using Okta.Auth.Sdk;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
-public class OktaMfaFactorSelector
+public interface IOktaMfaFactorSelector
 {
-    public Factor GetMfaFactor(string? preferredMfaType, IEnumerable<Factor> factors)
+    OktaFactor GetMfaFactor(string? preferredMfaType, IEnumerable<OktaFactor> factors);
+}
+
+public class OktaMfaFactorSelector : IOktaMfaFactorSelector
+{
+    public OktaFactor GetMfaFactor(string? preferredMfaType, IEnumerable<OktaFactor> factors)
     {
         var factorOptions = factors.Select(GetUserFriendlyMfaFactor);
 
@@ -36,14 +41,15 @@ public class OktaMfaFactorSelector
         };
     }
 
-    private static UserFriendlyFactor GetUserFriendlyMfaFactor(Factor factor)
+    private static UserFriendlyFactor GetUserFriendlyMfaFactor(OktaFactor factor)
     {
-        return factor.Type switch
+        return factor.FactorType switch
         {
             "push" => new UserFriendlyFactor("Okta Verify (Push)", factor),
             "token:software:totp" => new UserFriendlyFactor("Okta Verify (TOTP Code)", factor),
-            _ => new UserFriendlyFactor($"[grey]{factor.Type} (Unsupported)[/]", factor)
+            _ => new UserFriendlyFactor($"[grey]{factor.FactorType} (Unsupported)[/]", factor)
         };
     }
-    private sealed record UserFriendlyFactor(string Name, Factor Factor);
+
+    private sealed record UserFriendlyFactor(string Name, OktaFactor Factor);
 }

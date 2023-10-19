@@ -1,24 +1,23 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using Okta.Auth.Sdk;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 
-public class OktaPushFactorHandler : IOktaMfaHandler
+public class OktaPushFactorHandler : OktaFactorHandler
 {
-    private readonly IAuthenticationClient _authClient;
-
-    public OktaPushFactorHandler(IAuthenticationClient authClient) => _authClient = authClient;
-
-    public async Task<IAuthenticationResponse?> VerifyFactor(string factorId, string stateToken)
+    public OktaPushFactorHandler(HttpClient httpClient) : base(httpClient)
     {
-        var verifyFactorOptions = new VerifyPushFactorOptions
+    }
+
+    public override async Task<FactorVerificationResponse<PushOktaFactor>> VerifyFactor(Uri oktaDomain, OktaFactor factor, string stateToken)
+    {
+        var verifyFactorRequest = new VerifyPushFactorRequest
         {
-            FactorId = factorId,
             StateToken = stateToken
         };
 
-        var mfaAuthResponse = await _authClient.VerifyFactorAsync(verifyFactorOptions);
+        var mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, SourceGenerationContext.Default.VerifyPushFactorRequest);
         var factorResult = mfaAuthResponse.GetFactorResult();
 
         AnsiConsole.WriteLine("Okta push sent... Please check your phone");
@@ -28,7 +27,7 @@ public class OktaPushFactorHandler : IOktaMfaHandler
         {
             await Task.Delay(2000);
 
-            mfaAuthResponse = await _authClient.VerifyFactorAsync(verifyFactorOptions);
+            mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, SourceGenerationContext.Default.VerifyPushFactorRequest);
             factorResult = mfaAuthResponse.GetFactorResult();
 
             Verify3NumberPushMfaChallenge(mfaAuthResponse);
