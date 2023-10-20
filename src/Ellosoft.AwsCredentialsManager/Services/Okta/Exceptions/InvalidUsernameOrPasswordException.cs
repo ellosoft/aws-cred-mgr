@@ -4,7 +4,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
 
 public class InvalidUsernameOrPasswordException : Exception
 {
-    public InvalidUsernameOrPasswordException(Exception innerException) : base("Invalid username or password", innerException)
+    public InvalidUsernameOrPasswordException() : base("Invalid username or password")
     {
     }
 }

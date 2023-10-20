@@ -31,44 +31,31 @@ public class OktaClassicAuthenticator
         _mfaFactorSelector = mfaFactorSelector;
     }
 
-    public async Task<AuthenticationResult> Authenticate(Uri oktaDomain, string username, string password, string? preferredMfa)
+    public async Task<AuthenticationResult> AuthenticateAsync(Uri oktaDomain, string username, string password, string? preferredMfa)
     {
-        try
+        AnsiConsole.MarkupLine("Authenticating...");
+
+        var authResponse = await AuthenticateWithUsernameAndPassword(oktaDomain, username, password);
+
+        string? mfaUsed = null;
+
+        if (authResponse.Status == AuthenticationStatus.MfaRequired)
         {
-            AnsiConsole.MarkupLine("Authenticating...");
+            AnsiConsole.MarkupLine("Verifying 2FA...");
+            (authResponse, mfaUsed) = await VerifyMfa(oktaDomain, authResponse, preferredMfa);
 
-            var authResponse = await AuthenticateWithUsernameAndPassword(oktaDomain, username, password);
-
-            if (authResponse.Status == AuthenticationStatus.MfaRequired)
-            {
-                AnsiConsole.MarkupLine("Verifying 2FA...");
-                authResponse = await VerifyMfa(oktaDomain, authResponse, preferredMfa);
-
-                if (authResponse is null)
-                    return FailedResult(oktaDomain);
-            }
-
-            if (authResponse.Status == AuthenticationStatus.Success)
-            {
-                AnsiConsole.MarkupLine("[bold green]Authentication successful![/]");
-
-                return SuccessfulResult(oktaDomain, authResponse);
-            }
-
-            HandleFailedAuthenticationResponse(authResponse);
-        }
-        catch (OktaApiException e) when (e.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            WriteErrorMessage("Authentication failed: Invalid username or password. Please try again");
-
-            throw new InvalidUsernameOrPasswordException(e);
-        }
-        catch (OktaApiException e)
-        {
-            WriteErrorMessage($"Authentication failed: {e.OktaApiError?.ErrorSummary}");
+            if (authResponse is null)
+                return FailedResult(oktaDomain);
         }
 
-        return FailedResult(oktaDomain);
+        if (authResponse.Status == AuthenticationStatus.Success)
+        {
+            AnsiConsole.MarkupLine("[bold green]Authentication successful![/]");
+
+            return SuccessfulResult(oktaDomain, authResponse, mfaUsed);
+        }
+
+        return HandleFailedAuthenticationResponse(oktaDomain, authResponse);
     }
 
     private async Task<AuthenticationResponse> AuthenticateWithUsernameAndPassword(Uri oktaDomain, string username, string password)
@@ -91,65 +78,79 @@ public class OktaClassicAuthenticator
         }
 
         if (httpResponse.StatusCode == HttpStatusCode.Unauthorized)
-            throw new OktaApiException(httpResponse.StatusCode, null);
+            return new AuthenticationResponse { Status = AuthenticationStatus.Unauthorized };
 
         var apiError = await httpResponse.Content.ReadFromJsonAsync(OktaSourceGenerationContext.Default.OktaApiError);
-        throw new OktaApiException(httpResponse.StatusCode, apiError);
+
+        return new AuthenticationResponse
+        {
+            StatusCode = httpResponse.StatusCode,
+            Status = apiError?.ErrorSummary ?? httpResponse.StatusCode.ToString()
+        };
     }
 
-    private Task<AuthenticationResponse?> VerifyMfa(Uri oktaDomain, AuthenticationResponse authResponse, string? preferredMfaType)
+    private async Task<(AuthenticationResponse?, string)> VerifyMfa(Uri oktaDomain, AuthenticationResponse authResponse, string? preferredMfaType)
     {
-        if (authResponse.StateToken is null || authResponse.Embedded is null || authResponse.Embedded.Factors.Count == 0)
+        var availableMfaFactors = authResponse.Embedded?.Factors;
+
+        if (authResponse.StateToken is null || availableMfaFactors is null || availableMfaFactors.Count == 0)
             throw new InvalidOperationException("Invalid Okta MFA authentication response");
 
-        var factors = authResponse.Embedded.Factors;
+        AuthenticationResponse? factorResponse;
 
         if (preferredMfaType is not null)
         {
-            var preferredFactor = factors.FirstOrDefault(f => f.FactorType == preferredMfaType);
+            var preferredFactor = availableMfaFactors.FirstOrDefault(f => f.FactorType == preferredMfaType);
 
             if (preferredFactor is not null)
             {
-                return ExecuteMfaFactorHandler(oktaDomain, preferredFactor, authResponse.StateToken);
+                factorResponse = await ExecuteMfaFactorHandler(oktaDomain, preferredFactor, authResponse.StateToken);
+                return (factorResponse, preferredFactor.FactorType);
             }
         }
 
-        var selectedFactor = _mfaFactorSelector.GetMfaFactor(preferredMfaType, factors);
+        var selectedFactor = _mfaFactorSelector.GetMfaFactor(preferredMfaType, availableMfaFactors);
 
-        return ExecuteMfaFactorHandler(oktaDomain, selectedFactor, authResponse.StateToken);
+        factorResponse = await ExecuteMfaFactorHandler(oktaDomain, selectedFactor, authResponse.StateToken);
+
+        return (factorResponse, selectedFactor.FactorType);
     }
 
     private async Task<AuthenticationResponse?> ExecuteMfaFactorHandler(Uri oktaDomain, OktaFactor factor, string stateToken)
     {
-        try
+        var handler = _mfaHandlerProvider.GetOktaFactorHandler(_httpClient, factor.FactorType);
+
+        var mfaVerificationResponse = await handler.VerifyFactorAsync(oktaDomain, factor, stateToken);
+
+        if (mfaVerificationResponse.Status == AuthenticationStatus.Success)
         {
-            var handler = _mfaHandlerProvider.GetOktaFactorHandler(_httpClient, factor.FactorType);
-
-            var mfaResult = await handler.VerifyFactor(oktaDomain, factor, stateToken);
-            mfaResult.SetProperty(nameof(AuthenticationResult.MfaUsed), factor.Type);
-
-            return mfaResult;
+            return new AuthenticationResponse
+            {
+                Status = mfaVerificationResponse.Status,
+                ExpiresAt = mfaVerificationResponse.ExpiresAt,
+                SessionToken = mfaVerificationResponse.SessionToken,
+                StateToken = mfaVerificationResponse.StateToken
+            };
         }
-        catch (OktaApiException e) when (e.StatusCode == (int)HttpStatusCode.Unauthorized)
-        {
-            AnsiConsole.MarkupLine("[red]Failed![/]");
-            AnsiConsole.MarkupLine("[red]MFA verification timeout. Please try again.[/]");
 
-            return null;
-        }
+        WriteErrorMessage("Failed!");
+        WriteErrorMessage("MFA verification timeout or rejected. Please try again.");
+
+        return null;
     }
 
-    private static void HandleFailedAuthenticationResponse(AuthenticationResponse authResponse)
+    private static AuthenticationResult HandleFailedAuthenticationResponse(Uri oktaDomain, AuthenticationResponse authResponse)
     {
-        var errorMessage =
-            GetAuthErrorMessages().TryGetValue(authResponse.AuthenticationStatus, out var errorDescription)
-                ? errorDescription
-                : authResponse.AuthenticationStatus.ToString();
+        var errorMessage = GetAuthErrorMessages(authResponse.Status) ?? authResponse.Status;
 
         WriteErrorMessage($"Authentication failed: {errorMessage}");
 
-        if (authResponse.AuthenticationStatus == AuthenticationStatus.PasswordExpired)
-            throw new PasswordExpiredException();
+        return authResponse.Status switch
+        {
+            AuthenticationStatus.PasswordExpired => throw new PasswordExpiredException(),
+            AuthenticationStatus.Unauthorized => throw new InvalidUsernameOrPasswordException(),
+            _ => FailedResult(oktaDomain)
+        };
     }
 
     private static void WriteErrorMessage(string message) => AnsiConsole.MarkupLine($"[bold red]{message}[/]");
@@ -157,32 +158,40 @@ public class OktaClassicAuthenticator
     private static AuthenticationResult FailedResult(Uri oktaDomain, string? mfaUsed = null)
         => new() { OktaDomain = oktaDomain, MfaUsed = mfaUsed };
 
-    private static AuthenticationResult SuccessfulResult(Uri oktaDomain, AuthenticationResponse authResponse)
+    private static AuthenticationResult SuccessfulResult(Uri oktaDomain, AuthenticationResponse authResponse, string? mfaUsed)
         => new()
         {
             OktaDomain = oktaDomain,
-            MfaUsed = authResponse.GetProperty<string>(nameof(AuthenticationResult.MfaUsed)),
+            MfaUsed = mfaUsed,
             StateToken = authResponse.StateToken,
             SessionToken = authResponse.SessionToken,
             Authenticated = true
         };
 
-    private static Dictionary<string, string> GetAuthErrorMessages() => new()
-    {
-        [AuthenticationStatus.Unauthenticated] = "You are not authenticated",
-        [AuthenticationStatus.PasswordExpired] = "Password expired, please change your Okta password and try again",
-        [AuthenticationStatus.MfaEnroll] = "MFA enrollment required, please setup your MFA in Okta and try again",
-        [AuthenticationStatus.LockedOut] = "Okta account locked out"
-    };
+    private static string? GetAuthErrorMessages(string status) =>
+         status switch
+         {
+             AuthenticationStatus.Unauthenticated => "You are not authenticated",
+             AuthenticationStatus.PasswordExpired => "Password expired, please change your Okta password and try again",
+             AuthenticationStatus.MfaEnroll => "MFA enrollment required, please setup your MFA in Okta and try again",
+             AuthenticationStatus.LockedOut => "Okta account locked out",
+             AuthenticationStatus.Unauthorized => "Invalid username or password. Please try again",
+             _ => null
+         };
 
     private static HttpClient CreateHttpClientWithCookieContainer()
     {
+        const string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0";
+
         var handler = new HttpClientHandler
         {
             CookieContainer = new CookieContainer(),
             AllowAutoRedirect = false
         };
 
-        return new HttpClient(handler);
+        var httpClient = new HttpClient(handler);
+        httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
+
+        return httpClient;
     }
 }

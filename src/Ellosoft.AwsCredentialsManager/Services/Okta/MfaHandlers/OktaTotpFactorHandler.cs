@@ -1,8 +1,8 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using Okta.Auth.Sdk;
-using Okta.Auth.Sdk.Models;
-using Okta.Sdk.Abstractions;
+using System.Net;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
+using static Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels.OktaSourceGenerationContext;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 
@@ -12,9 +12,9 @@ public class OktaTotpFactorHandler : OktaFactorHandler
     {
     }
 
-    public override async Task<IAuthenticationResponse> VerifyFactor(Uri oktaDomain, Factor factor, string stateToken)
+    public override async Task<FactorVerificationResponse> VerifyFactorAsync(Uri oktaDomain, OktaFactor factor, string stateToken)
     {
-        try
+        while (true)
         {
             var passCode = AnsiConsole.Ask<int>("Enter the code displaying on your authenticator app:");
 
@@ -26,18 +26,24 @@ public class OktaTotpFactorHandler : OktaFactorHandler
 
             AnsiConsole.Write("Validating... ");
 
-            var authResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, SourceGenerationContext.Default.VerifyTotpFactorRequest);
+            var authResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyTotpFactorRequest, Default.FactorVerificationResponseObject);
 
-            AnsiConsole.MarkupLine("[green]Ok![/]");
+            if (authResponse.Status == AuthenticationStatus.Success)
+            {
+                AnsiConsole.MarkupLine("[green]Ok![/]");
+
+                return authResponse;
+            }
+
+            if (authResponse.StatusCode == HttpStatusCode.Forbidden)
+            {
+                AnsiConsole.MarkupLine("[red]Failed![/]");
+                AnsiConsole.MarkupLine("[red]Your passcode doesn't match our records. Please try again.[/]");
+
+                continue;
+            }
 
             return authResponse;
-        }
-        catch (OktaApiException e) when (e.StatusCode == 403)
-        {
-            AnsiConsole.MarkupLine("[red]Failed![/]");
-            AnsiConsole.MarkupLine("[red]Your passcode doesn't match our records. Please try again.[/]");
-
-            return await VerifyFactor(oktaDomain, factor, stateToken);
         }
     }
 }

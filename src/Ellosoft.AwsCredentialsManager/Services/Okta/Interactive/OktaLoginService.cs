@@ -47,7 +47,7 @@ public class OktaLoginService : IOktaLoginService
     {
         try
         {
-            var authResult = await _oktaAuth.Authenticate(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
+            var authResult = await _oktaAuth.AuthenticateAsync(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
 
             SaveUserCredentials(userProfileKey, userCredentials, savedCredentials);
 

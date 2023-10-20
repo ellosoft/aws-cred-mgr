@@ -7,7 +7,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
 public class OktaAbc
 {
-    public async Task<SamlData> GetAppSamlData(Uri oktaDomain, string sessionToken, string appLink)
+    public async Task<SamlData> GetAppSamlDataAsync(Uri oktaDomain, string sessionToken, string appLink)
     {
         using var response = await RedirectUsingSessionCookie(oktaDomain, sessionToken, appLink);
 

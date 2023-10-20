@@ -6,5 +6,5 @@ public class OktaFactor
     public required string FactorType { get; set; }
     public required string Provider { get; set; }
     public string? VendorName { get; set; }
-    public Dictionary<string, string> Profile { get; set; } = new();
+    public Dictionary<string, object> Profile { get; set; } = new();
 }

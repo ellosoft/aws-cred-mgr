@@ -9,7 +9,7 @@ public class PushOktaFactor : OktaFactor
 
     public class PushOktaFactorDetails
     {
-        public PushChallenge? Challenge { get; set; }
+        public required PushChallenge Challenge { get; set; }
     }
 
     public class PushChallenge

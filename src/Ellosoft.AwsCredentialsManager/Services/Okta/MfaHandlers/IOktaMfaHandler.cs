@@ -6,5 +6,5 @@ namespace Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 
 public interface IOktaMfaHandler
 {
-    Task<FactorVerificationResponse> VerifyFactor(Uri oktaDomain, OktaFactor factor, string stateToken);
+    Task<FactorVerificationResponse> VerifyFactorAsync(Uri oktaDomain, OktaFactor factor, string stateToken);
 }
