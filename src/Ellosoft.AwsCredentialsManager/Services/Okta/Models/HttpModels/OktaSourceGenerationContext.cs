@@ -18,6 +18,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
 [JsonSerializable(typeof(FactorVerificationResponse<object>))]
 
 [JsonSerializable(typeof(OktaApiError))]
+[JsonSerializable(typeof(TokenResponse))]
 internal partial class OktaSourceGenerationContext : JsonSerializerContext
 {
 }

@@ -3,8 +3,8 @@
 using System.Text;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Configuration;
 

@@ -5,25 +5,26 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
-public class OktaAccessTokenProvider
+public class OktaClassicAccessTokenProvider
 {
     private const string OKTA_UI_CLIENT_ID = "okta.2b1959c8-bcc0-56eb-a589-cfcfb7422f26";
 
     private readonly HttpClient _httpClient;
     private readonly OktaClassicAuthenticator _authenticator;
 
-    public OktaAccessTokenProvider() : this(CreateHttpClient())
+    public OktaClassicAccessTokenProvider() : this(CreateHttpClient())
     {
     }
 
-    public OktaAccessTokenProvider(HttpClient httpClient) : this(httpClient, new OktaClassicAuthenticator(httpClient))
+    public OktaClassicAccessTokenProvider(HttpClient httpClient) : this(httpClient, new OktaClassicAuthenticator(httpClient))
     {
     }
 
-    public OktaAccessTokenProvider(HttpClient httpClient, OktaClassicAuthenticator authenticator)
+    public OktaClassicAccessTokenProvider(HttpClient httpClient, OktaClassicAuthenticator authenticator)
     {
         _httpClient = httpClient;
         _authenticator = authenticator;
@@ -96,17 +97,17 @@ public class OktaAccessTokenProvider
             { "code", authCode }
         };
 
-        var response = await _httpClient.PostAsync(new Uri(oktaDomain, "/oauth2/v1/token"), new FormUrlEncodedContent(parameters));
+        var httpResponse = await _httpClient.PostAsync(new Uri(oktaDomain, "/oauth2/v1/token"), new FormUrlEncodedContent(parameters));
+        var tokenResponse = await httpResponse.Content.ReadFromJsonAsync(OktaSourceGenerationContext.Default.TokenResponse);
 
-        var tokenData = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-        return tokenData?["access_token"].ToString();
+        return tokenResponse?.AccessToken;
     }
 
     private static string GetQueryParams(Dictionary<string, string> parameters) => string.Join("&", parameters.Select(kv => $"{kv.Key}={kv.Value}"));
 
     private static (string codeVerifier, string codeChallenge) CreatePkceCodes()
     {
-        var codeVerifier = "M25iVXpKU3puUjFaYWg3T1NDTDQtcW1ROUY5YXlwalNoc0hhakxifmZHag";
+        var codeVerifier = GetRandomString() + GetRandomString();
 
         var hashedCodeChallenge = SHA256.HashData(Encoding.UTF8.GetBytes(codeVerifier).ToArray());
 

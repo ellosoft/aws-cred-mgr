@@ -1,3 +1,5 @@
+// Copyright (c) 2023 Ellosoft Limited. All rights reserved.
+
 using System.Text.Json.Serialization;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;

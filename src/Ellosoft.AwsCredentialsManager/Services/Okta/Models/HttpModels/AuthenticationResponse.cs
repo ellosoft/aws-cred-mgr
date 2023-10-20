@@ -1,3 +1,5 @@
+// Copyright (c) 2023 Ellosoft Limited. All rights reserved.
+
 using System.Net;
 using System.Text.Json.Serialization;
 
