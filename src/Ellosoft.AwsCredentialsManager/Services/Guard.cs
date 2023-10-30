@@ -8,6 +8,7 @@ public static class Guard
 {
     public static void AgainstChangeConfigWithVariable(string key, ResourceConfiguration config)
     {
-        throw new NotSupportedException($"It is not possible to update a configuration having a variable. Config Key: {key}");
+        if (config.HasVariables)
+            throw new NotSupportedException($"It is not possible to update a configuration having a variable. Config Key: {key}");
     }
 }

@@ -21,7 +21,7 @@ public class AwsCredentialsService
     /// <param name="roleArn">AWS role to be assumed.</param>
     /// <param name="idp">ARN of the SAML provider in AWS.</param>
     /// <param name="awsRegion">AWS region</param>
-    /// <param name="expirationInMinutes">The duration, in minutes, for which the temporary security credentials are valid.</param>
+    /// <param name="expirationInMinutes">The duration, in minutes, for which the temporary security credentials are valid. (default 120 min)</param>
     /// <returns>AwsCredentialsData containing retrieved temporary AWS credentials.</returns>
     /// <exception cref="InvalidOperationException">
     ///     Thrown when the SAML authentication assertion fails to meet the requirements
@@ -32,7 +32,7 @@ public class AwsCredentialsService
         string roleArn,
         string idp,
         RegionEndpoint awsRegion,
-        int expirationInMinutes = 60)
+        int expirationInMinutes = 120)
     {
         using var stsClient = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), awsRegion);
 
@@ -117,12 +117,14 @@ public class AwsCredentialsService
 
     private static void SaveProfileMetadata(string profileName, ProfileMetadata metadata)
     {
-        File.WriteAllBytes(GetProfileMetadataFilePath(profileName), JsonSerializer.SerializeToUtf8Bytes(metadata, SourceGenerationContext.Default.ProfileMetadata));
+        File.WriteAllBytes(GetProfileMetadataFilePath(profileName),
+            JsonSerializer.SerializeToUtf8Bytes(metadata, SourceGenerationContext.Default.ProfileMetadata));
     }
 
     private static ProfileMetadata? GetProfileMetadata(string profileName)
     {
         var bytes = File.ReadAllBytes(GetProfileMetadataFilePath(profileName));
+
         return JsonSerializer.Deserialize(bytes, SourceGenerationContext.Default.ProfileMetadata);
     }
 

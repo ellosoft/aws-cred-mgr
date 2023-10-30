@@ -45,10 +45,13 @@ public class ConfigReader
 
         var rawConfigContent = yamlContent.ToString();
 
-        if (!hasVariables)
-            return Deserializer.Deserialize<AppConfig>(rawConfigContent);
+        static AppConfig DeserializeAppConfig(string content)
+            => Deserializer.Deserialize<AppConfig?>(content) ?? new AppConfig();
 
-        var appConfig = Deserializer.Deserialize<AppConfig>(formattedYamlContent.ToString());
+        if (!hasVariables)
+            return DeserializeAppConfig(rawConfigContent);
+
+        var appConfig = DeserializeAppConfig(formattedYamlContent.ToString());
         var originalConfig = Deserializer.Deserialize<object>(rawConfigContent);
         appConfig.Variables = variableConfig;
 
@@ -81,6 +84,7 @@ public class ConfigReader
 
                 UpdateConfigMetadata(entry.Value!, (IDictionary<object, object>)yamlValue);
             }
+
             return;
         }
 
@@ -123,6 +127,7 @@ public class ConfigReader
         }
 
         formattedVariables = null;
+
         return false;
     }
 
@@ -144,6 +149,7 @@ public class ConfigReader
             if (configLine.Contains(placeholder))
                 configLine = configLine.Replace(placeholder, value.ToString());
         }
+
         return configLine;
     }
 

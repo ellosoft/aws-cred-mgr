@@ -1,7 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
-
 using static Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels.OktaSourceGenerationContext;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
@@ -16,7 +15,8 @@ public class OktaPushFactorHandler : OktaFactorHandler
     {
         var verifyFactorRequest = new VerifyPushFactorRequest { StateToken = stateToken };
 
-        var mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyPushFactorRequest, Default.FactorVerificationResponsePushOktaFactor);
+        var mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyPushFactorRequest,
+            Default.FactorVerificationResponsePushOktaFactor);
 
         var factorResult = mfaAuthResponse.FactorResult;
 
@@ -27,7 +27,9 @@ public class OktaPushFactorHandler : OktaFactorHandler
         {
             await Task.Delay(2000);
 
-            mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyPushFactorRequest, Default.FactorVerificationResponsePushOktaFactor);
+            mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyPushFactorRequest,
+                Default.FactorVerificationResponsePushOktaFactor);
+
             factorResult = mfaAuthResponse.FactorResult;
 
             Verify3NumberPushMfaChallenge(mfaAuthResponse);

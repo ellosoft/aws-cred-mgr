@@ -2,7 +2,7 @@
 
 using System.Text;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
-using Ellosoft.AwsCredentialsManager.Services.Configuration.Serialization;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.YamlSerialization;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -16,6 +16,11 @@ public class ConfigWriter
         .WithTypeInspector(inner => new ResourceConfigurationInspector(inner))
         .Build();
 
+    /// <summary>
+    ///     Serializes an AppConfig into a output file, replacing variable values with variable placeholders <see cref="ResourceConfigurationInspector" />
+    /// </summary>
+    /// <param name="fileName">Output file name</param>
+    /// <param name="config">AppConfig object</param>
     public void Write(string fileName, AppConfig config)
     {
         var writer = new StringBuilder();

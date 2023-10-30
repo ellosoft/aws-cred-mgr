@@ -11,10 +11,10 @@ public class AwsSamlService
 {
     /// <summary>
     ///     Extracts AWS roles and IDP from an encoded SAML assertion and
-    ///     returns a dictionary with the key being the ARN of the role and the value being the role name
+    ///     returns a dictionary with the key being the role ARN and the value being the role name
     /// </summary>
     /// <param name="encodedSamlAssertion">Encoded SAML assertion</param>
-    /// <returns>Dictionary with ARN of the role as the key and the role name as the value</returns>
+    /// <returns>Dictionary with AWS role ARN as the key and the role name as the value</returns>
     /// <exception cref="InvalidOperationException"></exception>
     public Dictionary<string, string> GetAwsRolesAndIdpFromSamlAssertion(string encodedSamlAssertion)
     {
@@ -38,13 +38,13 @@ public class AwsSamlService
     /// <summary>
     ///     Retrieves the AWS account names and roles for the current user
     ///     based on the provided SAML data and returns them in a dictionary format.
-    ///     The key of the dictionary is the ARN of the role and the value is the
+    ///     The key of the dictionary is the role ARN and the value is the
     ///     account name associated with that role.
     /// </summary>
     /// <param name="samlData">The SAML data containing the SAML assertion and sign-in URL</param>
-    /// <returns>Dictionary with ARN of the role as the key and the role name as the value</returns>
+    /// <returns>Dictionary with role ARN as the key and the account name as the value</returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public async Task<Dictionary<string, string>> GetAwsUserRolesWithAccountName(SamlData samlData)
+    public async Task<Dictionary<string, string>> GetAwsRolesWithAccountName(SamlData samlData)
     {
         if (samlData.SamlAssertion is null || samlData.SignInUrl is null)
             throw new InvalidOperationException("Invalid SAML assertion or Sign-in URL");

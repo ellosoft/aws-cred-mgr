@@ -15,7 +15,7 @@ public static class AppDataDirectory
     public static string Path { get; } = GetOrCreateAppDataDirectory();
 
     /// <summary>
-    /// Get the path to the user's home directory.
+    ///     Get the path to the user's home directory.
     /// </summary>
     public static string UserProfileDirectory { get; } = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 

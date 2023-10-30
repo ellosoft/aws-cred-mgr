@@ -6,14 +6,25 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization.TypeInspectors;
 
-namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Serialization;
+namespace Ellosoft.AwsCredentialsManager.Services.Configuration.YamlSerialization;
 
+/// <summary>
+///     This class is used by the YAML serializer to read variable metadata from the AppConfig
+///     and used the variable placeholder (variable name) in the output file
+/// </summary>
 public class ResourceConfigurationInspector : TypeInspectorSkeleton
 {
     private readonly ITypeInspector _innerTypeDescriptor;
 
     public ResourceConfigurationInspector(ITypeInspector innerTypeDescriptor) => _innerTypeDescriptor = innerTypeDescriptor;
 
+    /// <summary>
+    ///     Gets the property descriptor of ResourceConfiguration replacing the actual property value with the variable placeholder (variable name)
+    ///     if the object contains variables
+    /// </summary>
+    /// <param name="type">object type</param>
+    /// <param name="container">object container/parent</param>
+    /// <returns></returns>
     public override IEnumerable<IPropertyDescriptor> GetProperties(Type type, object? container)
     {
         var resourceConfiguration = container as ResourceConfiguration;

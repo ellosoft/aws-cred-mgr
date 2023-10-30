@@ -10,6 +10,7 @@ using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
+using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,9 +18,16 @@ var services = new ServiceCollection()
     .AddAppLogging();
 
 services
-    .AddSingleton<IOktaLoginService, OktaLoginService>()
     .AddSingleton<IConfigManager, ConfigManager>()
-    .AddSingleton<AwsOktaSessionManager, AwsOktaSessionManager>();
+    .AddSingleton<IOktaLoginService, OktaLoginService>()
+    .AddSingleton<AwsOktaSessionManager, AwsOktaSessionManager>()
+    .AddSingleton<IOktaMfaFactorSelector, OktaMfaFactorSelector>()
+    .AddSingleton<OktaClassicAccessTokenProvider, OktaClassicAccessTokenProvider>()
+    .AddSingleton<OktaClassicAuthenticator, OktaClassicAuthenticator>()
+    .AddSingleton<OktaSamlService, OktaSamlService>()
+    .AddSingleton<AwsSamlService, AwsSamlService>();
+
+services.AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
 
 var registrar = new TypeRegistrar(services);
 var app = new CommandApp(registrar);
@@ -48,7 +56,7 @@ app.Configure(config =>
         });
 
 #if DEBUG
-    //config.PropagateExceptions();
+    config.PropagateExceptions();
     //config.ValidateExamples();
 #endif
 });

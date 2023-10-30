@@ -18,23 +18,23 @@ public class GetRdsPassword : Command<GetRdsPassword.Settings>
         [Description("RDS profile name (see: [italic blue]rds create[/], for instructions on how to create a new profile)")]
         public string? Profile { get; set; }
 
-        [CommandOption("-h|--host <HOST>")]
+        [CommandOption("-h|--host")]
         [Description("DB instance endpoint")]
         public string? Hostname { get; set; }
 
-        [CommandOption("-p|--port <PORT>")]
+        [CommandOption("-p|--port")]
         [Description("Port number used for connecting to your DB instance")]
         public int Port { get; set; }
 
-        [CommandOption("-u|--user <USER>")]
+        [CommandOption("-u|--user")]
         [Description("Database account that you want to access")]
         public string? UserId { get; set; }
 
-        [CommandOption("-d|--database <DATABASE>")]
+        [CommandOption("-d|--database")]
         [Description("Database name")]
         public string? Database { get; set; }
 
-        [CommandOption("--ttl <TTL>")]
+        [CommandOption("--ttl")]
         [Description("Password lifetime in minutes (max recommended: 15 minutes)")]
         [DefaultValue(15)]
         public int PasswordLifetime { get; set; }

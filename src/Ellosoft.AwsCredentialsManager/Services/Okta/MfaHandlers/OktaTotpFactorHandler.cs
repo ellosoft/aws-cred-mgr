@@ -26,7 +26,8 @@ public class OktaTotpFactorHandler : OktaFactorHandler
 
             AnsiConsole.Write("Validating... ");
 
-            var authResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyTotpFactorRequest, Default.FactorVerificationResponseObject);
+            var authResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyTotpFactorRequest,
+                Default.FactorVerificationResponseObject);
 
             if (authResponse.Status == AuthenticationStatus.Success)
             {

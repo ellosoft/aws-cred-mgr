@@ -1,8 +1,8 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using Ellosoft.AwsCredentialsManager.Services;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
+using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.Okta;
@@ -27,19 +27,19 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
     public class Settings : CommonSettings
     {
         [CommandArgument(0, "[PROFILE]")]
-        [DefaultValue("default")]
+        [DefaultValue(OktaConstants.DefaultProfileName)]
         [Description("Local Okta profile name (Useful if you need to authenticate in multiple Okta domains)")]
-        public string Profile { get; set; } = "default";
+        public string Profile { get; set; } = OktaConstants.DefaultProfileName;
 
-        [CommandOption("-d|--domain <OKTA_DOMAIN>")]
+        [CommandOption("-d|--domain")]
         [Description("Your organization Okta domain URL (e.g. https://xyz.okta.com)")]
         public string? OktaDomain { get; set; }
 
-        [CommandOption("-u|--user <USER>")]
+        [CommandOption("-u|--user")]
         [Description("Your Okta username")]
         public string? Username { get; set; }
 
-        [CommandOption("--mfa <MFA>")]
+        [CommandOption("--mfa")]
         [Description("Your prefered MFA type <push|totp (code)>")]
         public string? PreferredMfaType { get; set; }
     }
@@ -51,8 +51,10 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
         var oktaDomain = GetOktaDomainUrl(settings);
         var username = settings.Username ?? AnsiConsole.Ask<string>("Enter your [green]Okta[/] username:");
         var password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your [green]Okta[/] password:").Secret());
-        var credentials = new UserCredentials(username, password);
 
+        AnsiConsole.WriteLine();
+
+        var credentials = new UserCredentials(username, password);
         var preferredMfaType = settings.PreferredMfaType is not null ? OktaMfaFactorSelector.GetOktaMfaFactorCode(settings.PreferredMfaType) : null;
 
         var authResult = await _loginService.Login(oktaDomain, credentials, preferredMfaType, userProfileKey: settings.Profile);
@@ -94,9 +96,6 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
         var appConfig = _configManager.AppConfig;
         appConfig.Authentication ??= new AppConfig.AuthenticationSection();
         appConfig.Authentication.Okta ??= new Dictionary<string, OktaConfiguration>();
-
-        if (appConfig.Authentication.Okta.TryGetValue(profileName, out var oktaConfig))
-            Guard.AgainstChangeConfigWithVariable($"okta:{profileName}", oktaConfig);
 
         appConfig.Authentication.Okta[profileName] = new OktaConfiguration
         {

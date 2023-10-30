@@ -5,7 +5,9 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
@@ -16,21 +18,23 @@ public class OktaClassicAccessTokenProvider
     private readonly HttpClient _httpClient;
     private readonly OktaClassicAuthenticator _authenticator;
 
-    public OktaClassicAccessTokenProvider() : this(CreateHttpClient())
-    {
-    }
-
-    public OktaClassicAccessTokenProvider(HttpClient httpClient) : this(httpClient, new OktaClassicAuthenticator(httpClient))
-    {
-    }
-
-    public OktaClassicAccessTokenProvider(HttpClient httpClient, OktaClassicAuthenticator authenticator)
+    public OktaClassicAccessTokenProvider(
+        [FromKeyedServices(nameof(OktaHttpClientFactory))] HttpClient httpClient,
+        OktaClassicAuthenticator authenticator)
     {
         _httpClient = httpClient;
         _authenticator = authenticator;
     }
 
-    public async Task<string?> GetAccessTokenAsync(Uri oktaDomain, string username, string password, string? preferredMfa)
+    /// <summary>
+    ///     Get Okta API access token using Okta PKCE auth flow
+    /// </summary>
+    /// <param name="oktaDomain"></param>
+    /// <param name="username"></param>
+    /// <param name="password"></param>
+    /// <param name="preferredMfa"></param>
+    /// <returns></returns>
+    public async Task<AccessTokenResult?> GetAccessTokenAsync(Uri oktaDomain, string username, string password, string? preferredMfa)
     {
         var (codeVerifier, codeChallenge) = CreatePkceCodes();
 
@@ -43,14 +47,19 @@ public class OktaClassicAccessTokenProvider
 
         var authCode = await AuthorizeAsync(oktaDomain, codeChallenge);
 
-        return await GetAccessToken(oktaDomain, authCode!, codeVerifier);
+        if (authCode is null)
+            return null;
+
+        var accessToken = await GetAccessToken(oktaDomain, authCode, codeVerifier);
+
+        return new AccessTokenResult(accessToken, authResult);
     }
 
     private async Task<string?> AuthorizeAsync(Uri oktaDomain, string codeChallenge)
     {
         var parameters = new Dictionary<string, string>
         {
-            { "client_id",  OKTA_UI_CLIENT_ID },
+            { "client_id", OKTA_UI_CLIENT_ID },
             { "code_challenge", codeChallenge },
             { "code_challenge_method", "S256" },
             { "nonce", GetRandomString() },
@@ -61,7 +70,7 @@ public class OktaClassicAccessTokenProvider
         };
 
         var url = new Uri(oktaDomain, "/oauth2/v1/authorize?" + GetQueryParams(parameters));
-        var httpResponse = await _httpClient.GetAsync(url);
+        using var httpResponse = await _httpClient.GetAsync(url);
 
         if (httpResponse.IsSuccessStatusCode)
             return null;
@@ -69,6 +78,7 @@ public class OktaClassicAccessTokenProvider
         if (httpResponse is { StatusCode: HttpStatusCode.Redirect or HttpStatusCode.TemporaryRedirect })
         {
             var queryParameters = HttpUtility.ParseQueryString(httpResponse.Headers.Location?.Query ?? String.Empty);
+
             return queryParameters.Get("code");
         }
 
@@ -78,7 +88,7 @@ public class OktaClassicAccessTokenProvider
     private async Task TokenRedirectAsync(Uri oktaDomain, string stateToken)
     {
         var url = new Uri(oktaDomain, "/login/token/redirect?stateToken=" + stateToken);
-        var httpResponse = await _httpClient.GetAsync(url);
+        using var httpResponse = await _httpClient.GetAsync(url);
 
         if (httpResponse is { StatusCode: HttpStatusCode.Redirect or HttpStatusCode.TemporaryRedirect })
             return;
@@ -86,7 +96,7 @@ public class OktaClassicAccessTokenProvider
         httpResponse.EnsureSuccessStatusCode();
     }
 
-    private async Task<string?> GetAccessToken(Uri oktaDomain, string authCode, string codeVerifier)
+    private async Task<string> GetAccessToken(Uri oktaDomain, string authCode, string codeVerifier)
     {
         var parameters = new Dictionary<string, string>
         {
@@ -97,10 +107,10 @@ public class OktaClassicAccessTokenProvider
             { "code", authCode }
         };
 
-        var httpResponse = await _httpClient.PostAsync(new Uri(oktaDomain, "/oauth2/v1/token"), new FormUrlEncodedContent(parameters));
+        using var httpResponse = await _httpClient.PostAsync(new Uri(oktaDomain, "/oauth2/v1/token"), new FormUrlEncodedContent(parameters));
         var tokenResponse = await httpResponse.Content.ReadFromJsonAsync(OktaSourceGenerationContext.Default.TokenResponse);
 
-        return tokenResponse?.AccessToken;
+        return tokenResponse?.AccessToken ?? throw new InvalidOperationException($"Invalid OAuth token response. Status Code: {httpResponse.StatusCode}");
     }
 
     private static string GetQueryParams(Dictionary<string, string> parameters) => string.Join("&", parameters.Select(kv => $"{kv.Key}={kv.Value}"));
@@ -117,21 +127,6 @@ public class OktaClassicAccessTokenProvider
             .TrimEnd('=');
 
         return (codeVerifier, codeChallenge);
-    }
-
-    private static HttpClient CreateHttpClient()
-    {
-        const string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0";
-
-        var handler = new HttpClientHandler
-        {
-            CookieContainer = new CookieContainer(),
-            AllowAutoRedirect = false
-        };
-
-        var httpClient = new HttpClient(handler);
-        httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
-        return httpClient;
     }
 
     private static string GetRandomString() => Guid.NewGuid().ToString("N");

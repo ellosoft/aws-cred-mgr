@@ -10,7 +10,7 @@ public class CredentialsConfiguration : ResourceConfiguration
 
     public string? Region { get; set; }
 
-    public string? OktaAppLink { get; set; }
+    public string? OktaAppUrl { get; set; }
 
     public string? OktaProfile { get; set; }
 }

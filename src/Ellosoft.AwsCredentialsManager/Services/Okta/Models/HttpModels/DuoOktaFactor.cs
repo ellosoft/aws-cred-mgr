@@ -17,7 +17,9 @@ public class DuoOktaFactor : OktaFactor
     public class DuoVerification
     {
         public string? Host { get; set; }
+
         public string? Signature { get; set; }
+
         public string? FactorResult { get; set; }
 
         [JsonPropertyName("_links")]

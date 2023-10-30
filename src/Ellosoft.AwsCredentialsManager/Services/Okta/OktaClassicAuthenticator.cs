@@ -7,27 +7,21 @@ using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
 public class OktaClassicAuthenticator
 {
     private readonly HttpClient _httpClient;
-    private readonly MfaHandlerProvider _mfaHandlerProvider;
+    private readonly MfaHandlerProvider _mfaHandlerProvider = new();
     private readonly IOktaMfaFactorSelector _mfaFactorSelector;
 
-    public OktaClassicAuthenticator() : this(CreateHttpClientWithCookieContainer())
-    {
-    }
-
-    public OktaClassicAuthenticator(HttpClient httpClient) : this(httpClient, new MfaHandlerProvider(), new OktaMfaFactorSelector())
-    {
-    }
-
-    public OktaClassicAuthenticator(HttpClient httpClient, MfaHandlerProvider mfaHandlerProvider, IOktaMfaFactorSelector mfaFactorSelector)
+    public OktaClassicAuthenticator(
+        [FromKeyedServices(nameof(OktaHttpClientFactory))] HttpClient httpClient,
+        IOktaMfaFactorSelector mfaFactorSelector)
     {
         _httpClient = httpClient;
-        _mfaHandlerProvider = mfaHandlerProvider;
         _mfaFactorSelector = mfaFactorSelector;
     }
 
@@ -41,16 +35,17 @@ public class OktaClassicAuthenticator
 
         if (authResponse.Status == AuthenticationStatus.MfaRequired)
         {
-            AnsiConsole.MarkupLine("Verifying 2FA...");
+            AnsiConsole.MarkupLine("Executing multi-factor authentication...");
             (authResponse, mfaUsed) = await VerifyMfa(oktaDomain, authResponse, preferredMfa);
 
-            if (authResponse is null)
+            if (authResponse.Status != AuthenticationStatus.Success)
                 return FailedResult(oktaDomain);
         }
 
         if (authResponse.Status == AuthenticationStatus.Success)
         {
             AnsiConsole.MarkupLine("[bold green]Authentication successful![/]");
+            AnsiConsole.WriteLine();
 
             return SuccessfulResult(oktaDomain, authResponse, mfaUsed);
         }
@@ -68,7 +63,7 @@ public class OktaClassicAuthenticator
             Password = password
         };
 
-        var httpResponse = await _httpClient.PostAsJsonAsync(authUrl, authRequest, OktaSourceGenerationContext.Default.AuthenticationRequest);
+        using var httpResponse = await _httpClient.PostAsJsonAsync(authUrl, authRequest, OktaSourceGenerationContext.Default.AuthenticationRequest);
 
         if (httpResponse.IsSuccessStatusCode)
         {
@@ -89,14 +84,14 @@ public class OktaClassicAuthenticator
         };
     }
 
-    private async Task<(AuthenticationResponse?, string)> VerifyMfa(Uri oktaDomain, AuthenticationResponse authResponse, string? preferredMfaType)
+    private async Task<(AuthenticationResponse, string)> VerifyMfa(Uri oktaDomain, AuthenticationResponse authResponse, string? preferredMfaType)
     {
         var availableMfaFactors = authResponse.Embedded?.Factors;
 
         if (authResponse.StateToken is null || availableMfaFactors is null || availableMfaFactors.Count == 0)
             throw new InvalidOperationException("Invalid Okta MFA authentication response");
 
-        AuthenticationResponse? factorResponse;
+        AuthenticationResponse factorResponse;
 
         if (preferredMfaType is not null)
         {
@@ -105,6 +100,7 @@ public class OktaClassicAuthenticator
             if (preferredFactor is not null)
             {
                 factorResponse = await ExecuteMfaFactorHandler(oktaDomain, preferredFactor, authResponse.StateToken);
+
                 return (factorResponse, preferredFactor.FactorType);
             }
         }
@@ -116,7 +112,7 @@ public class OktaClassicAuthenticator
         return (factorResponse, selectedFactor.FactorType);
     }
 
-    private async Task<AuthenticationResponse?> ExecuteMfaFactorHandler(Uri oktaDomain, OktaFactor factor, string stateToken)
+    private async Task<AuthenticationResponse> ExecuteMfaFactorHandler(Uri oktaDomain, OktaFactor factor, string stateToken)
     {
         var handler = _mfaHandlerProvider.GetOktaFactorHandler(_httpClient, factor.FactorType);
 
@@ -136,7 +132,7 @@ public class OktaClassicAuthenticator
         WriteErrorMessage("Failed!");
         WriteErrorMessage("MFA verification timeout or rejected. Please try again.");
 
-        return null;
+        return new AuthenticationResponse { Status = mfaVerificationResponse.Status, StatusCode = mfaVerificationResponse.StatusCode };
     }
 
     private static AuthenticationResult HandleFailedAuthenticationResponse(Uri oktaDomain, AuthenticationResponse authResponse)
@@ -169,29 +165,13 @@ public class OktaClassicAuthenticator
         };
 
     private static string? GetAuthErrorMessages(string status) =>
-         status switch
-         {
-             AuthenticationStatus.Unauthenticated => "You are not authenticated",
-             AuthenticationStatus.PasswordExpired => "Password expired, please change your Okta password and try again",
-             AuthenticationStatus.MfaEnroll => "MFA enrollment required, please setup your MFA in Okta and try again",
-             AuthenticationStatus.LockedOut => "Okta account locked out",
-             AuthenticationStatus.Unauthorized => "Invalid username or password. Please try again",
-             _ => null
-         };
-
-    private static HttpClient CreateHttpClientWithCookieContainer()
-    {
-        const string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0";
-
-        var handler = new HttpClientHandler
+        status switch
         {
-            CookieContainer = new CookieContainer(),
-            AllowAutoRedirect = false
+            AuthenticationStatus.Unauthenticated => "You are not authenticated",
+            AuthenticationStatus.PasswordExpired => "Password expired, please change your Okta password and try again",
+            AuthenticationStatus.MfaEnroll => "MFA enrollment required, please setup your MFA in Okta and try again",
+            AuthenticationStatus.LockedOut => "Okta account locked out",
+            AuthenticationStatus.Unauthorized => "Invalid username or password. Please try again",
+            _ => null
         };
-
-        var httpClient = new HttpClient(handler);
-        httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
-
-        return httpClient;
-    }
 }
