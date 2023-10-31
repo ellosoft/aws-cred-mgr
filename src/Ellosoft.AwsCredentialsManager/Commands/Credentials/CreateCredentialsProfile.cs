@@ -17,6 +17,26 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Examples("new prod")]
 public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Settings>
 {
+    public class Settings : AwsSettings
+    {
+        [CommandArgument(0, "<CREDENTIAL_NAME>")]
+        [Description("Credential profile name")]
+        public required string Name { get; set; }
+
+        [CommandOption("--role-arn")]
+        [Description("AWS role ARN")]
+        public string? AwsRoleArn { get; set; }
+
+        [CommandOption("-p|--aws-profile")]
+        [Description("AWS profile to use (profile used in AWS CLI)")]
+        [DefaultValue("default")]
+        public string? AwsProfile { get; set; }
+
+        [CommandOption("--okta-app-url")]
+        [Description("URL of the AWS application in Okta")]
+        public string? OktaAppUrl { get; set; }
+    }
+
     private readonly IConfigManager _configManager;
     private readonly IOktaLoginService _oktaLogin;
     private readonly OktaSamlService _oktaSamlService;
@@ -34,71 +54,34 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         _awsSamlService = awsSamlService;
     }
 
-    public class Settings : AwsSettings
-    {
-        [CommandArgument(0, "<CREDENTIAL_NAME>")]
-        [Description("Credential profile name")]
-        public required string Name { get; set; }
-
-        [CommandOption("--okta-app-url")]
-        [Description("URL of the AWS application in Okta")]
-        public string? OktaAppUrl { get; set; }
-
-        [CommandOption("--aws-role")]
-        [Description("AWS role ARN")]
-        public string? AwsRoleArn { get; set; }
-
-        [CommandOption("-p|--aws-profile")]
-        [Description("AWS profile to use (profile used in AWS CLI)")]
-        [DefaultValue("default")]
-        public string? AwsProfile { get; set; }
-    }
-
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         var oktaAppUrl = settings.OktaAppUrl ?? await GetAwsAppUrl(settings.OktaUserProfile);
-
-        if (oktaAppUrl is null)
-            return 1;
-
         var awsRole = settings.AwsRoleArn ?? await GetAwsRoleArn(settings.OktaUserProfile, oktaAppUrl);
 
-        if (awsRole is null)
-            return 1;
+        CreateCredentials(settings, awsRole, oktaAppUrl);
 
-        var credential = new CredentialsConfiguration
-        {
-            AwsProfile = settings.AwsProfile,
-            Region = settings.Region?.DisplayName,
-            RoleArn = awsRole,
-
-            OktaAppUrl = oktaAppUrl,
-            OktaProfile = settings.OktaUserProfile
-        };
-
-        _configManager.AppConfig.Credentials ??= new Dictionary<string, CredentialsConfiguration>();
-        _configManager.AppConfig.Credentials[settings.Name] = credential;
+        AnsiConsole.MarkupLine($"[bold green]'{settings.Name}' credentials created[/]");
 
         return 0;
     }
 
-    private async Task<string?> GetAwsAppUrl(string oktaUserProfile)
+    private async Task<string> GetAwsAppUrl(string oktaUserProfile)
     {
-        AnsiConsole.MarkupLine("Retrieving AWS Apps from OKTA...");
+        AnsiConsole.MarkupLine("[yellow]Retrieving AWS Apps from OKTA...[/]");
 
         var accessTokenResult = await _oktaLogin.InteractiveGetAccessToken(oktaUserProfile);
 
         if (accessTokenResult is null)
-            return null;
+        {
+            throw new CommandException(
+                "Unable to create OKTA API Access Token, please try again or use the '--okta-app-url' option to specify an app URL manually");
+        }
 
         var awsAppLinks = await GetAwsLinks(accessTokenResult.AuthResult.OktaDomain, accessTokenResult.AccessToken);
 
         if (awsAppLinks.Count == 0)
-        {
-            AnsiConsole.MarkupLine("[red]Unable to find any AWS apps in Okta, please use the '--okta-app-url' option to specify an URL manually[/]");
-
-            return null;
-        }
+            throw new CommandException("Unable to find any AWS apps in Okta, please use the '--okta-app-url' option to specify an app URL manually");
 
         var appLink = AnsiConsole.Prompt(
             new SelectionPrompt<AppLink>()
@@ -124,12 +107,14 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         }
     }
 
-    private async Task<string?> GetAwsRoleArn(string oktaUserProfile, string oktaAppUrl)
+    private async Task<string> GetAwsRoleArn(string oktaUserProfile, string oktaAppUrl)
     {
+        AnsiConsole.MarkupLine("[yellow]Retrieving AWS roles...[/]");
+
         var sessionTokenResult = await _oktaLogin.InteractiveLogin(oktaUserProfile);
 
         if (sessionTokenResult?.SessionToken is null)
-            return null;
+            throw new CommandException("Unable to create AWS profile, please try again");
 
         var samlData = await _oktaSamlService.GetAppSamlDataAsync(sessionTokenResult.OktaDomain, oktaAppUrl,
             sessionTokenResult.SessionToken);
@@ -137,22 +122,37 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         var awsRoles = await _awsSamlService.GetAwsRolesWithAccountName(samlData);
 
         if (awsRoles.Count == 0)
+            throw new CommandException("Unable to load AWS roles, please use the '--aws-role' option to specify an role manually");
+
+        var rolesGroupedByAccount = awsRoles.GroupBy(k => k.AccountName, v => v.RoleName);
+
+        var choices = new SelectionPrompt<string>()
+            .Title("Select your AWS role:")
+            .PageSize(10)
+            .HighlightStyle(new Style(Color.Yellow, decoration: Decoration.Bold))
+            .MoreChoicesText("[grey](Move up and down to reveal more options)[/]");
+
+        choices.DisabledStyle = new Style(Color.Blue);
+
+        foreach (var accountGroup in rolesGroupedByAccount)
+            choices.AddChoiceGroup($"[blue]{accountGroup.Key}[/]", accountGroup);
+
+        return AnsiConsole.Prompt(choices);
+    }
+
+    private void CreateCredentials(Settings settings, string awsRole, string oktaAppUrl)
+    {
+        var credential = new CredentialsConfiguration
         {
-            AnsiConsole.MarkupLine("[red]Unable to load AWS roles, please use the '--aws-role' option to specify an role manually[/]");
+            AwsProfile = settings.AwsProfile!,
+            RoleArn = awsRole,
 
-            return null;
-        }
+            OktaAppUrl = oktaAppUrl,
+            OktaProfile = settings.OktaUserProfile
+        };
 
-        var sortedRoles = awsRoles.OrderBy(role => role.Value);
-
-        var awsRole = AnsiConsole.Prompt(
-            new SelectionPrompt<KeyValuePair<string, string>>()
-                .Title("Select your AWS role:")
-                .PageSize(10)
-                .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .UseConverter(role => $"{role.Value}: {role.Key}")
-                .AddChoices(sortedRoles));
-
-        return awsRole.Key;
+        _configManager.AppConfig.Credentials ??= new Dictionary<string, CredentialsConfiguration>();
+        _configManager.AppConfig.Credentials[settings.Name] = credential;
+        _configManager.SaveConfig();
     }
 }

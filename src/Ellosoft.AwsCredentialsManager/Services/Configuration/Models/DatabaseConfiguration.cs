@@ -6,13 +6,11 @@ public class DatabaseConfiguration : ResourceConfiguration
 {
     public string? Hostname { get; set; }
 
-    public int Port { get; set; }
+    public int? Port { get; set; }
 
-    public string? UserId { get; set; }
+    public string? Username { get; set; }
 
-    public string? Database { get; set; }
-
-    public int PasswordLifetime { get; set; }
+    public int? Ttl { get; set; }
 
     public string? Template { get; set; }
 }

@@ -25,8 +25,10 @@ public abstract class OktaFactorHandler : IOktaMfaHandler
             await _httpClient.PostAsJsonAsync(new Uri(oktaDomain, $"/api/v1/authn/factors/{factorId}/verify"), request, requestJsonTypeInfo);
 
         if (httpResponse.IsSuccessStatusCode)
+        {
             return await httpResponse.Content.ReadFromJsonAsync(responseJsonTypeInfo) ??
                    throw new InvalidOperationException("Invalid Okta MFA verification response");
+        }
 
         var apiError = await httpResponse.Content.ReadFromJsonAsync(OktaSourceGenerationContext.Default.OktaApiError);
 

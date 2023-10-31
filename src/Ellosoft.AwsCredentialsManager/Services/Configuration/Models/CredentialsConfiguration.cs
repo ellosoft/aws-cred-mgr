@@ -4,11 +4,9 @@ namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 public class CredentialsConfiguration : ResourceConfiguration
 {
-    public string? RoleArn { get; set; }
+    public required string RoleArn { get; set; }
 
-    public string? AwsProfile { get; set; }
-
-    public string? Region { get; set; }
+    public required string AwsProfile { get; set; } = "default";
 
     public string? OktaAppUrl { get; set; }
 

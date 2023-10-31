@@ -20,7 +20,6 @@ public class AwsCredentialsService
     /// <param name="samlAssertion">A SAML authentication assertion used to authenticate the call to AWS STS.</param>
     /// <param name="roleArn">AWS role to be assumed.</param>
     /// <param name="idp">ARN of the SAML provider in AWS.</param>
-    /// <param name="awsRegion">AWS region</param>
     /// <param name="expirationInMinutes">The duration, in minutes, for which the temporary security credentials are valid. (default 120 min)</param>
     /// <returns>AwsCredentialsData containing retrieved temporary AWS credentials.</returns>
     /// <exception cref="InvalidOperationException">
@@ -31,10 +30,9 @@ public class AwsCredentialsService
         string samlAssertion,
         string roleArn,
         string idp,
-        RegionEndpoint awsRegion,
         int expirationInMinutes = 120)
     {
-        using var stsClient = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), awsRegion);
+        using var stsClient = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), (RegionEndpoint?)null);
 
         var request = new AssumeRoleWithSAMLRequest
         {
@@ -65,11 +63,8 @@ public class AwsCredentialsService
     /// </summary>
     /// <param name="awsProfileName">The name of the AWS profile where the credentials should be stored.</param>
     /// <param name="credentials">AWS credentials to be stored.</param>
-    /// <param name="region">The region where the credentials should be stored.</param>
-    public void StoreCredentials(string awsProfileName, AwsCredentialsData credentials, RegionEndpoint region)
+    public void StoreCredentials(string awsProfileName, AwsCredentialsData credentials)
     {
-        //TODO: Check if the region is really needed here
-
         var options = new CredentialProfileOptions
         {
             AccessKey = credentials.AccessKeyId,

@@ -9,6 +9,7 @@ using Ellosoft.AwsCredentialsManager.Commands.RDS;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
+using Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
@@ -18,13 +19,20 @@ var services = new ServiceCollection()
     .AddAppLogging();
 
 services
-    .AddSingleton<IConfigManager, ConfigManager>()
-    .AddSingleton<IOktaLoginService, OktaLoginService>()
-    .AddSingleton<AwsOktaSessionManager, AwsOktaSessionManager>()
-    .AddSingleton<IOktaMfaFactorSelector, OktaMfaFactorSelector>()
-    .AddSingleton<OktaClassicAccessTokenProvider, OktaClassicAccessTokenProvider>()
+    .AddSingleton<IConfigManager, ConfigManager>();
+
+// okta related services
+services
     .AddSingleton<OktaClassicAuthenticator, OktaClassicAuthenticator>()
-    .AddSingleton<OktaSamlService, OktaSamlService>()
+    .AddSingleton<OktaClassicAccessTokenProvider, OktaClassicAccessTokenProvider>()
+    .AddSingleton<IOktaLoginService, OktaLoginService>()
+    .AddSingleton<IOktaMfaFactorSelector, OktaMfaFactorSelector>()
+    .AddSingleton<AwsOktaSessionManager, AwsOktaSessionManager>()
+    .AddSingleton<OktaSamlService, OktaSamlService>();
+
+// aws related services
+services
+    .AddSingleton<RdsTokenGenerator, RdsTokenGenerator>()
     .AddSingleton<AwsSamlService, AwsSamlService>();
 
 services.AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
@@ -52,18 +60,31 @@ app.Configure(config =>
         {
             rds.AddCommand<GetRdsPassword>();
             rds.AddCommand<ListRdsProfiles>();
-            rds.AddCommand<CreateRdsProfile>();
         });
 
-#if DEBUG
     config.PropagateExceptions();
+
+#if DEBUG
     //config.ValidateExamples();
 #endif
 });
 
 if (Debugger.IsAttached)
 {
-    args = "cred new prod".Split(' ');
+    args = "rds pwd".Split(' ');
 }
 
-return app.Run(args);
+try
+{
+    return app.Run(args);
+}
+catch (CommandException e)
+{
+    AnsiConsole.MarkupLine($"[red bold]{e.Message}[/]");
+}
+catch (Exception e)
+{
+    AnsiConsole.MarkupLine($"[red bold]Unexpected Error:[/]{e.Message}");
+}
+
+return -1;

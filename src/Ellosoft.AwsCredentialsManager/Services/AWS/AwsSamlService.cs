@@ -3,6 +3,7 @@
 using System.Text;
 using System.Xml;
 using AngleSharp.Html.Parser;
+using Ellosoft.AwsCredentialsManager.Services.AWS.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS;
@@ -11,10 +12,10 @@ public class AwsSamlService
 {
     /// <summary>
     ///     Extracts AWS roles and IDP from an encoded SAML assertion and
-    ///     returns a dictionary with the key being the role ARN and the value being the role name
+    ///     returns a dictionary with the key being the role ARN and the value being the IDP
     /// </summary>
     /// <param name="encodedSamlAssertion">Encoded SAML assertion</param>
-    /// <returns>Dictionary with AWS role ARN as the key and the role name as the value</returns>
+    /// <returns>Dictionary with AWS role ARN as the key and the IDP as the value</returns>
     /// <exception cref="InvalidOperationException"></exception>
     public Dictionary<string, string> GetAwsRolesAndIdpFromSamlAssertion(string encodedSamlAssertion)
     {
@@ -37,14 +38,12 @@ public class AwsSamlService
 
     /// <summary>
     ///     Retrieves the AWS account names and roles for the current user
-    ///     based on the provided SAML data and returns them in a dictionary format.
-    ///     The key of the dictionary is the role ARN and the value is the
-    ///     account name associated with that role.
+    ///     based on the provided SAML data.
     /// </summary>
     /// <param name="samlData">The SAML data containing the SAML assertion and sign-in URL</param>
-    /// <returns>Dictionary with role ARN as the key and the account name as the value</returns>
+    /// <returns>A list of <see cref="AwsRole">AWS roles</see></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public async Task<Dictionary<string, string>> GetAwsRolesWithAccountName(SamlData samlData)
+    public async Task<ICollection<AwsRole>> GetAwsRolesWithAccountName(SamlData samlData)
     {
         if (samlData.SamlAssertion is null || samlData.SignInUrl is null)
             throw new InvalidOperationException("Invalid SAML assertion or Sign-in URL");
@@ -62,27 +61,27 @@ public class AwsSamlService
         return ExtractAwsAccountNamesAndRolesFromSignInResponse(responseContent);
     }
 
-    private static Dictionary<string, string> ExtractAwsAccountNamesAndRolesFromSignInResponse(string samlSignInResponse)
+    private static List<AwsRole> ExtractAwsAccountNamesAndRolesFromSignInResponse(string samlSignInResponse)
     {
         var parser = new HtmlParser();
         var document = parser.ParseDocument(samlSignInResponse);
 
         var awsAccountsElements = document.QuerySelectorAll("fieldset > div.saml-account");
 
-        var awsAccounts = new Dictionary<string, string>();
+        var awsRoles = new List<AwsRole>();
 
         foreach (var awsAccountsElement in awsAccountsElements)
         {
             var accountName = awsAccountsElement.QuerySelector("div.saml-account-name")?.TextContent;
-            var accountArn = awsAccountsElement.QuerySelector("div.saml-role > input[name='roleIndex']")
+            var roleArn = awsAccountsElement.QuerySelector("div.saml-role > input[name='roleIndex']")
                 ?.GetAttribute("value");
 
-            if (accountArn is not null && accountName is not null)
+            if (roleArn is not null && accountName is not null)
             {
-                awsAccounts[accountArn] = accountName;
+                awsRoles.Add(new AwsRole(roleArn, accountName));
             }
         }
 
-        return awsAccounts;
+        return awsRoles;
     }
 }

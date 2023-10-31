@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Ellosoft.AwsCredentialsManager.Commands.AWS;
+using Ellosoft.AwsCredentialsManager.Services.Configuration;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 
@@ -10,8 +11,34 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Examples("ls")]
 public class ListCredentialsProfiles : Command<AwsSettings>
 {
+    private readonly IConfigManager _configManager;
+
+    public ListCredentialsProfiles(IConfigManager configManager) => _configManager = configManager;
+
     public override int Execute([NotNull] CommandContext context, [NotNull] AwsSettings settings)
     {
+        var credentials = _configManager.AppConfig.Credentials;
+
+        if (credentials is null)
+        {
+            AnsiConsole.MarkupLine("[yellow]No credentials found[/]");
+
+            return 0;
+        }
+
+        var table = new Table()
+            .Title("[green]Saved credentials[/]")
+            .AddColumn("Name")
+            .AddColumn("Role ARN")
+            .AddColumn("AWS Profile");
+
+        var filteredCredentials = credentials.Where(kv => kv.Value.OktaProfile == settings.OktaUserProfile);
+
+        foreach (var credential in filteredCredentials)
+            table.AddRow(credential.Key, credential.Value.RoleArn ?? string.Empty, credential.Value.AwsProfile ?? string.Empty);
+
+        AnsiConsole.Write(table);
+
         return 0;
     }
 }

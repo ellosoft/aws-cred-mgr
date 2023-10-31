@@ -1,5 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
@@ -51,7 +52,7 @@ public class OktaLoginService : IOktaLoginService
             return null;
 
         var userCredentials = GetUserCredentials(userProfileKey, out var savedCredentials);
-        var authResult = await Login(new Uri(oktaConfig.OktaDomain!), userCredentials, oktaConfig.PreferredMfaType, savedCredentials, userProfileKey);
+        var authResult = await Login(new Uri(oktaConfig.OktaDomain), userCredentials, oktaConfig.PreferredMfaType, savedCredentials, userProfileKey);
 
         return authResult;
     }
@@ -66,7 +67,7 @@ public class OktaLoginService : IOktaLoginService
         try
         {
             var authResult = await _oktaAccessTokenProvider
-                .GetAccessTokenAsync(new Uri(oktaConfig.OktaDomain!), userCredentials.Username, userCredentials.Password, oktaConfig.PreferredMfaType);
+                .GetAccessTokenAsync(new Uri(oktaConfig.OktaDomain), userCredentials.Username, userCredentials.Password, oktaConfig.PreferredMfaType);
 
             if (authResult is not null)
                 SaveUserCredentials(userProfileKey, userCredentials, savedCredentials);
@@ -152,7 +153,7 @@ public class OktaLoginService : IOktaLoginService
         _userCredentialsManager.SaveUserCredentials(profileKey, credentialsWithoutPasswords);
     }
 
-    private bool TryGetOktaConfig(string userProfileKey, out OktaConfiguration oktaConfig)
+    private bool TryGetOktaConfig(string userProfileKey, [NotNullWhen(true)] out OktaConfiguration? oktaConfig)
     {
         if (_configManager.AppConfig.Authentication?.Okta?.TryGetValue(userProfileKey, out var config) == true)
         {
@@ -161,10 +162,10 @@ public class OktaLoginService : IOktaLoginService
             return true;
         }
 
-        oktaConfig = new OktaConfiguration();
+        oktaConfig = null;
 
         var profileCommand = "aws-cred-mgr okta setup" + userProfileKey == OktaConstants.DefaultProfileName ? null : $" {userProfileKey}";
-        AnsiConsole.MarkupLine($"[red]No '{userProfileKey}' Okta profile found, please use [green]'{profileCommand}'[/] to create a new profile[/]");
+        AnsiConsole.MarkupLine($"[yellow]No '{userProfileKey}' Okta profile found, please use [green]'{profileCommand}'[/] to create a new profile[/]");
 
         return false;
     }
