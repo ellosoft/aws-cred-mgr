@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
+public record AccessTokenResult(string AccessToken, AuthenticationResult AuthResult);
+
 public class OktaClassicAccessTokenProvider
 {
     private const string OKTA_UI_CLIENT_ID = "okta.2b1959c8-bcc0-56eb-a589-cfcfb7422f26";

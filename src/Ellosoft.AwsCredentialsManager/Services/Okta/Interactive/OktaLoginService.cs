@@ -155,7 +155,7 @@ public class OktaLoginService : IOktaLoginService
 
     private bool TryGetOktaConfig(string userProfileKey, [NotNullWhen(true)] out OktaConfiguration? oktaConfig)
     {
-        if (_configManager.AppConfig.Authentication?.Okta?.TryGetValue(userProfileKey, out var config) == true)
+        if (_configManager.AppConfig.Authentication?.Okta.TryGetValue(userProfileKey, out var config) == true)
         {
             oktaConfig = config;
 
@@ -164,7 +164,7 @@ public class OktaLoginService : IOktaLoginService
 
         oktaConfig = null;
 
-        var profileCommand = "aws-cred-mgr okta setup" + userProfileKey == OktaConstants.DefaultProfileName ? null : $" {userProfileKey}";
+        var profileCommand = "aws-cred-mgr okta setup" + (userProfileKey == OktaConstants.DefaultProfileName ? null : $" {userProfileKey}");
         AnsiConsole.MarkupLine($"[yellow]No '{userProfileKey}' Okta profile found, please use [green]'{profileCommand}'[/] to create a new profile[/]");
 
         return false;

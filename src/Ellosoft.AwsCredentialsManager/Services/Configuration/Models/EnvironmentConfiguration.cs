@@ -4,5 +4,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 public class EnvironmentConfiguration : ResourceConfiguration
 {
-    public Dictionary<string, DatabaseConfiguration>? Rds { get; set; } = new();
+    public required string Credential { get; set; }
+
+    public Dictionary<string, DatabaseConfiguration> Rds { get; set; } = new();
 }

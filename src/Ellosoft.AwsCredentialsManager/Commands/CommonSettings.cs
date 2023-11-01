@@ -7,7 +7,7 @@ namespace Ellosoft.AwsCredentialsManager.Commands;
 
 public class CommonSettings : CommandSettings, ILogLevelSettings
 {
-    [CommandOption("--log-level")]
+    [CommandOption("--log-level", IsHidden = true)]
     [Description("Set log level <verbose|debug|info|warn|error>")]
     [TypeConverter(typeof(LogLevelConverter))]
     [DefaultValue("warn")]

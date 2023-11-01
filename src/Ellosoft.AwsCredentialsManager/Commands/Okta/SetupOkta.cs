@@ -91,7 +91,6 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
     {
         var appConfig = _configManager.AppConfig;
         appConfig.Authentication ??= new AppConfig.AuthenticationSection();
-        appConfig.Authentication.Okta ??= new Dictionary<string, OktaConfiguration>();
 
         appConfig.Authentication.Okta[profileName] = new OktaConfiguration
         {

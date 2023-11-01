@@ -6,13 +6,14 @@ using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
-using Ellosoft.AwsCredentialsManager.Services.AWS.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
+public record AwsCredentialsData(string AccessKeyId, string SecretAccessKey, string SessionToken, DateTime ExpirationDateTime, string RoleArn);
+
 public class AwsCredentialsService
 {
-    internal sealed record ProfileMetadata(string AccessKey, DateTime Expiration);
+    internal sealed record ProfileMetadata(string RoleArn, string AccessKey, DateTime Expiration);
 
     /// <summary>
     ///     Assume AWS role and retrieve its credentials by using the SAML authentication assertion
@@ -50,7 +51,8 @@ public class AwsCredentialsService
                 response.Credentials.AccessKeyId,
                 response.Credentials.SecretAccessKey,
                 response.Credentials.SessionToken,
-                response.Credentials.Expiration);
+                response.Credentials.Expiration,
+                roleArn);
         }
         catch (Exception ex)
         {
@@ -77,7 +79,7 @@ public class AwsCredentialsService
         var sharedFile = new SharedCredentialsFile();
         sharedFile.RegisterProfile(profile);
 
-        SaveProfileMetadata(awsProfileName, new ProfileMetadata(credentials.AccessKeyId, credentials.ExpirationDateTime));
+        SaveProfileMetadata(awsProfileName, new ProfileMetadata(credentials.RoleArn, credentials.AccessKeyId, credentials.ExpirationDateTime));
     }
 
     /// <summary>
@@ -107,7 +109,8 @@ public class AwsCredentialsService
             immutableCredentials.AccessKey,
             immutableCredentials.SecretKey,
             immutableCredentials.Token,
-            profileMetadata.Expiration);
+            profileMetadata.Expiration,
+            profileMetadata.RoleArn);
     }
 
     private static void SaveProfileMetadata(string profileName, ProfileMetadata metadata)

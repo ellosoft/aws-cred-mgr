@@ -19,13 +19,6 @@ public class ListCredentialsProfiles : Command<AwsSettings>
     {
         var credentials = _configManager.AppConfig.Credentials;
 
-        if (credentials is null)
-        {
-            AnsiConsole.MarkupLine("[yellow]No credentials found[/]");
-
-            return 0;
-        }
-
         var table = new Table()
             .Title("[green]Saved credentials[/]")
             .AddColumn("Name")
@@ -35,7 +28,7 @@ public class ListCredentialsProfiles : Command<AwsSettings>
         var filteredCredentials = credentials.Where(kv => kv.Value.OktaProfile == settings.OktaUserProfile);
 
         foreach (var credential in filteredCredentials)
-            table.AddRow(credential.Key, credential.Value.RoleArn ?? string.Empty, credential.Value.AwsProfile ?? string.Empty);
+            table.AddRow(credential.Key, credential.Value.RoleArn, credential.Value.AwsProfile);
 
         AnsiConsole.Write(table);
 

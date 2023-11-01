@@ -1,5 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using System.Collections;
 using System.Text;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.YamlSerialization;
@@ -44,7 +45,7 @@ public class ConfigWriter
 
     private static void WriteProperty(StringBuilder writer, string propertyName, object? value)
     {
-        if (value is null)
+        if (value is null or ICollection { Count: 0 })
             return;
 
         var yamlPropertyContainer = new Dictionary<object, object?>

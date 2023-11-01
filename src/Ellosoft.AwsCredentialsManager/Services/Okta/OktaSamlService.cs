@@ -1,9 +1,10 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using AngleSharp.Html.Parser;
-using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
+
+public record SamlData(string SamlAssertion, string SignInUrl, string RelayState);
 
 public class OktaSamlService
 {

@@ -12,5 +12,9 @@ public class DatabaseConfiguration : ResourceConfiguration
 
     public int? Ttl { get; set; }
 
+    public string? Region { get; set; }
+
     public string? Template { get; set; }
+
+    public string? Credential { get; set; }
 }

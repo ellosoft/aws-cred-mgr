@@ -1,7 +1,7 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using System.Diagnostics.CodeAnalysis;
-using Ellosoft.AwsCredentialsManager.Services.AWS.Models;
+using Amazon.Runtime;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
@@ -28,41 +28,45 @@ public class AwsOktaSessionManager
         _oktaSamlService = oktaSamlService;
     }
 
-    public async Task<bool> CreateSessionAsync(string credentialKey)
+    public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile)
     {
-        if (!TryGetCredential(credentialKey, out var credentialsConfig))
-            return false;
+        if (!TryGetCredential(credentialProfile, out var credentialsConfig))
+            return null;
 
-        var authResult = await _oktaLoginService.InteractiveLogin(credentialsConfig.OktaProfile!);
+        if (TryResumeSession(credentialsConfig.AwsProfile, out var awsCredentialsData) && awsCredentialsData.RoleArn == credentialsConfig.RoleArn)
+            return CreateAwsCredentials(awsCredentialsData);
 
-        if (authResult?.SessionToken is null)
-            return false;
+        var newCredential = await CreateSessionAsync(credentialProfile, credentialsConfig);
 
-        var samlData = await _oktaSamlService.GetAppSamlDataAsync(authResult.OktaDomain, credentialsConfig.OktaAppUrl!, authResult.SessionToken);
-
-        var idp = GetRoleIdp(credentialKey, credentialsConfig.RoleArn, samlData.SamlAssertion);
-
-        if (idp is null)
-            return false;
-
-        var awsCredentialsData = await _awsCredentialsService.GetAwsCredentials(samlData.SamlAssertion, credentialsConfig.RoleArn, idp);
-
-        _awsCredentialsService.StoreCredentials(credentialsConfig.AwsProfile, awsCredentialsData);
-
-        return true;
+        return newCredential is not null ? CreateAwsCredentials(newCredential) : null;
     }
 
-    public bool TryResumeSession(string? awsProfile, out AwsCredentialsData? credentials)
+    private bool TryGetCredential(string credentialProfile, [NotNullWhen(true)] out CredentialsConfiguration? credentialsConfig)
     {
-        credentials = _awsCredentialsService.GetCredentialsFromStore(awsProfile ?? "default");
+        if (_configManager.AppConfig.Credentials.TryGetValue(credentialProfile, out credentialsConfig))
+        {
+            if (credentialsConfig is { OktaProfile: not null, OktaAppUrl: not null })
+                return true;
 
-        if (credentials is null)
+            AnsiConsole.MarkupLine($"[yellow]The credential [b]'{credentialProfile}'[/] has invalid Okta properties[/]");
+        }
+
+        AnsiConsole.MarkupLine($"[yellow]Unable to find credential [b]'{credentialProfile}'[/][/]");
+
+        return false;
+    }
+
+    private bool TryResumeSession(string? awsProfile, [NotNullWhen(true)] out AwsCredentialsData? credentialsData)
+    {
+        credentialsData = _awsCredentialsService.GetCredentialsFromStore(awsProfile ?? "default");
+
+        if (credentialsData is null)
             return false;
 
-        if (credentials.ExpirationDateTime >= DateTime.Now.AddMinutes(60))
+        if (credentialsData.ExpirationDateTime >= DateTime.Now.AddMinutes(60))
             return true;
 
-        var expirationInMinutes = (int)(credentials.ExpirationDateTime - DateTime.Now).TotalMinutes;
+        var expirationInMinutes = (int)(credentialsData.ExpirationDateTime - DateTime.Now).TotalMinutes;
 
         var renewCredentialsMessage = $"""
                                        [bold yellow]Your AWS credentials will expire in [bold green]{expirationInMinutes}[/] minutes.
@@ -76,24 +80,28 @@ public class AwsOktaSessionManager
         return true;
     }
 
-    private bool TryGetCredential(string credentialKey, [NotNullWhen(true)] out CredentialsConfiguration? credentialsConfig)
+    private async Task<AwsCredentialsData?> CreateSessionAsync(string credentialProfile, CredentialsConfiguration credentialsConfig)
     {
-        credentialsConfig = null;
+        var authResult = await _oktaLoginService.InteractiveLogin(credentialsConfig.OktaProfile!);
 
-        if (_configManager.AppConfig.Credentials?.TryGetValue(credentialKey, out credentialsConfig) == true)
-        {
-            if (credentialsConfig is { OktaProfile: not null, OktaAppUrl: not null })
-                return true;
+        if (authResult?.SessionToken is null)
+            return null;
 
-            AnsiConsole.MarkupLine($"[yellow]The credential [b]'{credentialKey}'[/] has invalid Okta properties[/]");
-        }
+        var samlData = await _oktaSamlService.GetAppSamlDataAsync(authResult.OktaDomain, credentialsConfig.OktaAppUrl!, authResult.SessionToken);
 
-        AnsiConsole.MarkupLine($"[yellow]Unable to find credential [b]'{credentialKey}'[/][/]");
+        var idp = GetRoleIdp(credentialProfile, credentialsConfig.RoleArn, samlData.SamlAssertion);
 
-        return false;
+        if (idp is null)
+            return null;
+
+        var awsCredentialsData = await _awsCredentialsService.GetAwsCredentials(samlData.SamlAssertion, credentialsConfig.RoleArn, idp);
+
+        _awsCredentialsService.StoreCredentials(credentialsConfig.AwsProfile, awsCredentialsData);
+
+        return awsCredentialsData;
     }
 
-    private string? GetRoleIdp(string credentialKey, string roleArn, string samlAssertion)
+    private string? GetRoleIdp(string credentialProfile, string roleArn, string samlAssertion)
     {
         var roles = _awsSamlService.GetAwsRolesAndIdpFromSamlAssertion(samlAssertion);
 
@@ -101,8 +109,8 @@ public class AwsOktaSessionManager
             return idp;
 
         var invalidCredentialMessage = $"""
-                                        [bold yellow]The AWS role ARN specified in the credential [b]'{credentialKey}'[/] is not assigned to your user.
-                                        Please update the [b]'{credentialKey}'[/], with one of the following roles:[/]
+                                        [bold yellow]The AWS role ARN specified in the credential [b]'{credentialProfile}'[/] is not assigned to your user.
+                                        Please update the [b]'{credentialProfile}'[/] credential, with one of the following roles:[/]
                                         """;
 
         AnsiConsole.MarkupLine(invalidCredentialMessage);
@@ -112,4 +120,7 @@ public class AwsOktaSessionManager
 
         return null;
     }
+
+    private static BasicAWSCredentials CreateAwsCredentials(AwsCredentialsData credentialsData) =>
+        new(credentialsData.AccessKeyId, credentialsData.SecretAccessKey);
 }

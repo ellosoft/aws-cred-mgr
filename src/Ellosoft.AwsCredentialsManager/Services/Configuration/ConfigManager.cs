@@ -8,6 +8,9 @@ public interface IConfigManager
 {
     AppConfig AppConfig { get; }
 
+    /// <summary>
+    ///     Persist the <see cref="AppConfig" /> state into a file
+    /// </summary>
     void SaveConfig();
 }
 

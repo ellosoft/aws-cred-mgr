@@ -4,8 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Ellosoft.AwsCredentialsManager.Commands.AWS;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
-using Ellosoft.AwsCredentialsManager.Services.Configuration;
-using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
@@ -37,18 +36,18 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         public string? OktaAppUrl { get; set; }
     }
 
-    private readonly IConfigManager _configManager;
+    private readonly CredentialsManager _credentialsManager;
     private readonly IOktaLoginService _oktaLogin;
     private readonly OktaSamlService _oktaSamlService;
     private readonly AwsSamlService _awsSamlService;
 
     public CreateCredentialsProfile(
-        IConfigManager configManager,
+        CredentialsManager credentialsManager,
         IOktaLoginService oktaLogin,
         OktaSamlService oktaSamlService,
         AwsSamlService awsSamlService)
     {
-        _configManager = configManager;
+        _credentialsManager = credentialsManager;
         _oktaLogin = oktaLogin;
         _oktaSamlService = oktaSamlService;
         _awsSamlService = awsSamlService;
@@ -59,9 +58,7 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         var oktaAppUrl = settings.OktaAppUrl ?? await GetAwsAppUrl(settings.OktaUserProfile);
         var awsRole = settings.AwsRoleArn ?? await GetAwsRoleArn(settings.OktaUserProfile, oktaAppUrl);
 
-        CreateCredentials(settings, awsRole, oktaAppUrl);
-
-        AnsiConsole.MarkupLine($"[bold green]'{settings.Name}' credentials created[/]");
+        _credentialsManager.CreateCredential(settings.Name, settings.AwsProfile!, awsRole, oktaAppUrl, settings.OktaUserProfile);
 
         return 0;
     }
@@ -75,7 +72,7 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         if (accessTokenResult is null)
         {
             throw new CommandException(
-                "Unable to create OKTA API Access Token, please try again or use the '--okta-app-url' option to specify an app URL manually");
+                "Unable to retrieve OKTA apps, please try again or use the '--okta-app-url' option to specify an app URL manually");
         }
 
         var awsAppLinks = await GetAwsLinks(accessTokenResult.AuthResult.OktaDomain, accessTokenResult.AccessToken);
@@ -114,7 +111,7 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         var sessionTokenResult = await _oktaLogin.InteractiveLogin(oktaUserProfile);
 
         if (sessionTokenResult?.SessionToken is null)
-            throw new CommandException("Unable to create AWS profile, please try again");
+            throw new CommandException("Unable to create AWS credential profile, please try again");
 
         var samlData = await _oktaSamlService.GetAppSamlDataAsync(sessionTokenResult.OktaDomain, oktaAppUrl,
             sessionTokenResult.SessionToken);
@@ -138,21 +135,5 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
             choices.AddChoiceGroup($"[blue]{accountGroup.Key}[/]", accountGroup);
 
         return AnsiConsole.Prompt(choices);
-    }
-
-    private void CreateCredentials(Settings settings, string awsRole, string oktaAppUrl)
-    {
-        var credential = new CredentialsConfiguration
-        {
-            AwsProfile = settings.AwsProfile!,
-            RoleArn = awsRole,
-
-            OktaAppUrl = oktaAppUrl,
-            OktaProfile = settings.OktaUserProfile
-        };
-
-        _configManager.AppConfig.Credentials ??= new Dictionary<string, CredentialsConfiguration>();
-        _configManager.AppConfig.Credentials[settings.Name] = credential;
-        _configManager.SaveConfig();
     }
 }

@@ -13,18 +13,18 @@ public class AppConfig
 
     public TemplatesSection? Templates { get; set; }
 
-    public Dictionary<string, EnvironmentConfiguration>? Environments { get; set; }
+    public Dictionary<string, EnvironmentConfiguration> Environments { get; set; } = new();
 
-    public Dictionary<string, CredentialsConfiguration>? Credentials { get; set; }
+    public Dictionary<string, CredentialsConfiguration> Credentials { get; set; } = new();
 
     public class AuthenticationSection
     {
-        public Dictionary<string, OktaConfiguration>? Okta { get; set; }
+        public Dictionary<string, OktaConfiguration> Okta { get; set; } = new();
     }
 
     public class TemplatesSection
     {
-        public Dictionary<string, DatabaseConfiguration>? Rds { get; set; }
+        public Dictionary<string, DatabaseConfiguration> Rds { get; set; } = new();
     }
 
     internal VariablesSection? Variables { get; set; }

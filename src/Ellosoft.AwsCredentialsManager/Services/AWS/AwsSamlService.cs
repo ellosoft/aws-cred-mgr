@@ -3,10 +3,11 @@
 using System.Text;
 using System.Xml;
 using AngleSharp.Html.Parser;
-using Ellosoft.AwsCredentialsManager.Services.AWS.Models;
-using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
+using Ellosoft.AwsCredentialsManager.Services.Okta;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS;
+
+public record AwsRole(string RoleName, string AccountName);
 
 public class AwsSamlService
 {

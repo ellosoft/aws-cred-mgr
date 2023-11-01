@@ -18,6 +18,14 @@ public class AwsSettings : CommonSettings
     [DefaultValue("default")]
     public virtual string OktaUserProfile { get; set; } = OktaConstants.DefaultProfileName;
 
+    /// <summary>
+    ///     Get AWS region endpoint
+    /// </summary>
+    /// <remarks>If the region option (--region) is provided it return its value, otherwise prompts the user for a AWS region</remarks>
+    /// <returns>AWS Region Endpoint</returns>
+    public RegionEndpoint GetRegion() =>
+        Region ??= AwsRegionConverter.GetRegionFromString(AnsiConsole.Ask<string>("Enter the AWS region (e.g. us-east-2):"));
+
     public class AwsRegionConverter : TypeConverter
     {
         private const string INVALID_REGION = "Invalid AWS region";
@@ -25,10 +33,13 @@ public class AwsSettings : CommonSettings
         public override object ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
         {
             if (value is not string regionStringValue)
-            {
                 throw new NotSupportedException(INVALID_REGION);
-            }
 
+            return GetRegionFromString(regionStringValue);
+        }
+
+        public static RegionEndpoint GetRegionFromString(string regionStringValue)
+        {
             var region = RegionEndpoint.GetBySystemName(regionStringValue);
 
             return region ?? throw new NotSupportedException(INVALID_REGION);
