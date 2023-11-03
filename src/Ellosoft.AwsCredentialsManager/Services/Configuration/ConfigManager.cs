@@ -16,7 +16,7 @@ public interface IConfigManager
 
 public class ConfigManager : IConfigManager
 {
-    private const string APP_CONFIG_FILE = "aws_cred_mgr.yaml";
+    private const string APP_CONFIG_FILE = "aws_cred_mgr.yml";
 
     private static readonly string AppConfigPath = Path.Combine(AppDataDirectory.UserProfileDirectory, APP_CONFIG_FILE);
 

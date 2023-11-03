@@ -11,11 +11,11 @@ public class AppConfig
 {
     public AuthenticationSection? Authentication { get; set; }
 
+    public Dictionary<string, CredentialsConfiguration> Credentials { get; set; } = new();
+
     public TemplatesSection? Templates { get; set; }
 
     public Dictionary<string, EnvironmentConfiguration> Environments { get; set; } = new();
-
-    public Dictionary<string, CredentialsConfiguration> Credentials { get; set; } = new();
 
     public class AuthenticationSection
     {
