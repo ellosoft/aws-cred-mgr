@@ -44,7 +44,7 @@ public class OktaClassicAuthenticator
 
         if (authResponse.Status == AuthenticationStatus.Success)
         {
-            AnsiConsole.MarkupLine("\r\n[bold green]Authentication successful![/]\r\n");
+            AnsiConsole.MarkupLine("\r\n[bold green]Authenticated![/]\r\n");
 
             return SuccessfulResult(oktaDomain, authResponse, mfaUsed);
         }

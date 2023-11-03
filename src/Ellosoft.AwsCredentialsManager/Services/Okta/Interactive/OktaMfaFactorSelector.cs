@@ -17,7 +17,7 @@ public class OktaMfaFactorSelector : IOktaMfaFactorSelector
 
         var factorSelectionMessage = preferredMfaType is not null
             ? $"[yellow]Preferred MFA factor '{preferredMfaType}' not found in your profile, please select one of the following options:[/]"
-            : "[yellow]Please select one of the following MFA options:[/]";
+            : "Please select one of the following MFA options:";
 
         var selectedFactor = AnsiConsole.Prompt(
             new SelectionPrompt<UserFriendlyFactor>()

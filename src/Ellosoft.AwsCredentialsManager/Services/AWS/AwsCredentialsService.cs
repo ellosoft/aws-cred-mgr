@@ -115,13 +115,22 @@ public class AwsCredentialsService
 
     private static void SaveProfileMetadata(string profileName, ProfileMetadata metadata)
     {
-        File.WriteAllBytes(GetProfileMetadataFilePath(profileName),
+        var profileMetadataPath = GetProfileMetadataFilePath(profileName);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(profileMetadataPath)!);
+
+        File.WriteAllBytes(profileMetadataPath,
             JsonSerializer.SerializeToUtf8Bytes(metadata, SourceGenerationContext.Default.ProfileMetadata));
     }
 
     private static ProfileMetadata? GetProfileMetadata(string profileName)
     {
-        var bytes = File.ReadAllBytes(GetProfileMetadataFilePath(profileName));
+        var profileMetadataPath = GetProfileMetadataFilePath(profileName);
+
+        if (!File.Exists(profileMetadataPath))
+            return null;
+
+        var bytes = File.ReadAllBytes(profileMetadataPath);
 
         return JsonSerializer.Deserialize(bytes, SourceGenerationContext.Default.ProfileMetadata);
     }

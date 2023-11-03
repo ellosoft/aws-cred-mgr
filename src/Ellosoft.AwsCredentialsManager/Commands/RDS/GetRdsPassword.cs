@@ -14,13 +14,13 @@ namespace Ellosoft.AwsCredentialsManager.Commands.RDS;
 [Description("Get AWS RDS DB password")]
 [Examples(
     "pwd prod_db",
-    "pwd -h localhost -p 5432 -u john -d postgres")]
+    "pwd -h localhost -p 5432 -u john")]
 public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
 {
     public class Settings : AwsSettings
     {
         [CommandArgument(0, "[PROFILE]")]
-        [Description("RDS profile name (see: [italic blue]rds create[/], for instructions on how to create a new profile)")]
+        [Description("RDS profile name (use [italic blue]rds pwd[/] to create a new profile)")]
         public string? Profile { get; set; }
 
         [CommandOption("-h|--hostname")]
@@ -39,6 +39,10 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         [Description("Password lifetime in minutes (max recommended: 15 minutes)")]
         [DefaultValue(15)]
         public int Ttl { get; set; }
+
+        [CommandOption("--env")]
+        [Description("Environment name")]
+        public string? Environment { get; set; }
     }
 
     private readonly IConfigManager _configManager;
@@ -66,7 +70,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         if (settings.Profile is null)
             return await HandleAdHocRequest(settings);
 
-        var dbConfig = GetDbConfig(_configManager.AppConfig, settings.Profile);
+        var dbConfig = GetDbConfig(_configManager.AppConfig, settings.Profile, settings.Environment);
 
         ApplyTemplateValues(dbConfig, _configManager.AppConfig.Templates);
 
@@ -85,6 +89,9 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
     private async Task<int> HandleAdHocRequest(Settings settings)
     {
         var credentialName = _credentialsManager.GetCredential();
+
+        AnsiConsole.MarkupLine($"Getting RDS password using [green i]{credentialName}[/] credential profile");
+
         var hostname = settings.Hostname ?? AnsiConsole.Ask<string>("Enter the DB hostname:");
         var port = settings.Port ?? AnsiConsole.Ask<int>("Enter the DB port:");
         var username = settings.Username ?? AnsiConsole.Ask<string>("Enter the DB username:");
@@ -92,7 +99,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
 
         await GenerateDbPassword(credentialName, hostname, port, username, settings.Ttl, region.SystemName);
 
-        CreateNewRdsProfile(credentialName, hostname, port, username, settings.Ttl, region.SystemName);
+        CreateNewRdsProfile(credentialName, hostname, port, username, settings.Ttl, region.SystemName, settings.Environment);
 
         return 0;
     }
@@ -120,11 +127,11 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         }
         catch (ArgumentNullException e)
         {
-            throw new CommandException($"Invalid {e.ParamName} value");
+            throw new CommandException($"Error: '{e.ParamName}' value can not be empty[/]");
         }
     }
 
-    private void CreateNewRdsProfile(string credential, string hostname, int port, string username, int ttl, string region)
+    private void CreateNewRdsProfile(string credential, string hostname, int port, string username, int ttl, string region, string? environmentName)
     {
         if (!AnsiConsole.Confirm("Do you want to save this RDS details for future use ?"))
         {
@@ -133,7 +140,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             return;
         }
 
-        var environment = _envManager.GetEnvironment();
+        var environment = _envManager.GetOrCreateEnvironment(environmentName);
 
         var dbConfig = new DatabaseConfiguration
         {
@@ -155,10 +162,22 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         }
 
         _configManager.SaveConfig();
+
+        AnsiConsole.MarkupLine($"[bold green]'{profileName}' RDS profile created[/]");
     }
 
-    private static DatabaseConfiguration GetDbConfig(AppConfig appConfig, string rdsProfile)
+    private DatabaseConfiguration GetDbConfig(AppConfig appConfig, string rdsProfile, string? environmentName)
     {
+        if (environmentName is not null)
+        {
+            var env = _envManager.GetEnvironment(environmentName);
+
+            if (env is not null && env.Rds.TryGetValue(rdsProfile, out var dbConfig))
+                return dbConfig;
+
+            throw new CommandException($"Unable to find RDS profile [i]'{rdsProfile}'[/] on [i]'{environmentName}'[/] environment");
+        }
+
         var dbConfigs = new Dictionary<string, DatabaseConfiguration>();
 
         foreach (var (envName, env) in appConfig.Environments)
@@ -168,18 +187,17 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         }
 
         if (dbConfigs.Count == 0)
-            throw new CommandException($"Unable to find RDS profile '{rdsProfile}'");
+            throw new CommandException($"Unable to find RDS profile [i]'{rdsProfile}'[/]");
 
-        if (dbConfigs.Count == 1)
-            return dbConfigs.First().Value;
-
-        var selectedConfig = AnsiConsole.Prompt(
-            new SelectionPrompt<KeyValuePair<string, DatabaseConfiguration>>()
-                .Title("Select an environment:")
-                .PageSize(10)
-                .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .UseConverter(kv => kv.Key)
-                .AddChoices(dbConfigs));
+        var selectedConfig = dbConfigs.Count == 1
+            ? dbConfigs.First()
+            : AnsiConsole.Prompt(
+                new SelectionPrompt<KeyValuePair<string, DatabaseConfiguration>>()
+                    .Title("Select an environment:")
+                    .PageSize(10)
+                    .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
+                    .UseConverter(kv => kv.Key)
+                    .AddChoices(dbConfigs));
 
         selectedConfig.Value.Credential ??= appConfig.Environments[selectedConfig.Key].Credential;
 
@@ -195,7 +213,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
 
         if (rdsTemplates is null || !rdsTemplates.TryGetValue(dbConfig.Template, out var templateConfig))
         {
-            AnsiConsole.MarkupLine($"[yellow]Warning: Unable to find RDS template '{dbConfig.Template}'[/]");
+            AnsiConsole.MarkupLine($"[yellow]Warning: Unable to find RDS template [i]'{dbConfig.Template}'[/][/]");
 
             return;
         }

@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics;
 using Ellosoft.AwsCredentialsManager.Commands;
 using Ellosoft.AwsCredentialsManager.Commands.Credentials;
 using Ellosoft.AwsCredentialsManager.Commands.Okta;
@@ -54,24 +53,19 @@ app.Configure(config =>
         })
         .AddBranch<CredentialsBranch>(cred =>
         {
-            cred.AddCommand<GetCredentials>();
+            //cred.AddCommand<GetCredentials>();
             cred.AddCommand<ListCredentialsProfiles>();
             cred.AddCommand<CreateCredentialsProfile>();
         })
         .AddBranch<RdsBranch>(rds =>
         {
             rds.AddCommand<GetRdsPassword>();
-            rds.AddCommand<ListRdsProfiles>();
+            //rds.AddCommand<ListRdsProfiles>();
         });
 
     config.PropagateExceptions();
-    //config.ValidateExamples();
+    config.ValidateExamples();
 });
-
-if (Debugger.IsAttached)
-{
-    args = "test setup --help".Split(' ');
-}
 
 try
 {

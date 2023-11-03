@@ -9,9 +9,8 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Name("get-credentials"), Alias("get")]
 [Description("Get AWS credentials for an existing credential profile")]
 [Examples(
-    "get -i",
     "get prod",
-    "get prod --profile default")]
+    "get prod --aws-profile default")]
 public class GetCredentials : Command<AwsSettings>
 {
     public override int Execute([NotNull] CommandContext context, [NotNull] AwsSettings settings)

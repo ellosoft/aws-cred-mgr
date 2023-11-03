@@ -46,7 +46,7 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        AnsiConsole.MarkupLine("[bold yellow]Okta Setup[/]");
+        AnsiConsole.MarkupLine("Okta Setup");
 
         var oktaDomain = GetOktaDomainUrl(settings);
         var username = settings.Username ?? AnsiConsole.Ask<string>("Enter your [green]Okta[/] username:");

@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics.CodeAnalysis;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
@@ -13,16 +12,16 @@ public interface IOktaLoginService
     /// <summary>
     ///     Execute an interactive Okta user login
     /// </summary>
-    /// <param name="userProfileKey">Okta profile key</param>
+    /// <param name="oktaProfile">Okta profile</param>
     /// <returns>Authentication result</returns>
-    Task<AuthenticationResult?> InteractiveLogin(string userProfileKey);
+    Task<AuthenticationResult?> InteractiveLogin(string oktaProfile);
 
     /// <summary>
     ///     Execute an interactive Okta user login returning an OKTA API access token as result
     /// </summary>
-    /// <param name="userProfileKey">Okta profile key</param>
+    /// <param name="oktaProfile">Okta profile</param>
     /// <returns>Access token result</returns>
-    Task<AccessTokenResult?> InteractiveGetAccessToken(string userProfileKey);
+    Task<AccessTokenResult?> InteractiveGetAccessToken(string oktaProfile);
 
     Task<AuthenticationResult> Login(Uri oktaDomain, UserCredentials userCredentials,
         string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = OktaConstants.DefaultProfileName);
@@ -46,23 +45,19 @@ public class OktaLoginService : IOktaLoginService
         _oktaAccessTokenProvider = oktaClassicAccessTokenProvider;
     }
 
-    public async Task<AuthenticationResult?> InteractiveLogin(string userProfileKey)
+    public async Task<AuthenticationResult?> InteractiveLogin(string oktaProfile)
     {
-        if (!TryGetOktaConfig(userProfileKey, out var oktaConfig))
-            return null;
-
-        var userCredentials = GetUserCredentials(userProfileKey, out var savedCredentials);
-        var authResult = await Login(new Uri(oktaConfig.OktaDomain), userCredentials, oktaConfig.PreferredMfaType, savedCredentials, userProfileKey);
+        var oktaConfig = GetOktaConfig(oktaProfile);
+        var userCredentials = GetUserCredentials(oktaProfile, out var savedCredentials);
+        var authResult = await Login(new Uri(oktaConfig.OktaDomain), userCredentials, oktaConfig.PreferredMfaType, savedCredentials, oktaProfile);
 
         return authResult;
     }
 
-    public async Task<AccessTokenResult?> InteractiveGetAccessToken(string userProfileKey)
+    public async Task<AccessTokenResult?> InteractiveGetAccessToken(string oktaProfile)
     {
-        if (!TryGetOktaConfig(userProfileKey, out var oktaConfig))
-            return null;
-
-        var userCredentials = GetUserCredentials(userProfileKey, out var savedCredentials);
+        var oktaConfig = GetOktaConfig(oktaProfile);
+        var userCredentials = GetUserCredentials(oktaProfile, out var savedCredentials);
 
         try
         {
@@ -70,13 +65,13 @@ public class OktaLoginService : IOktaLoginService
                 .GetAccessTokenAsync(new Uri(oktaConfig.OktaDomain), userCredentials.Username, userCredentials.Password, oktaConfig.PreferredMfaType);
 
             if (authResult is not null)
-                SaveUserCredentials(userProfileKey, userCredentials, savedCredentials);
+                SaveUserCredentials(oktaProfile, userCredentials, savedCredentials);
 
             return authResult;
         }
         catch (Exception e) when (e is InvalidUsernameOrPasswordException or PasswordExpiredException)
         {
-            ClearStoredPassword(userProfileKey, userCredentials);
+            ClearStoredPassword(oktaProfile, userCredentials);
 
             return null;
         }
@@ -153,20 +148,11 @@ public class OktaLoginService : IOktaLoginService
         _userCredentialsManager.SaveUserCredentials(profileKey, credentialsWithoutPasswords);
     }
 
-    private bool TryGetOktaConfig(string userProfileKey, [NotNullWhen(true)] out OktaConfiguration? oktaConfig)
+    private OktaConfiguration GetOktaConfig(string profile)
     {
-        if (_configManager.AppConfig.Authentication?.Okta.TryGetValue(userProfileKey, out var config) == true)
-        {
-            oktaConfig = config;
+        if (_configManager.AppConfig.Authentication?.Okta.TryGetValue(profile, out var config) == true)
+            return config;
 
-            return true;
-        }
-
-        oktaConfig = null;
-
-        var profileCommand = "aws-cred-mgr okta setup" + (userProfileKey == OktaConstants.DefaultProfileName ? null : $" {userProfileKey}");
-        AnsiConsole.MarkupLine($"[yellow]No '{userProfileKey}' Okta profile found, please use [green]'{profileCommand}'[/] to create a new profile[/]");
-
-        return false;
+        throw new OktaProfileNotFoundException(profile);
     }
 }

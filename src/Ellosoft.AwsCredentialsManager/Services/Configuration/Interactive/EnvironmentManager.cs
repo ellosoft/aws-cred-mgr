@@ -17,12 +17,15 @@ public class EnvironmentManager
         _credentialsManager = credentialsManager;
     }
 
-    public EnvironmentConfiguration GetEnvironment()
+    public EnvironmentConfiguration GetOrCreateEnvironment(string? environment)
     {
         var appConfig = _configManager.AppConfig;
 
-        if (appConfig.Environments.Count == 0)
-            return CreateNewEnvironment();
+        if (environment is not null && appConfig.Environments.TryGetValue(environment, out var existingEnv))
+            return existingEnv;
+
+        if (environment is not null || appConfig.Environments.Count == 0)
+            return CreateNewEnvironment(environment);
 
         var environmentOptions = appConfig.Environments
             .OrderBy(kv => kv.Key)
@@ -42,9 +45,14 @@ public class EnvironmentManager
         return selectedEnv.Configuration ?? CreateNewEnvironment();
     }
 
-    private EnvironmentConfiguration CreateNewEnvironment()
+    public EnvironmentConfiguration? GetEnvironment(string environment) =>
+        _configManager.AppConfig.Environments.TryGetValue(environment, out var env) ? env : null;
+
+    private EnvironmentConfiguration CreateNewEnvironment(string? environment = null)
     {
-        var environmentName = AnsiConsole.Ask<string>("Enter the environment name:");
+        var environmentName = environment ?? AnsiConsole.Ask<string>("Enter the environment name:");
+
+        AnsiConsole.MarkupLine($"Creating environment [green i]{environmentName}[/]");
 
         var credentialName = _credentialsManager.GetCredential();
         var environmentConfig = new EnvironmentConfiguration { Credential = credentialName };
@@ -55,6 +63,8 @@ public class EnvironmentManager
         }
 
         _configManager.SaveConfig();
+
+        AnsiConsole.MarkupLine("Environment created");
 
         return environmentConfig;
     }

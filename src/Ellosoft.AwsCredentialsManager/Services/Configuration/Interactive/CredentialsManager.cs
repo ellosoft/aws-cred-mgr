@@ -22,7 +22,7 @@ public class CredentialsManager
             new SelectionPrompt<KeyValuePair<string, CredentialsConfiguration>>()
                 .Title(
                     "Select an [green]AWS credential[/]:\r\n" +
-                    "(Use [yellow]'aws-cred-mgr cred new'[/] to create a new credential)")
+                    "(Use [green]'aws-cred-mgr cred new'[/] to create a new credential)")
                 .PageSize(10)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .UseConverter(kv => $"{kv.Key} - {kv.Value.RoleArn}")
@@ -43,7 +43,5 @@ public class CredentialsManager
 
         _configManager.AppConfig.Credentials[name] = credential;
         _configManager.SaveConfig();
-
-        AnsiConsole.MarkupLine($"[bold green]'{name}' credentials created[/]");
     }
 }

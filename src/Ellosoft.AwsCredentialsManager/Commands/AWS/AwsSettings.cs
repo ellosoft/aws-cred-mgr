@@ -3,6 +3,8 @@
 using System.Globalization;
 using Amazon;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
+using Spectre.Console;
+using YamlDotNet.Core.Tokens;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.AWS;
 
@@ -28,12 +30,12 @@ public class AwsSettings : CommonSettings
 
     public class AwsRegionConverter : TypeConverter
     {
-        private const string INVALID_REGION = "Invalid AWS region";
+        private const string INVALID_REGION = "'{0}' is not a valid AWS region";
 
         public override object ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
         {
             if (value is not string regionStringValue)
-                throw new NotSupportedException(INVALID_REGION);
+                throw new NotSupportedException(String.Format(INVALID_REGION, value));
 
             return GetRegionFromString(regionStringValue);
         }
@@ -42,7 +44,10 @@ public class AwsSettings : CommonSettings
         {
             var region = RegionEndpoint.GetBySystemName(regionStringValue);
 
-            return region ?? throw new NotSupportedException(INVALID_REGION);
+            if (region is null || region.DisplayName == "Unknown")
+                throw new NotSupportedException(String.Format(INVALID_REGION, regionStringValue));
+
+            return region;
         }
     }
 }

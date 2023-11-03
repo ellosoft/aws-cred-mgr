@@ -33,7 +33,7 @@ public class AwsOktaSessionManager
         if (!TryGetCredential(credentialProfile, out var credentialsConfig))
             return null;
 
-        if (TryResumeSession(credentialsConfig.AwsProfile, out var awsCredentialsData) && awsCredentialsData.RoleArn == credentialsConfig.RoleArn)
+        if (TryResumeSession(credentialsConfig.AwsProfile, credentialsConfig.RoleArn, out var awsCredentialsData))
             return CreateAwsCredentials(awsCredentialsData);
 
         var newCredential = await CreateSessionAsync(credentialProfile, credentialsConfig);
@@ -56,11 +56,11 @@ public class AwsOktaSessionManager
         return false;
     }
 
-    private bool TryResumeSession(string? awsProfile, [NotNullWhen(true)] out AwsCredentialsData? credentialsData)
+    private bool TryResumeSession(string? awsProfile, string roleArn, [NotNullWhen(true)] out AwsCredentialsData? credentialsData)
     {
         credentialsData = _awsCredentialsService.GetCredentialsFromStore(awsProfile ?? "default");
 
-        if (credentialsData is null)
+        if (credentialsData is null || credentialsData.RoleArn != roleArn)
             return false;
 
         if (credentialsData.ExpirationDateTime >= DateTime.Now.AddMinutes(60))
@@ -73,6 +73,8 @@ public class AwsOktaSessionManager
                                        Any tokens (RDS password, PreSigned URLs, etc) created with it will also expired within that time frame.
                                        Do you want renew the credentials now ?[/]
                                        """;
+
+        AnsiConsole.WriteLine();
 
         if (AnsiConsole.Confirm(renewCredentialsMessage, defaultValue: false))
             return false;
