@@ -25,10 +25,10 @@ jobs:
       - uses: kzrnm/get-net-sdk-project-versions-action@v1
         id: get-version
         with:
-          proj-path: Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj
+          proj-path: src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3
         with:
           name: aws-cred-mgr-${{steps.get-version.outputs.version}}${{ github.ref == 'refs/heads/main' && '' || ('-beta-' && github.run_attempt) }}-win.exe
-          path: Ellosoft.AwsCredentialsManager/output/*.exe
+          path: output/*.exe
           if-no-files-found: error
