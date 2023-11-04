@@ -16,7 +16,7 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build & Publish
-        run: dotnet publish -c Release -r win-x64 -o output --no-build
+        run: dotnet publish -c Release -r win-x64 -o output
       - name: Archive Release
         uses: thedoctor0/zip-release@0.7.5
         with:
