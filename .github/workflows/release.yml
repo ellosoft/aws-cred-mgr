@@ -1,4 +1,4 @@
-name: .NET
+name: .NET Release
 on:
   push:
     tags:
@@ -15,9 +15,7 @@ jobs:
           dotnet-quality: "preview"
       - name: Restore dependencies
         run: dotnet restore
-      - name: Build
-        run: dotnet build -c Release --no-restore
-      - name: Publish
+      - name: Build & Publish
         run: dotnet publish -c Release -r win-x64 -o output --no-build
       - name: Archive Release
         uses: thedoctor0/zip-release@0.7.5
