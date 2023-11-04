@@ -16,16 +16,16 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build & Publish
-        run: dotnet publish -c Release -r win-x64 -o output
+        run: dotnet publish -c Release -r win-x64 -o win-output
       - name: Zip Output
         uses: thedoctor0/zip-release@0.7.5
         with:
           type: "zip"
-          directory: output/
+          directory: win-output/
           path: aws-cred-mgr.exe
           filename: "aws-cred-mgr-win-x64.zip"
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           prerelease: contains(github.ref, 'beta') || contains(github.ref, 'alpha')
-          files: aws-cred-mgr-win-x64.zip
+          files: win-output/aws-cred-mgr-win-x64.zip
