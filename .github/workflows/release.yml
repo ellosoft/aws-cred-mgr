@@ -17,11 +17,12 @@ jobs:
         run: dotnet restore
       - name: Build & Publish
         run: dotnet publish -c Release -r win-x64 -o output
-      - name: Archive Release
+      - name: Zip Output
         uses: thedoctor0/zip-release@0.7.5
         with:
           type: "zip"
-          path: output/aws-cred-mgr.exe
+          directory: output/
+          path: aws-cred-mgr.exe
           filename: "aws-cred-mgr-win-x64.zip"
       - name: Create Release
         uses: softprops/action-gh-release@v1
