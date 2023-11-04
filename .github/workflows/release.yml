@@ -1,0 +1,32 @@
+name: .NET
+on:
+  push:
+    tags:
+      - "*"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
+          dotnet-quality: "preview"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build -c Release --no-restore
+      - name: Publish
+        run: dotnet publish -c Release -r win-x64 -o output --no-build
+      - name: Archive Release
+        uses: thedoctor0/zip-release@0.7.5
+        with:
+          type: "zip"
+          path: output/aws-cred-mgr.exe
+          filename: "aws-cred-mgr-win-x64.zip"
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: contains(github.ref, 'beta') || contains(github.ref, 'alpha')
+          files: aws-cred-mgr-win-x64.zip

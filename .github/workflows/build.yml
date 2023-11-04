@@ -20,15 +20,3 @@ jobs:
         run: dotnet build --no-restore
       - name: Test
         run: dotnet test --no-build --verbosity normal
-      - name: Publish
-        run: dotnet publish -c Release -r win-x64 -o output
-      - uses: kzrnm/get-net-sdk-project-versions-action@v1
-        id: get-version
-        with:
-          proj-path: src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: aws-cred-mgr-${{steps.get-version.outputs.version}}${{ github.ref == 'refs/heads/main' && '' || ('-beta-' && github.run_attempt) }}-win.exe
-          path: output/*.exe
-          if-no-files-found: error
