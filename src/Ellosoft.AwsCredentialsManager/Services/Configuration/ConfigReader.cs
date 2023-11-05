@@ -52,10 +52,12 @@ public class ConfigReader
             return DeserializeAppConfig(rawConfigContent);
 
         var appConfig = DeserializeAppConfig(formattedYamlContent.ToString());
-        var originalConfig = Deserializer.Deserialize<object>(rawConfigContent);
         appConfig.Variables = variableConfig;
 
-        UpdateConfigMetadata(appConfig, originalConfig);
+        var originalConfig = Deserializer.Deserialize<object?>(rawConfigContent);
+
+        if (originalConfig is not null)
+            UpdateConfigMetadata(appConfig, originalConfig);
 
         return appConfig;
     }

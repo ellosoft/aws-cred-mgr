@@ -3,8 +3,6 @@
 using System.Globalization;
 using Amazon;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
-using Spectre.Console;
-using YamlDotNet.Core.Tokens;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.AWS;
 

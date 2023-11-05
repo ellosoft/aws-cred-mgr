@@ -2,7 +2,6 @@
 
 using System.Text.Json.Serialization;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
-using Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Services;

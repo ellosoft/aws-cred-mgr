@@ -2,7 +2,6 @@
 
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Xml.Linq;
 using Ellosoft.AwsCredentialsManager.Commands.AWS;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
