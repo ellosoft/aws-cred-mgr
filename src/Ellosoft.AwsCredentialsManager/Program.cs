@@ -14,10 +14,10 @@ using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Microsoft.Extensions.DependencyInjection;
 
-var services = new ServiceCollection()
-    .AddAppLogging();
+var logger = LogRegistration.CreateNewLogger();
 
-services
+var services = new ServiceCollection()
+    .SetupLogging(logger)
     .AddSingleton<IConfigManager, ConfigManager>()
     .AddSingleton<CredentialsManager>()
     .AddSingleton<EnvironmentManager>();
@@ -77,6 +77,7 @@ catch (CommandException e)
 }
 catch (Exception e)
 {
+    logger.Error(e, "Unexpected error");
     AnsiConsole.MarkupLine($"[red bold]Error: [/]{e.Message}");
 }
 
