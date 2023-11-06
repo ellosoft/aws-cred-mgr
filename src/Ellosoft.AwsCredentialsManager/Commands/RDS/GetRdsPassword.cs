@@ -122,7 +122,8 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
             var dbPassword = _rdsTokenGenerator.GenerateDbPassword(awsCredentials, regionEndpoint, hostname, port.Value, username, ttl);
 
-            AnsiConsole.MarkupLine($"\r\n[green]DB Password:[/]\r\n{dbPassword}\r\n");
+            AnsiConsole.MarkupLine("\r\n[green]DB Password:[/]");
+            Console.WriteLine(dbPassword);
         }
         catch (ArgumentNullException e)
         {
