@@ -123,6 +123,6 @@ public class AwsOktaSessionManager
         return null;
     }
 
-    private static BasicAWSCredentials CreateAwsCredentials(AwsCredentialsData credentialsData) =>
-        new(credentialsData.AccessKeyId, credentialsData.SecretAccessKey);
+    private static SessionAWSCredentials CreateAwsCredentials(AwsCredentialsData credentialsData) =>
+        new(credentialsData.AccessKeyId, credentialsData.SecretAccessKey, credentialsData.SessionToken);
 }

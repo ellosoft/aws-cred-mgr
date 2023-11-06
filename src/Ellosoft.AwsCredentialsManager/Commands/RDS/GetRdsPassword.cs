@@ -37,7 +37,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
 
         [CommandOption("--ttl")]
         [Description("Password lifetime in minutes (max recommended: 15 minutes)")]
-        [DefaultValue(15)]
+        [DefaultValue(DatabaseConfiguration.DefaultTtlInMinutes)]
         public int Ttl { get; set; }
 
         [CommandOption("--env")]
@@ -79,8 +79,8 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             dbConfig.Hostname,
             dbConfig.Port,
             dbConfig.Username,
-            dbConfig.Ttl,
-            dbConfig.Region
+            dbConfig.Region,
+            dbConfig.GetTtl()
         );
 
         return 0;
@@ -97,14 +97,14 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         var username = settings.Username ?? AnsiConsole.Ask<string>("Enter the DB username:");
         var region = settings.GetRegion();
 
-        await GenerateDbPassword(credentialName, hostname, port, username, settings.Ttl, region.SystemName);
+        await GenerateDbPassword(credentialName, hostname, port, username, region.SystemName, settings.Ttl);
 
         CreateNewRdsProfile(credentialName, hostname, port, username, settings.Ttl, region.SystemName, settings.Environment);
 
         return 0;
     }
 
-    private async Task GenerateDbPassword(string? credential, string? hostname, int? port, string? username, int? ttl, string? region)
+    private async Task GenerateDbPassword(string? credential, string? hostname, int? port, string? username, string? region, int ttl)
     {
         try
         {
@@ -112,7 +112,6 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             ArgumentNullException.ThrowIfNull(hostname);
             ArgumentNullException.ThrowIfNull(port);
             ArgumentNullException.ThrowIfNull(username);
-            ArgumentNullException.ThrowIfNull(ttl);
             ArgumentNullException.ThrowIfNull(region);
 
             var awsCredentials = await _awsSessionManager.CreateOrResumeSessionAsync(credential);
@@ -121,7 +120,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
                 throw new CommandException($"Unable to resume or create AWS session for credential '{credential}'");
 
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-            var dbPassword = _rdsTokenGenerator.GenerateDbPassword(awsCredentials, regionEndpoint, hostname, port.Value, username, ttl.Value);
+            var dbPassword = _rdsTokenGenerator.GenerateDbPassword(awsCredentials, regionEndpoint, hostname, port.Value, username, ttl);
 
             AnsiConsole.MarkupLine($"\r\n[green]DB Password:[/]\r\n{dbPassword}\r\n");
         }
@@ -147,9 +146,11 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             Hostname = hostname,
             Port = port,
             Username = username,
-            Region = region,
-            Ttl = ttl
+            Region = region
         };
+
+        if (ttl != DatabaseConfiguration.DefaultTtlInMinutes)
+            dbConfig.Ttl = ttl;
 
         if (credential != environment.Credential)
             dbConfig.Credential = credential;
@@ -173,7 +174,11 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             var env = _envManager.GetEnvironment(environmentName);
 
             if (env is not null && env.Rds.TryGetValue(rdsProfile, out var dbConfig))
+            {
+                dbConfig.Credential ??= env.Credential;
+
                 return dbConfig;
+            }
 
             throw new CommandException($"Unable to find RDS profile [i]'{rdsProfile}'[/] on [i]'{environmentName}'[/] environment");
         }
