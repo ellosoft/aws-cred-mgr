@@ -114,7 +114,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             ArgumentNullException.ThrowIfNull(username);
             ArgumentNullException.ThrowIfNull(region);
 
-            var awsCredentials = await _awsSessionManager.CreateOrResumeSessionAsync(credential);
+            var awsCredentials = await _awsSessionManager.CreateOrResumeSessionAsync(credential, null);
 
             if (awsCredentials is null)
                 throw new CommandException($"Unable to resume or create AWS session for credential '{credential}'");

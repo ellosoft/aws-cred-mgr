@@ -41,7 +41,7 @@ public class GetCredentials : AsyncCommand<GetCredentials.Settings>
     {
         var credential = settings.Credential ?? _credentialsManager.GetCredential();
 
-        var awsCredentials = await _sessionManager.CreateOrResumeSessionAsync(credential);
+        var awsCredentials = await _sessionManager.CreateOrResumeSessionAsync(credential, settings.AwsProfile);
 
         if (awsCredentials is null)
             return 1;
