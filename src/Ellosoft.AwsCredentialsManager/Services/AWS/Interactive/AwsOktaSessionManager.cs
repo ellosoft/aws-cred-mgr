@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Amazon.Runtime;
-using Ellosoft.AwsCredentialsManager.Services.Configuration;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
@@ -11,7 +11,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 
 public class AwsOktaSessionManager
 {
-    private readonly IConfigManager _configManager;
+    private readonly CredentialsManager _credentialsManager;
     private readonly IOktaLoginService _oktaLoginService;
     private readonly OktaSamlService _oktaSamlService;
 
@@ -19,18 +19,18 @@ public class AwsOktaSessionManager
     private readonly AwsSamlService _awsSamlService = new();
 
     public AwsOktaSessionManager(
-        IConfigManager configManager,
+        CredentialsManager credentialsManager,
         IOktaLoginService loginService,
         OktaSamlService oktaSamlService)
     {
-        _configManager = configManager;
+        _credentialsManager = credentialsManager;
         _oktaLoginService = loginService;
         _oktaSamlService = oktaSamlService;
     }
 
     public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile)
     {
-        if (!TryGetCredential(credentialProfile, out var credentialsConfig))
+        if (!_credentialsManager.TryGetCredential(credentialProfile, out var credentialsConfig))
             return null;
 
         if (TryResumeSession(credentialsConfig.AwsProfile, credentialsConfig.RoleArn, out var awsCredentialsData))
@@ -39,21 +39,6 @@ public class AwsOktaSessionManager
         var newCredential = await CreateSessionAsync(credentialProfile, credentialsConfig);
 
         return newCredential is not null ? CreateAwsCredentials(newCredential) : null;
-    }
-
-    private bool TryGetCredential(string credentialProfile, [NotNullWhen(true)] out CredentialsConfiguration? credentialsConfig)
-    {
-        if (_configManager.AppConfig.Credentials.TryGetValue(credentialProfile, out credentialsConfig))
-        {
-            if (credentialsConfig is { OktaProfile: not null, OktaAppUrl: not null })
-                return true;
-
-            AnsiConsole.MarkupLine($"[yellow]The credential [b]'{credentialProfile}'[/] has invalid Okta properties[/]");
-        }
-
-        AnsiConsole.MarkupLine($"[yellow]Unable to find credential [b]'{credentialProfile}'[/][/]");
-
-        return false;
     }
 
     private bool TryResumeSession(string? awsProfile, string roleArn, [NotNullWhen(true)] out AwsCredentialsData? credentialsData)

@@ -14,6 +14,7 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog.Events;
 
 var logger = LogRegistration.CreateNewLogger();
 
@@ -54,26 +55,25 @@ app.Configure(config =>
         })
         .AddBranch<CredentialsBranch>(cred =>
         {
-            //cred.AddCommand<GetCredentials>();
+            cred.AddCommand<GetCredentials>();
             cred.AddCommand<ListCredentialsProfiles>();
             cred.AddCommand<CreateCredentialsProfile>();
         })
         .AddBranch<RdsBranch>(rds =>
         {
             rds.AddCommand<GetRdsPassword>();
-            //rds.AddCommand<ListRdsProfiles>();
+            rds.AddCommand<ListRdsProfiles>();
         });
 
     config.PropagateExceptions();
-    config.ValidateExamples();
-});
 
 #if DEBUG
-if (Debugger.IsAttached)
-{
-    args = "rds pwd test_db".Split(' ');
-}
+    config.ValidateExamples();
+
+    if (Debugger.IsAttached)
+        args = "rds pwd test_db".Split(' ');
 #endif
+});
 
 try
 {
@@ -86,7 +86,11 @@ catch (CommandException e)
 catch (Exception e)
 {
     logger.Error(e, "Unexpected error");
-    AnsiConsole.MarkupLine($"[red bold]Error: [/]{e.Message}");
+
+    if (logger.IsEnabled(LogEventLevel.Debug))
+        AnsiConsole.WriteException(e);
+    else
+        AnsiConsole.MarkupLine($"[red bold]Error: [/]{e.Message}");
 }
 
 return -1;

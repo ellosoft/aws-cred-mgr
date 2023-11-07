@@ -24,7 +24,7 @@ public interface IOktaLoginService
     Task<AccessTokenResult?> InteractiveGetAccessToken(string oktaProfile);
 
     Task<AuthenticationResult> Login(Uri oktaDomain, UserCredentials userCredentials,
-        string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = OktaConstants.DefaultProfileName);
+        string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = OktaConfiguration.DefaultProfileName);
 }
 
 public class OktaLoginService : IOktaLoginService
@@ -49,7 +49,9 @@ public class OktaLoginService : IOktaLoginService
     {
         var oktaConfig = GetOktaConfig(oktaProfile);
         var userCredentials = GetUserCredentials(oktaProfile, out var savedCredentials);
-        var authResult = await Login(new Uri(oktaConfig.OktaDomain), userCredentials, oktaConfig.PreferredMfaType, savedCredentials, oktaProfile);
+        var preferredMfa = oktaConfig.PreferredMfaType is not null ? OktaMfaFactorSelector.GetOktaMfaFactorCode(oktaConfig.PreferredMfaType) : null;
+
+        var authResult = await Login(new Uri(oktaConfig.OktaDomain), userCredentials, preferredMfa, savedCredentials, oktaProfile);
 
         return authResult;
     }
@@ -78,7 +80,7 @@ public class OktaLoginService : IOktaLoginService
     }
 
     public async Task<AuthenticationResult> Login(Uri oktaDomain, UserCredentials userCredentials,
-        string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = OktaConstants.DefaultProfileName)
+        string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = OktaConfiguration.DefaultProfileName)
     {
         try
         {

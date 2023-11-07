@@ -42,6 +42,13 @@ public class BranchConfigurator<TBranchSettings> : IBranchConfigurator<TBranchSe
     {
         return AddBranch<TBranch, TBranchSettings>(branchConfigAction);
     }
+
+    public IBranchConfigurator<TBranchSettings> SetDefaultCommand<TCommand>() where TCommand : class, ICommandLimiter<TBranchSettings>
+    {
+        _configurator.SetDefaultCommand<TCommand>();
+
+        return this;
+    }
 }
 
 public interface IBranchConfigurator<in TBranchSettings> where TBranchSettings : CommandSettings
@@ -56,4 +63,6 @@ public interface IBranchConfigurator<in TBranchSettings> where TBranchSettings :
 
     IBranchConfigurator<TBranchSettings> AddBranch<TBranch>(Action<IBranchConfigurator<TBranchSettings>> branchConfigAction)
         where TBranch : class;
+
+    IBranchConfigurator<TBranchSettings> SetDefaultCommand<TCommand>() where TCommand : class, ICommandLimiter<TBranchSettings>;
 }

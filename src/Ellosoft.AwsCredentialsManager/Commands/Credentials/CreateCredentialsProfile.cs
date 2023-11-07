@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using Ellosoft.AwsCredentialsManager.Commands.AWS;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
@@ -34,6 +35,11 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         [CommandOption("--okta-app-url")]
         [Description("URL of the AWS application in Okta")]
         public string? OktaAppUrl { get; set; }
+
+        [CommandOption("--okta-profile")]
+        [Description("Local Okta profile name (Useful if you need to authenticate in multiple Okta domains)")]
+        [DefaultValue("default")]
+        public string OktaUserProfile { get; set; } = OktaConfiguration.DefaultProfileName;
     }
 
     private readonly CredentialsManager _credentialsManager;

@@ -27,7 +27,7 @@ public class ConfigManager : IConfigManager
 
     public AppConfig AppConfig { get; }
 
-    private AppConfig GetConfiguration() => File.Exists(AppConfigPath) ? _configReader.Read(AppConfigPath) : new AppConfig();
-
     public void SaveConfig() => _configWriter.Write(AppConfigPath, AppConfig);
+
+    private AppConfig GetConfiguration() => File.Exists(AppConfigPath) ? _configReader.Read(AppConfigPath) : new AppConfig();
 }

@@ -2,7 +2,6 @@
 
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
-using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.Okta;
@@ -18,9 +17,9 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
     public class Settings : CommonSettings
     {
         [CommandArgument(0, "[PROFILE]")]
-        [DefaultValue(OktaConstants.DefaultProfileName)]
+        [DefaultValue(OktaConfiguration.DefaultProfileName)]
         [Description("Local Okta profile name (Useful if you need to authenticate in multiple Okta domains)")]
-        public string Profile { get; set; } = OktaConstants.DefaultProfileName;
+        public string Profile { get; set; } = OktaConfiguration.DefaultProfileName;
 
         [CommandOption("-d|--domain")]
         [Description("Your organization Okta domain URL (e.g. https://xyz.okta.com)")]
