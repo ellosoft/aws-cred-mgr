@@ -36,7 +36,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         public string? Username { get; set; }
 
         [CommandOption("--ttl")]
-        [Description("Password lifetime in minutes (max recommended: 15 minutes)")]
+        [Description("Password lifetime in minutes (max allowed: 15 minutes)")]
         [DefaultValue(DatabaseConfiguration.DefaultTtlInMinutes)]
         public int Ttl { get; set; }
 

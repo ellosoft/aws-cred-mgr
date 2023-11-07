@@ -1,5 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using Ellosoft.AwsCredentialsManager.Commands;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
@@ -29,6 +30,21 @@ public class CredentialsManager
                 .AddChoices(appConfig.Credentials));
 
         return selectedCredential.Key;
+    }
+
+    public bool TryGetCredential(string credentialProfile, [NotNullWhen(true)] out CredentialsConfiguration? credentialsConfig)
+    {
+        if (_configManager.AppConfig.Credentials.TryGetValue(credentialProfile, out credentialsConfig))
+        {
+            if (credentialsConfig is { OktaProfile: not null, OktaAppUrl: not null })
+                return true;
+
+            AnsiConsole.MarkupLine($"[yellow]The credential [b]'{credentialProfile}'[/] has invalid Okta properties[/]");
+        }
+
+        AnsiConsole.MarkupLine($"[yellow]Unable to find credential [b]'{credentialProfile}'[/][/]");
+
+        return false;
     }
 
     public void CreateCredential(string name, string awsProfile, string awsRole, string oktaAppUrl, string oktaProfile)

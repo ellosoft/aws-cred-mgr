@@ -4,6 +4,8 @@ namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 public class OktaConfiguration : ResourceConfiguration
 {
+    public const string DefaultProfileName = "default";
+
     public required string OktaDomain { get; set; }
 
     /// <summary>

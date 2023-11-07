@@ -1,5 +1,7 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
+
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
 
 public class OktaProfileNotFoundException : Exception
@@ -10,7 +12,7 @@ public class OktaProfileNotFoundException : Exception
 
     public static string GetErrorMessage(string profile)
     {
-        var profileCommand = "aws-cred-mgr okta setup" + (profile == OktaConstants.DefaultProfileName ? null : $" {profile}");
+        var profileCommand = "aws-cred-mgr okta setup" + (profile == OktaConfiguration.DefaultProfileName ? null : $" {profile}");
 
         return $"No '{profile}' Okta profile found, please use [green]'{profileCommand}'[/] to create a new profile";
     }

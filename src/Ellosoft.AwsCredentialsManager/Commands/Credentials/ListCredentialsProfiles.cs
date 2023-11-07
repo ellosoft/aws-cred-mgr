@@ -3,19 +3,28 @@
 using System.Diagnostics.CodeAnalysis;
 using Ellosoft.AwsCredentialsManager.Commands.AWS;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
+using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 
 [Name("list"), Alias("ls")]
-[Description("List all saved credential profiles")]
+[Description("List saved credential profiles")]
 [Examples("ls")]
-public class ListCredentialsProfiles : Command<AwsSettings>
+public class ListCredentialsProfiles : Command<ListCredentialsProfiles.Settings>
 {
+    public class Settings : AwsSettings
+    {
+        [CommandOption("--okta-profile")]
+        [Description("Local Okta profile name (Useful if you need to authenticate in multiple Okta domains)")]
+        [DefaultValue("default")]
+        public string OktaUserProfile { get; set; } = OktaConfiguration.DefaultProfileName;
+    }
+
     private readonly IConfigManager _configManager;
 
     public ListCredentialsProfiles(IConfigManager configManager) => _configManager = configManager;
 
-    public override int Execute([NotNull] CommandContext context, [NotNull] AwsSettings settings)
+    public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         var credentials = _configManager.AppConfig.Credentials;
 

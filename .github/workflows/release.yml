@@ -27,5 +27,5 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          prerelease: contains(github.ref, 'beta') || contains(github.ref, 'alpha')
+          generate_release_notes: true
           files: win-output/aws-cred-mgr-win-x64.zip
