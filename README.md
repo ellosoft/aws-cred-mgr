@@ -34,18 +34,20 @@ aws-cred-mgr cred [COMMAND]
 
 #### Subcommands
 
--   `list` (alias `ls`): List all saved credential profiles.
 -   `new`: Create a new credential profile.
+-   `get`: Get AWS credentials for an existing credential profile
+-   `list` (alias `ls`): List all saved credential profiles.
 
 #### Examples
 
--   List credentials: `aws-cred-mgr cred ls`
 -   Create a new credential profile named `prod`: `aws-cred-mgr cred new prod`
+-   List credentials: `aws-cred-mgr cred ls`
+-   Get the AWS credentials for `prod` and stores it in ~/.aws/credentials: `aws-cred-mgr cred get prod`
 
 ### RDS Token Management
 
 ```plaintext
-aws-cred-mgr rds pwd
+aws-cred-mgr rds [COMMAND]
 ```
 
 #### Examples
@@ -91,7 +93,6 @@ templates:
             hostname: rds-hostname.aws.endpoint
             port: 5432
             username: ${rds_username} # variable usage
-            ttl: ${default_pwd_lifetime}
             region: us-east-2
         ...
 
@@ -132,18 +133,18 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
-This project has adopted the code of conduct defined by the Contributor Covenant to clarify expected behavior in our community. For more information see the [Code of Conduct](CODE_OF_CONDUCT.md).
+This project has adopted the code of conduct defined by the Contributor Covenant to clarify expected behavior in our community. For more information see the [Code of Conduct](.github/CODE_OF_CONDUCT.md).
 
 ## Credits and Acknowledgements
 
 `aws-cred-mgr` makes use of several open-source libraries. We extend our gratitude to the developers and contributors of these libraries:
 
-- **[AngleSharp](https://github.com/AngleSharp/AngleSharp)**: A .NET library for parsing, manipulating, and rendering HTML and CSS documents.
-- **[AWSSDK](https://github.com/aws/aws-sdk-net)**: The official AWS SDK for the .NET Framework.
-- **[Serilog.Extensions.Logging](https://github.com/serilog/serilog-extensions-logging)**: An extension to `Microsoft.Extensions.Logging` that integrates Serilog.
-- **[Serilog.Sinks.File](https://github.com/serilog/serilog-sinks-file)**: A Serilog sink that writes log events to text files.
-- **[Spectre.Console](https://github.com/spectreconsole/spectre.console)**: A library for building command line interfaces.
-- **[YamlDotNet](https://github.com/aaubry/YamlDotNet)**: A .NET library for YAML serialization and deserialization.
+-   **[AngleSharp](https://github.com/AngleSharp/AngleSharp)**: A .NET library for parsing, manipulating, and rendering HTML and CSS documents.
+-   **[AWSSDK](https://github.com/aws/aws-sdk-net)**: The official AWS SDK for the .NET Framework.
+-   **[Serilog.Extensions.Logging](https://github.com/serilog/serilog-extensions-logging)**: An extension to `Microsoft.Extensions.Logging` that integrates Serilog.
+-   **[Serilog.Sinks.File](https://github.com/serilog/serilog-sinks-file)**: A Serilog sink that writes log events to text files.
+-   **[Spectre.Console](https://github.com/spectreconsole/spectre.console)**: A library for building command line interfaces.
+-   **[YamlDotNet](https://github.com/aaubry/YamlDotNet)**: A .NET library for YAML serialization and deserialization.
 
 Each of these libraries may be licensed differently, so we recommend you to review their licenses if you plan to use `aws-cred-mgr` in your own projects.
 

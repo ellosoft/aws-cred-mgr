@@ -49,7 +49,7 @@ public class OktaLoginService : IOktaLoginService
     {
         var oktaConfig = GetOktaConfig(oktaProfile);
         var userCredentials = GetUserCredentials(oktaProfile, out var savedCredentials);
-        var preferredMfa = oktaConfig.PreferredMfaType is not null ? OktaMfaFactorSelector.GetOktaMfaFactorCode(oktaConfig.PreferredMfaType) : null;
+        var preferredMfa = GetOktaMfaFactorCode(oktaConfig.PreferredMfaType);
 
         var authResult = await Login(new Uri(oktaConfig.OktaDomain), userCredentials, preferredMfa, savedCredentials, oktaProfile);
 
@@ -60,11 +60,12 @@ public class OktaLoginService : IOktaLoginService
     {
         var oktaConfig = GetOktaConfig(oktaProfile);
         var userCredentials = GetUserCredentials(oktaProfile, out var savedCredentials);
+        var preferredMfa = GetOktaMfaFactorCode(oktaConfig.PreferredMfaType);
 
         try
         {
             var authResult = await _oktaAccessTokenProvider
-                .GetAccessTokenAsync(new Uri(oktaConfig.OktaDomain), userCredentials.Username, userCredentials.Password, oktaConfig.PreferredMfaType);
+                .GetAccessTokenAsync(new Uri(oktaConfig.OktaDomain), userCredentials.Username, userCredentials.Password, preferredMfa);
 
             if (authResult is not null)
                 SaveUserCredentials(oktaProfile, userCredentials, savedCredentials);
@@ -157,4 +158,7 @@ public class OktaLoginService : IOktaLoginService
 
         throw new OktaProfileNotFoundException(profile);
     }
+
+    private static string? GetOktaMfaFactorCode(string? mfaType) =>
+        mfaType is not null ? OktaMfaFactorSelector.GetOktaMfaFactorCode(mfaType) : null;
 }
