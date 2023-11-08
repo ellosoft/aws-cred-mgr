@@ -74,13 +74,17 @@ public class AwsSamlService
         foreach (var awsAccountsElement in awsAccountsElements)
         {
             var accountName = awsAccountsElement.QuerySelector("div.saml-account-name")?.TextContent;
-            var roleArn = awsAccountsElement.QuerySelector("div.saml-role > input[name='roleIndex']")
-                ?.GetAttribute("value");
 
-            if (roleArn is not null && accountName is not null)
-            {
-                awsRoles.Add(new AwsRole(roleArn, accountName));
-            }
+            if (accountName is null)
+                continue;
+
+            var roles = awsAccountsElement
+                .QuerySelectorAll("div.saml-role > input[name='roleIndex']")
+                .Select(el => el.GetAttribute("value"))
+                .Where(roleArn => roleArn is not null)
+                .Select(roleArn => new AwsRole(roleArn!, accountName));
+
+            awsRoles.AddRange(roles);
         }
 
         return awsRoles;
