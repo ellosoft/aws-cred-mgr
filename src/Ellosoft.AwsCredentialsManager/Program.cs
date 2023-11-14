@@ -7,6 +7,7 @@ using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Commands.RDS;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
+using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
 using Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
@@ -17,6 +18,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
 
 var logger = LogRegistration.CreateNewLogger();
+
+var upgradeService = new UpgradeService(logger);
+await upgradeService.TryUpgradeApp();
 
 var services = new ServiceCollection()
     .SetupLogging(logger)
@@ -38,7 +42,8 @@ services
     .AddSingleton<RdsTokenGenerator>()
     .AddSingleton<AwsSamlService>();
 
-services.AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
+services
+    .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
 
 var registrar = new TypeRegistrar(services);
 var app = new CommandApp(registrar);
