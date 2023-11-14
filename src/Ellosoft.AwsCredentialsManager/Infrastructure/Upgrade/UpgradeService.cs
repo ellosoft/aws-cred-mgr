@@ -50,6 +50,9 @@ public class UpgradeService
     {
         try
         {
+            if (!ShouldCheckForUpgrade())
+                return;
+
             var currentAppVersion = _appMetadata.GetAppVersion();
 
             if (currentAppVersion is null)
@@ -166,5 +169,34 @@ public class UpgradeService
         httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
 
         return httpClient;
+    }
+
+    private static bool ShouldCheckForUpgrade()
+    {
+        var upgradeCheck = AppDataDirectory.GetPath("version_check.txt");
+
+        var lastUpgradeCheckDateUtc = ReadLastUpgradeCheckDate();
+
+        if (lastUpgradeCheckDateUtc is null || lastUpgradeCheckDateUtc < DateTime.UtcNow.AddDays(-1))
+        {
+            File.WriteAllText(upgradeCheck, DateTime.UtcNow.ToBinary().ToString());
+
+            return true;
+        }
+
+        return false;
+
+        DateTime? ReadLastUpgradeCheckDate()
+        {
+            if (!File.Exists(upgradeCheck))
+                return null;
+
+            var lastUpgradeCheckValue = File.ReadAllText(upgradeCheck);
+
+            if (!long.TryParse(lastUpgradeCheckValue, out var lastUpgradeCheckBinaryDateUtc))
+                return null;
+
+            return DateTime.FromBinary(lastUpgradeCheckBinaryDateUtc);
+        }
     }
 }
