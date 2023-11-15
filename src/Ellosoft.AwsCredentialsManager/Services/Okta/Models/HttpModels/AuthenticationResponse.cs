@@ -22,6 +22,6 @@ public class AuthenticationResponse
 
     public class AuthenticationResponseDetails
     {
-        public IList<OktaFactor> Factors { get; set; } = Array.Empty<OktaFactor>();
+        public IList<OktaFactor> Factors { get; set; } = [];
     }
 }

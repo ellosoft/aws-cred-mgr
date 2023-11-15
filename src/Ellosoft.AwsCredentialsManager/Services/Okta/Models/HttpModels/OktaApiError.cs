@@ -12,7 +12,7 @@ public class OktaApiError
 
     public string? ErrorId { get; set; }
 
-    public ErrorCause[] ErrorCauses { get; set; } = Array.Empty<ErrorCause>();
+    public ErrorCause[] ErrorCauses { get; set; } = [];
 
     public class ErrorCause
     {
