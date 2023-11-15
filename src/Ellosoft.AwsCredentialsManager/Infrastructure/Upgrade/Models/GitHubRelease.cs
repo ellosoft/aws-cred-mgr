@@ -16,7 +16,7 @@ public class GitHubRelease
     public bool PreRelease { get; set; }
 
     [JsonPropertyName("assets")]
-    public ICollection<ReleaseAsset> Assets { get; set; } = Array.Empty<ReleaseAsset>();
+    public ICollection<ReleaseAsset> Assets { get; set; } = [];
 
     public class ReleaseAsset
     {

@@ -20,11 +20,11 @@ public class RdsTokenGenerator
     /// <param name="hostname">Hostname of the RDS instance.</param>
     /// <param name="port">Port number of the RDS instance.</param>
     /// <param name="dbUser">Database user to authenticate.</param>
-    /// <param name="ttlInMinutes">RDS password lifetime (recommended 15 minutes)</param>
+    /// <param name="ttlInMinutes">RDS password lifetime (max 15 minutes)</param>
     /// <returns>RDS DB password</returns>
     /// <remarks>
     ///     This method is based on the <see cref="RDSAuthTokenGenerator" />,
-    ///     however it allows the DB password lifetime to be change from the hard code 15 minutes.
+    ///     however it allows the DB password lifetime to be changed from the hard code 15 minutes.
     /// </remarks>
     public string GenerateDbPassword(
         AWSCredentials awsCredentials,

@@ -9,28 +9,17 @@ using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 
-public class AwsOktaSessionManager
+public class AwsOktaSessionManager(
+    CredentialsManager credentialsManager,
+    IOktaLoginService loginService,
+    OktaSamlService oktaSamlService)
 {
-    private readonly CredentialsManager _credentialsManager;
-    private readonly IOktaLoginService _oktaLoginService;
-    private readonly OktaSamlService _oktaSamlService;
-
     private readonly AwsCredentialsService _awsCredentialsService = new();
     private readonly AwsSamlService _awsSamlService = new();
 
-    public AwsOktaSessionManager(
-        CredentialsManager credentialsManager,
-        IOktaLoginService loginService,
-        OktaSamlService oktaSamlService)
-    {
-        _credentialsManager = credentialsManager;
-        _oktaLoginService = loginService;
-        _oktaSamlService = oktaSamlService;
-    }
-
     public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? awsProfile)
     {
-        if (!_credentialsManager.TryGetCredential(credentialProfile, out var credentialsConfig))
+        if (!credentialsManager.TryGetCredential(credentialProfile, out var credentialsConfig))
             return null;
 
         var awsProfileName = awsProfile ?? credentialsConfig.AwsProfile;
@@ -71,12 +60,12 @@ public class AwsOktaSessionManager
 
     private async Task<AwsCredentialsData?> CreateSessionAsync(string credentialProfile, string awsProfileName, CredentialsConfiguration credentialsConfig)
     {
-        var authResult = await _oktaLoginService.InteractiveLogin(credentialsConfig.OktaProfile!);
+        var authResult = await loginService.InteractiveLogin(credentialsConfig.OktaProfile!);
 
         if (authResult?.SessionToken is null)
             return null;
 
-        var samlData = await _oktaSamlService.GetAppSamlDataAsync(authResult.OktaDomain, credentialsConfig.OktaAppUrl!, authResult.SessionToken);
+        var samlData = await oktaSamlService.GetAppSamlDataAsync(authResult.OktaDomain, credentialsConfig.OktaAppUrl!, authResult.SessionToken);
 
         var idp = GetRoleIdp(credentialProfile, credentialsConfig.RoleArn, samlData.SamlAssertion);
 
