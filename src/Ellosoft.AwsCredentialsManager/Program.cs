@@ -1,19 +1,15 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using System.Diagnostics;
+using Ellosoft.AwsCredentialsManager;
 using Ellosoft.AwsCredentialsManager.Commands;
+using Ellosoft.AwsCredentialsManager.Commands.Config;
 using Ellosoft.AwsCredentialsManager.Commands.Credentials;
 using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Commands.RDS;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade;
-using Ellosoft.AwsCredentialsManager.Services.AWS;
-using Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
-using Ellosoft.AwsCredentialsManager.Services.Configuration;
-using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
-using Ellosoft.AwsCredentialsManager.Services.Okta;
-using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
 
@@ -24,26 +20,7 @@ await upgradeService.TryUpgradeApp();
 
 var services = new ServiceCollection()
     .SetupLogging(logger)
-    .AddSingleton<IConfigManager, ConfigManager>()
-    .AddSingleton<CredentialsManager>()
-    .AddSingleton<EnvironmentManager>();
-
-// okta related services
-services
-    .AddSingleton<OktaClassicAuthenticator>()
-    .AddSingleton<OktaClassicAccessTokenProvider>()
-    .AddSingleton<IOktaLoginService, OktaLoginService>()
-    .AddSingleton<IOktaMfaFactorSelector, OktaMfaFactorSelector>()
-    .AddSingleton<AwsOktaSessionManager>()
-    .AddSingleton<OktaSamlService>();
-
-// aws related services
-services
-    .AddSingleton<RdsTokenGenerator>()
-    .AddSingleton<AwsSamlService>();
-
-services
-    .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
+    .RegisterAppServices();
 
 var registrar = new TypeRegistrar(services);
 var app = new CommandApp(registrar);
@@ -68,6 +45,12 @@ app.Configure(config =>
         {
             rds.AddCommand<GetRdsPassword>();
             rds.AddCommand<ListRdsProfiles>();
+        })
+        .AddBranch<ConfigBranch>(cfg =>
+        {
+            cfg.SetDefaultCommand<OpenConfig>();
+            cfg.AddCommand<OpenConfig>();
+            cfg.AddCommand<OpenAwsConfig>();
         });
 
     config.PropagateExceptions();

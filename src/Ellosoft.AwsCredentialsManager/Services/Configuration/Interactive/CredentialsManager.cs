@@ -6,15 +6,11 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 
-public class CredentialsManager
+public class CredentialsManager(IConfigManager configManager)
 {
-    private readonly IConfigManager _configManager;
-
-    public CredentialsManager(IConfigManager configManager) => _configManager = configManager;
-
     public string GetCredential()
     {
-        var appConfig = _configManager.AppConfig;
+        var appConfig = configManager.AppConfig;
 
         if (appConfig.Credentials.Count == 0)
             throw new CommandException("No AWS credentials found, please use [green]'aws-cred-mgr cred new'[/] to create a new profile");
@@ -34,7 +30,7 @@ public class CredentialsManager
 
     public bool TryGetCredential(string credentialProfile, [NotNullWhen(true)] out CredentialsConfiguration? credentialsConfig)
     {
-        if (_configManager.AppConfig.Credentials.TryGetValue(credentialProfile, out credentialsConfig))
+        if (configManager.AppConfig.Credentials.TryGetValue(credentialProfile, out credentialsConfig))
         {
             if (credentialsConfig is { OktaProfile: not null, OktaAppUrl: not null })
                 return true;
@@ -57,7 +53,7 @@ public class CredentialsManager
             OktaProfile = oktaProfile
         };
 
-        _configManager.AppConfig.Credentials[name] = credential;
-        _configManager.SaveConfig();
+        configManager.AppConfig.Credentials[name] = credential;
+        configManager.SaveConfig();
     }
 }

@@ -27,13 +27,17 @@ public class AwsCredentialsService
     ///     Thrown when the SAML authentication assertion fails to meet the requirements
     ///     or AWS STS is unable to assume the specified role due to invalid parameters.
     /// </exception>
+    /// <remarks>
+    ///     The AssumeRoleWithSAMLAsync issues an HTTP POST request to https://sts.amazonaws.com, which does not require a region,
+    ///     however the region is still required as part of the AmazonSecurityTokenServiceClient constructor validation, therefore USEast2 is being used.
+    /// </remarks>
     public async Task<AwsCredentialsData> GetAwsCredentials(
         string samlAssertion,
         string roleArn,
         string idp,
         int expirationInMinutes = 120)
     {
-        using var stsClient = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), (RegionEndpoint?)null);
+        using var stsClient = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), RegionEndpoint.USEast2);
 
         var request = new AssumeRoleWithSAMLRequest
         {

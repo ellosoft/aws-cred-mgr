@@ -64,7 +64,12 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         var oktaAppUrl = settings.OktaAppUrl ?? await GetAwsAppUrl(settings.OktaUserProfile);
         var awsRole = settings.AwsRoleArn ?? await GetAwsRoleArn(settings.OktaUserProfile, oktaAppUrl);
 
-        _credentialsManager.CreateCredential(settings.Name, settings.AwsProfile!, awsRole, oktaAppUrl, settings.OktaUserProfile);
+        _credentialsManager.CreateCredential(
+            name: settings.Name,
+            awsProfile: settings.AwsProfile!,
+            awsRole: awsRole,
+            oktaAppUrl: oktaAppUrl,
+            oktaProfile: settings.OktaUserProfile);
 
         AnsiConsole.MarkupLine($"[bold green]'{settings.Name}' credentials created[/]");
 

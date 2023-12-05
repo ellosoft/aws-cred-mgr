@@ -164,5 +164,5 @@ public class ConfigReader
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
 
-    public static string GetYamlName(string value) => UnderscoredNamingConvention.Instance.Apply(value);
+    private static string GetYamlName(string value) => UnderscoredNamingConvention.Instance.Apply(value);
 }
