@@ -24,7 +24,6 @@ aws-cred-mgr okta setup
 
 -   Simply run `aws-cred-mgr okta setup` to use interactive mode.
 -   Set up with domain and username: `aws-cred-mgr okta setup -d https://xyz.okta.com -u john --mfa push`
--   Set up a specific profile with all options: `aws-cred-mgr okta setup xyz_profile -d https://xyz.okta.com -u john --mfa push`
 
 ### Credential Management
 
@@ -55,6 +54,17 @@ aws-cred-mgr rds [COMMAND]
 -   Get RDS password : `aws-cred-mgr rds pwd`
 -   Get RDS password for `prod_db`: `aws-cred-mgr rds pwd prod_db`
 -   Get RDS password with all options: `aws-cred-mgr rds pwd -h localhost -p 5432 -u john`
+
+### Config Files
+
+```plaintext
+aws-cred-mgr config
+```
+
+#### Examples
+
+-   Open user config: `aws-cred-mgr config`
+-   Open AWS credentials file: `aws-cred-mgr config aws`
 
 ## Security Note for Windows Users
 
