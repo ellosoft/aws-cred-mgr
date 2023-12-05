@@ -8,8 +8,10 @@ public interface IConfigManager
 {
     AppConfig AppConfig { get; }
 
+    string AppConfigPath { get; }
+
     /// <summary>
-    ///     Persist the <see cref="AppConfig" /> state into a file
+    ///     Persist the <see cref="AppConfig" /> state into a file, an empty file will be create if this method is called on a "empty" state
     /// </summary>
     void SaveConfig();
 }
@@ -17,11 +19,12 @@ public interface IConfigManager
 public class ConfigManager : IConfigManager
 {
     private const string APP_CONFIG_FILE = "aws_cred_mgr.yml";
-
-    private static readonly string AppConfigPath = Path.Combine(AppDataDirectory.UserProfileDirectory, APP_CONFIG_FILE);
+    private static readonly string InternalAppConfigPath = Path.Combine(AppDataDirectory.UserProfileDirectory, APP_CONFIG_FILE);
 
     private readonly ConfigReader _configReader = new();
     private readonly ConfigWriter _configWriter = new();
+
+    public string AppConfigPath => InternalAppConfigPath;
 
     public ConfigManager() => AppConfig = GetConfiguration();
 

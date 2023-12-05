@@ -24,7 +24,7 @@ public static class AppDataDirectory
     /// </summary>
     /// <param name="fileName">The name of the file to get the path for.</param>
     /// <returns>The full path to the specified file in the application's data directory.</returns>
-    public static string GetPath(string fileName) => IOPath.Combine(GetOrCreateAppDataDirectory(), fileName);
+    public static string GetPath(string fileName) => IOPath.Combine(Path, fileName);
 
     private static string GetOrCreateAppDataDirectory()
     {
