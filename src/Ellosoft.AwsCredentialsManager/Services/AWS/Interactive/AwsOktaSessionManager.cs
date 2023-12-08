@@ -17,19 +17,19 @@ public class AwsOktaSessionManager(
     private readonly AwsCredentialsService _awsCredentialsService = new();
     private readonly AwsSamlService _awsSamlService = new();
 
-    public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? awsProfile)
+    public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? outputAwsProfile)
     {
         if (!credentialsManager.TryGetCredential(credentialProfile, out var credentialsConfig))
             return null;
 
-        var awsProfileName = awsProfile ?? credentialsConfig.AwsProfile;
+        var awsProfile = credentialsConfig.GetAwsProfileSafe(credentialProfile);
 
-        if (TryResumeSession(awsProfileName, credentialsConfig.RoleArn, out var awsCredentialsData))
-            return CreateAwsCredentials(awsCredentialsData);
+        if (TryResumeSession(awsProfile, credentialsConfig.RoleArn, out var awsCredentialsData))
+            return CreateAwsCredentials(awsCredentialsData, awsProfile, outputAwsProfile);
 
-        var newCredential = await CreateSessionAsync(credentialProfile, awsProfileName, credentialsConfig);
+        var newCredential = await CreateSessionAsync(credentialProfile, awsProfile, credentialsConfig);
 
-        return newCredential is not null ? CreateAwsCredentials(newCredential) : null;
+        return newCredential is not null ? CreateAwsCredentials(newCredential, awsProfile, outputAwsProfile) : null;
     }
 
     private bool TryResumeSession(string awsProfile, string roleArn, [NotNullWhen(true)] out AwsCredentialsData? credentialsData)
@@ -58,7 +58,7 @@ public class AwsOktaSessionManager(
         return true;
     }
 
-    private async Task<AwsCredentialsData?> CreateSessionAsync(string credentialProfile, string awsProfileName, CredentialsConfiguration credentialsConfig)
+    private async Task<AwsCredentialsData?> CreateSessionAsync(string credentialProfile, string awsProfile, CredentialsConfiguration credentialsConfig)
     {
         var authResult = await loginService.InteractiveLogin(credentialsConfig.OktaProfile!);
 
@@ -74,7 +74,7 @@ public class AwsOktaSessionManager(
 
         var awsCredentialsData = await _awsCredentialsService.GetAwsCredentials(samlData.SamlAssertion, credentialsConfig.RoleArn, idp);
 
-        _awsCredentialsService.StoreCredentials(awsProfileName, awsCredentialsData);
+        _awsCredentialsService.StoreCredentials(awsProfile, awsCredentialsData);
 
         return awsCredentialsData;
     }
@@ -99,6 +99,13 @@ public class AwsOktaSessionManager(
         return null;
     }
 
-    private static SessionAWSCredentials CreateAwsCredentials(AwsCredentialsData credentialsData) =>
-        new(credentialsData.AccessKeyId, credentialsData.SecretAccessKey, credentialsData.SessionToken);
+    private SessionAWSCredentials CreateAwsCredentials(AwsCredentialsData credentialsData, string credentialProfile, string? outputAwsProfile)
+    {
+        if (outputAwsProfile is not null && outputAwsProfile != credentialProfile)
+        {
+            _awsCredentialsService.StoreCredentials(outputAwsProfile, credentialsData);
+        }
+
+        return new SessionAWSCredentials(credentialsData.AccessKeyId, credentialsData.SecretAccessKey, credentialsData.SessionToken);
+    }
 }

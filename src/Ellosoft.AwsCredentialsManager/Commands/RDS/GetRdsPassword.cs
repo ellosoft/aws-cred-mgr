@@ -88,7 +88,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
 
     private async Task<int> HandleAdHocRequest(Settings settings)
     {
-        var credentialName = _credentialsManager.GetCredential();
+        var credentialName = _credentialsManager.GetCredentialNameFromUser();
 
         AnsiConsole.MarkupLine($"Getting RDS password using [green i]{credentialName}[/] credential profile");
 
