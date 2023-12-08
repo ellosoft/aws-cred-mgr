@@ -54,7 +54,7 @@ public class EnvironmentManager
 
         AnsiConsole.MarkupLine($"Creating environment [green i]{environmentName}[/]");
 
-        var credentialName = _credentialsManager.GetCredential();
+        var credentialName = _credentialsManager.GetCredentialNameFromUser();
         var environmentConfig = new EnvironmentConfiguration { Credential = credentialName };
 
         while (!_configManager.AppConfig.Environments.TryAdd(environmentName, environmentConfig))

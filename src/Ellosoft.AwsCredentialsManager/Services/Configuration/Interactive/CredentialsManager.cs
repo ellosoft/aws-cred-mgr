@@ -8,7 +8,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 
 public class CredentialsManager(IConfigManager configManager)
 {
-    public string GetCredential()
+    public string GetCredentialNameFromUser()
     {
         var appConfig = configManager.AppConfig;
 
@@ -43,7 +43,7 @@ public class CredentialsManager(IConfigManager configManager)
         return false;
     }
 
-    public void CreateCredential(string name, string awsProfile, string awsRole, string oktaAppUrl, string oktaProfile)
+    public void CreateCredential(string name, string? awsProfile, string awsRole, string oktaAppUrl, string oktaProfile)
     {
         var credential = new CredentialsConfiguration
         {

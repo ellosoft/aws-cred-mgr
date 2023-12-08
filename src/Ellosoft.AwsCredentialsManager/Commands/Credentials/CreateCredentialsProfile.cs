@@ -17,6 +17,8 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Examples("new prod")]
 public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Settings>
 {
+    private const string DEFAULT_AWS_PROFILE_VALUE = "[credential name]";
+
     public class Settings : AwsSettings
     {
         [CommandArgument(0, "<CREDENTIAL_NAME>")]
@@ -27,9 +29,9 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         [Description("AWS role ARN")]
         public string? AwsRoleArn { get; set; }
 
-        [CommandOption("-p|--aws-profile")]
+        [CommandOption("--aws-profile")]
         [Description("AWS profile to use (profile used in AWS CLI)")]
-        [DefaultValue("default")]
+        [DefaultValue(DEFAULT_AWS_PROFILE_VALUE)]
         public string? AwsProfile { get; set; }
 
         [CommandOption("--okta-app-url")]
@@ -63,10 +65,11 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
     {
         var oktaAppUrl = settings.OktaAppUrl ?? await GetAwsAppUrl(settings.OktaUserProfile);
         var awsRole = settings.AwsRoleArn ?? await GetAwsRoleArn(settings.OktaUserProfile, oktaAppUrl);
+        var awsProfile = settings.AwsProfile is null or DEFAULT_AWS_PROFILE_VALUE ? null : settings.AwsProfile;
 
         _credentialsManager.CreateCredential(
             name: settings.Name,
-            awsProfile: settings.AwsProfile!,
+            awsProfile: awsProfile,
             awsRole: awsRole,
             oktaAppUrl: oktaAppUrl,
             oktaProfile: settings.OktaUserProfile);

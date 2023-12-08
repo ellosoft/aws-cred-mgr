@@ -11,7 +11,10 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Examples(
     "get prod",
     "get prod --aws-profile default")]
-public class GetCredentials : AsyncCommand<GetCredentials.Settings>
+public class GetCredentials(
+    CredentialsManager credentialsManager,
+    AwsOktaSessionManager sessionManager
+) : AsyncCommand<GetCredentials.Settings>
 {
     public class Settings : AwsSettings
     {
@@ -25,23 +28,11 @@ public class GetCredentials : AsyncCommand<GetCredentials.Settings>
         public string? AwsProfile { get; set; }
     }
 
-    private readonly CredentialsManager _credentialsManager;
-    private readonly AwsOktaSessionManager _sessionManager;
-
-    public GetCredentials(
-        CredentialsManager credentialsManager,
-        AwsOktaSessionManager sessionManager
-    )
-    {
-        _credentialsManager = credentialsManager;
-        _sessionManager = sessionManager;
-    }
-
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var credential = settings.Credential ?? _credentialsManager.GetCredential();
+        var credential = settings.Credential ?? credentialsManager.GetCredentialNameFromUser();
 
-        var awsCredentials = await _sessionManager.CreateOrResumeSessionAsync(credential, settings.AwsProfile);
+        var awsCredentials = await sessionManager.CreateOrResumeSessionAsync(credential, settings.AwsProfile);
 
         if (awsCredentials is null)
             return 1;

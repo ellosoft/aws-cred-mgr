@@ -10,7 +10,7 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Name("list"), Alias("ls")]
 [Description("List saved credential profiles")]
 [Examples("ls")]
-public class ListCredentialsProfiles : Command<ListCredentialsProfiles.Settings>
+public class ListCredentialsProfiles(IConfigManager configManager) : Command<ListCredentialsProfiles.Settings>
 {
     public class Settings : AwsSettings
     {
@@ -20,13 +20,9 @@ public class ListCredentialsProfiles : Command<ListCredentialsProfiles.Settings>
         public string OktaUserProfile { get; set; } = OktaConfiguration.DefaultProfileName;
     }
 
-    private readonly IConfigManager _configManager;
-
-    public ListCredentialsProfiles(IConfigManager configManager) => _configManager = configManager;
-
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        var credentials = _configManager.AppConfig.Credentials;
+        var credentials = configManager.AppConfig.Credentials;
 
         var table = new Table()
             .Title("[green]Saved credentials[/]")
@@ -36,8 +32,8 @@ public class ListCredentialsProfiles : Command<ListCredentialsProfiles.Settings>
 
         var filteredCredentials = credentials.Where(kv => kv.Value.OktaProfile == settings.OktaUserProfile);
 
-        foreach (var credential in filteredCredentials)
-            table.AddRow(credential.Key, credential.Value.RoleArn, credential.Value.AwsProfile);
+        foreach (var (credentialName, credentialConfig) in filteredCredentials)
+            table.AddRow(credentialName, credentialConfig.RoleArn, credentialConfig.GetAwsProfileSafe(credentialName));
 
         AnsiConsole.Write(table);
 

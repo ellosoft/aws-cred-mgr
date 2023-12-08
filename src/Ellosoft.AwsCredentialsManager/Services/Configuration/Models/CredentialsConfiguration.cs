@@ -6,9 +6,14 @@ public class CredentialsConfiguration : ResourceConfiguration
 {
     public required string RoleArn { get; set; }
 
-    public required string AwsProfile { get; set; } = "default";
+    public string? AwsProfile { get; set; }
 
     public string? OktaAppUrl { get; set; }
 
     public string? OktaProfile { get; set; }
+
+    /// <summary>
+    ///     If the AwsProfile is populated then return its value otherwise returns the credential name
+    /// </summary>
+    internal string GetAwsProfileSafe(string credentialName) => AwsProfile ?? credentialName;
 }
