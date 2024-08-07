@@ -10,14 +10,10 @@ namespace Ellosoft.AwsCredentialsManager.Services.Configuration.YamlSerializatio
 
 /// <summary>
 ///     This class is used by the YAML serializer to read variable metadata from the AppConfig
-///     and used the variable placeholder (variable name) in the output file
+///     and use the variable placeholder (variable name) in the output file
 /// </summary>
-public class ResourceConfigurationInspector : TypeInspectorSkeleton
+public class ResourceConfigurationInspector(ITypeInspector innerTypeDescriptor) : TypeInspectorSkeleton
 {
-    private readonly ITypeInspector _innerTypeDescriptor;
-
-    public ResourceConfigurationInspector(ITypeInspector innerTypeDescriptor) => _innerTypeDescriptor = innerTypeDescriptor;
-
     /// <summary>
     ///     Gets the property descriptor of ResourceConfiguration replacing the actual property value with the variable placeholder (variable name)
     ///     if the object contains variables
@@ -30,7 +26,7 @@ public class ResourceConfigurationInspector : TypeInspectorSkeleton
         var resourceConfiguration = container as ResourceConfiguration;
         var hasVariables = resourceConfiguration?.HasVariables == true;
 
-        return _innerTypeDescriptor.GetProperties(type, container)
+        return innerTypeDescriptor.GetProperties(type, container)
             .Select(prop =>
             {
                 if (!hasVariables || !resourceConfiguration!.Metadata.TryGetValue(GetPropertyName(prop.Name), out var configMetadata))
@@ -41,6 +37,10 @@ public class ResourceConfigurationInspector : TypeInspectorSkeleton
     }
 
     private static string GetPropertyName(string name) => PascalCaseNamingConvention.Instance.Apply(name);
+
+    public override string GetEnumName(Type enumType, string name) => throw new NotSupportedException();
+
+    public override string GetEnumValue(object enumValue) => throw new NotSupportedException();
 
     private sealed class VariablePropertyDescription : IPropertyDescriptor
     {
@@ -58,6 +58,8 @@ public class ResourceConfigurationInspector : TypeInspectorSkeleton
 
         public string Name => _baseDescriptor.Name;
 
+        public bool AllowNulls => true;
+
         public bool CanWrite => false;
 
         public Type Type => typeof(string);
@@ -65,6 +67,10 @@ public class ResourceConfigurationInspector : TypeInspectorSkeleton
         public Type? TypeOverride { get; set; } = typeof(string);
 
         public ScalarStyle ScalarStyle { get; set; }
+
+        public bool Required => false;
+
+        public Type? ConverterType { get; } = null;
 
         public int Order { get; set; }
 
