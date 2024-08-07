@@ -18,7 +18,7 @@ public class OktaSamlService
         var responseBody = await response.Content.ReadAsStringAsync();
 
         var parser = new HtmlParser();
-        using var document = parser.ParseDocument(responseBody);
+        using var document = await parser.ParseDocumentAsync(responseBody);
 
         return new SamlData
         (

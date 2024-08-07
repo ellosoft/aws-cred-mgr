@@ -65,7 +65,7 @@ app.Configure(config =>
 
 try
 {
-    return app.Run(args);
+    return await app.RunAsync(args);
 }
 catch (CommandException e)
 {
