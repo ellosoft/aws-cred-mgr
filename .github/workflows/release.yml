@@ -22,15 +22,20 @@ jobs:
       - name: Build & Publish Windows
         run: |
           dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
-          -r win-x64 /p:AssemblyName=aws-cred-mgr-win-x64 -o output-win
+          -r win-x64 -o output-win
       - name: Build & Publish MacOS x64
         run: |
           dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
-          -r osx-x64 /p:AssemblyName=aws-cred-mgr-osx-x64 -o output-osx
+          -r osx-x64 -o output-osx
       - name: Build & Publish MacOS ARM
         run: |
           dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
-          -r osx-arm64 /p:AssemblyName=aws-cred-mgr-osx-arm64 -o output-osxarm
+          -r osx-arm64 -o output-osxarm
+      - name: Rename Executables
+        run: |
+          mv output-win/aws-cred-mgr.exe output-win/aws-cred-mgr-win-x64.exe
+          mv output-osx/aws-cred-mgr output-osx/aws-cred-mgr-osx-x64
+          mv output-osxarm/aws-cred-mgr output-osxarm/aws-cred-mgr-osx-arm64
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
