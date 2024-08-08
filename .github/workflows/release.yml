@@ -1,11 +1,11 @@
-name: .NET Release
+name: .NET Release Workflow
 on:
   push:
     tags:
       - "*"
 permissions:
   id-token: write
-  contents: read
+  contents: write
   attestations: write
 jobs:
   release:
