@@ -6,7 +6,8 @@ on:
     branches: ["main", "develop"]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: MacOS Build
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
