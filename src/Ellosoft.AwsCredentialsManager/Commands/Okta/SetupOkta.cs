@@ -70,7 +70,7 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
 
     private static Uri GetOktaDomainUrl(Settings settings)
     {
-        const string URL_MESSAGE = "Enter your [green]Okta[/] domain URL (e.g. https://xyz.okta.com):";
+        const string URL_MESSAGE = "Enter your [green]Okta[/] domain URL (e.g. https://xyz.okta.com): [grey85][[https://]][/]";
 
         var oktaDomain = settings.OktaDomain ?? AnsiConsole.Ask<string>(URL_MESSAGE);
 

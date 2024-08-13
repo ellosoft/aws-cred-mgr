@@ -28,6 +28,6 @@ public class FileManager : IFileManager
             return;
         }
 
-        throw new InvalidOperationException("Unsupported operating system.");
+        Process.Start("xdg-open", $"\"{filePath}\"");
     }
 }

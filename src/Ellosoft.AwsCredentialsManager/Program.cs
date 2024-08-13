@@ -59,7 +59,7 @@ app.Configure(config =>
     config.ValidateExamples();
 
     if (Debugger.IsAttached)
-        args = "rds pwd test_db".Split(' ');
+        args = "cred new test1".Split(' ');
 #endif
 });
 

@@ -1,7 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using System.Diagnostics.CodeAnalysis;
-using System.IO.Compression;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade.Models;
@@ -68,19 +67,17 @@ public class UpgradeService
             if (!shouldUpdate)
                 return;
 
-            using var zipStream = new MemoryStream();
-            await _downloadService.DownloadFileAsync(_httpClient, downloadUrl, zipStream);
-
             var (executablePath, appFolder) = _appMetadata.GetExecutablePath();
 
             var executableName = Path.GetFileName(executablePath);
-            var newFile = Path.Combine(appFolder, executableName + ".new");
+            var newFilePath = Path.Combine(appFolder, executableName + ".new");
             var archivePath = Path.Combine(Path.GetTempPath(), executableName + ".old");
+
+            await _downloadService.DownloadAsync(_httpClient, downloadUrl, newFilePath);
 
             _console.MarkupLine("\r\nInstalling upgrade...");
 
-            ExtractApp(zipStream, newFile);
-            UpgradeApp(executablePath, archivePath, newFile);
+            UpgradeApp(executablePath, archivePath, newFilePath);
 
             _console.MarkupLine("[green]Upgrade complete! The changes will reflect next time you execute the application.\r\n[/]");
         }
@@ -132,24 +129,10 @@ public class UpgradeService
         if (!SemanticVersion.TryParse(latestRelease.Name, out version))
             return false;
 
-        var fileSuffix = $"{RuntimeInformation.RuntimeIdentifier}.zip";
-
         downloadUrl = latestRelease
-            .Assets.FirstOrDefault(a => a.DownloadUrl.EndsWith(fileSuffix))?.DownloadUrl;
+            .Assets.FirstOrDefault(a => a.DownloadUrl.Contains(RuntimeInformation.RuntimeIdentifier))?.DownloadUrl;
 
         return downloadUrl is not null;
-    }
-
-    private static void ExtractApp(Stream zipStream, string newFile)
-    {
-        using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
-
-        var mainAppEntry = archive.Entries.FirstOrDefault(e => e.Name == "aws-cred-mgr.exe");
-
-        if (mainAppEntry is null)
-            throw new InvalidOperationException("Unable to find application file in release archive");
-
-        mainAppEntry.ExtractToFile(newFile, overwrite: true);
     }
 
     private static void UpgradeApp(string executablePath, string archivePath, string newFile)
