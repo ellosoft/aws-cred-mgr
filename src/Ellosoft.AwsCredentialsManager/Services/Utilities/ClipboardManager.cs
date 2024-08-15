@@ -2,8 +2,9 @@
 
 using System.Runtime.InteropServices;
 using CliWrap;
+using CliWrap.Buffered;
 
-namespace Ellosoft.AwsCredentialsManager.Services;
+namespace Ellosoft.AwsCredentialsManager.Services.Utilities;
 
 public class ClipboardManager : PlatformService
 {

@@ -1,12 +1,13 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using System.Runtime.InteropServices;
+using Ellosoft.AwsCredentialsManager.Services.Platforms.Windows;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Encryption;
 
-public static class DataProtection
+public class SecureStorage
 {
-    public static byte[] Encrypt(byte[] data)
+    public void Store(string key, byte[] data)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             throw new PlatformNotSupportedException("Saving passwords is only supported on Windows at the moment");
@@ -14,7 +15,7 @@ public static class DataProtection
         return WindowsDataProtection.Protect(data);
     }
 
-    public static byte[] Decrypt(byte[] data)
+    public byte[] Retrieve(string key)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             throw new PlatformNotSupportedException("Saving passwords is only supported on Windows at the moment");

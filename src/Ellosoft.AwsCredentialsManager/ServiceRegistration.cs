@@ -7,6 +7,7 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.IO;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
+using Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.Security;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ellosoft.AwsCredentialsManager;
@@ -37,6 +38,9 @@ public static class ServiceRegistration
 
         services
             .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
+
+        services
+            .AddSingleton<IKeychain, Keychain>();
 
         return services;
     }

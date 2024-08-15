@@ -19,7 +19,7 @@ public class UserCredentialsManager
     /// <remarks>If the file already exists it will be overwritten</remarks>
     public void SaveUserCredentials(string key, UserCredentials userCredentials)
     {
-        var encryptedData = DataProtection.Encrypt(JsonSerializer.SerializeToUtf8Bytes(userCredentials, SourceGenerationContext.Default.UserCredentials));
+        var encryptedData = SecureStorage.Store(JsonSerializer.SerializeToUtf8Bytes(userCredentials, SourceGenerationContext.Default.UserCredentials));
 
         File.WriteAllBytes(GetUserCredentialsFilePath(key), encryptedData);
     }
@@ -49,7 +49,7 @@ public class UserCredentialsManager
             return null;
 
         var data = File.ReadAllBytes(userProfileFilePath);
-        var decryptedData = DataProtection.Decrypt(data);
+        var decryptedData = SecureStorage.Retrieve(data);
 
         return JsonSerializer.Deserialize(decryptedData, SourceGenerationContext.Default.UserCredentials);
     }

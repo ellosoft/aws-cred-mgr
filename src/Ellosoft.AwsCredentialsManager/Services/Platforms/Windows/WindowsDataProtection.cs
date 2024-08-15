@@ -3,7 +3,7 @@
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
-namespace Ellosoft.AwsCredentialsManager.Services.Encryption;
+namespace Ellosoft.AwsCredentialsManager.Services.Platforms.Windows;
 
 [SupportedOSPlatform("windows")]
 public static class WindowsDataProtection
