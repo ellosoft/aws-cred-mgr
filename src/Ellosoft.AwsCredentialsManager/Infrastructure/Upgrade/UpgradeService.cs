@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade.Models;

@@ -9,7 +9,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
 public record AwsRole(string RoleName, string AccountName);
 
-public class AwsSamlService
+public interface IAwsSamlService
 {
     /// <summary>
     ///     Extracts AWS roles and IDP from an encoded SAML assertion and
@@ -18,6 +18,20 @@ public class AwsSamlService
     /// <param name="encodedSamlAssertion">Encoded SAML assertion</param>
     /// <returns>Dictionary with AWS role ARN as the key and the IDP as the value</returns>
     /// <exception cref="InvalidOperationException"></exception>
+    Dictionary<string, string> GetAwsRolesAndIdpFromSamlAssertion(string encodedSamlAssertion);
+
+    /// <summary>
+    ///     Retrieves the AWS account names and roles for the current user
+    ///     based on the provided SAML data.
+    /// </summary>
+    /// <param name="samlData">The SAML data containing the SAML assertion and sign-in URL</param>
+    /// <returns>A list of <see cref="AwsRole">AWS roles</see></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    Task<ICollection<AwsRole>> GetAwsRolesWithAccountName(SamlData samlData);
+}
+
+public class AwsSamlService : IAwsSamlService
+{
     public Dictionary<string, string> GetAwsRolesAndIdpFromSamlAssertion(string encodedSamlAssertion)
     {
         var samlAssertion = Encoding.UTF8.GetString(Convert.FromBase64String(encodedSamlAssertion));
@@ -37,13 +51,6 @@ public class AwsSamlService
             .ToDictionary(roleInfo => roleInfo[1], roleInfo => roleInfo[0]);
     }
 
-    /// <summary>
-    ///     Retrieves the AWS account names and roles for the current user
-    ///     based on the provided SAML data.
-    /// </summary>
-    /// <param name="samlData">The SAML data containing the SAML assertion and sign-in URL</param>
-    /// <returns>A list of <see cref="AwsRole">AWS roles</see></returns>
-    /// <exception cref="InvalidOperationException"></exception>
     public async Task<ICollection<AwsRole>> GetAwsRolesWithAccountName(SamlData samlData)
     {
         if (samlData.SamlAssertion is null || samlData.SignInUrl is null)

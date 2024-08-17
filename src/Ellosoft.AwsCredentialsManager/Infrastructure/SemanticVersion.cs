@@ -1,7 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Ellosoft.AwsCredentialsManager.Infrastructure;
 
 public record SemanticVersion : IComparable<SemanticVersion>

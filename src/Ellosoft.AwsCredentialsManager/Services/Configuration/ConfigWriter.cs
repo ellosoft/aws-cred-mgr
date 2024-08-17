@@ -9,7 +9,17 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Configuration;
 
-public class ConfigWriter
+public interface IConfigWriter
+{
+    /// <summary>
+    ///     Serializes an AppConfig into a output file, replacing variable values with variable placeholders <see cref="ResourceConfigurationInspector" />
+    /// </summary>
+    /// <param name="fileName">Output file name</param>
+    /// <param name="config">AppConfig object</param>
+    void Write(string fileName, AppConfig config);
+}
+
+public class ConfigWriter : IConfigWriter
 {
     private static readonly ISerializer Serializer = new SerializerBuilder()
         .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
@@ -17,11 +27,6 @@ public class ConfigWriter
         .WithTypeInspector(inner => new ResourceConfigurationInspector(inner))
         .Build();
 
-    /// <summary>
-    ///     Serializes an AppConfig into a output file, replacing variable values with variable placeholders <see cref="ResourceConfigurationInspector" />
-    /// </summary>
-    /// <param name="fileName">Output file name</param>
-    /// <param name="config">AppConfig object</param>
     public void Write(string fileName, AppConfig config)
     {
         var writer = new StringBuilder();

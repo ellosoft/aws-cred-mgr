@@ -1,5 +1,6 @@
 namespace Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.NSTypes;
 
+[SupportedOSPlatform("macos")]
 public class NSNumber : NSObject
 {
     private static readonly IntPtr NSClassType = GetClass("NSNumber");
@@ -8,11 +9,11 @@ public class NSNumber : NSObject
 
     public NSNumber(bool value)
     {
-        Handle = ObjectiveCRuntime.Instance.SendMessage(NSClassType, CreateBoolSelector, value);
+        Handle = ObjectiveCRuntimeInterop.Instance.SendMessage(NSClassType, CreateBoolSelector, value);
     }
 
     public NSNumber(int value)
     {
-        Handle = ObjectiveCRuntime.Instance.SendMessage(NSClassType, CreateIntSelector.Value, value);
+        Handle = ObjectiveCRuntimeInterop.Instance.SendMessage(NSClassType, CreateIntSelector.Value, value);
     }
 }

@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Serilog;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS;
 
@@ -15,7 +16,7 @@ public static class IntPtrExtensions
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Log.Logger.Error(e, "Unable to release memory");
         }
     }
 }

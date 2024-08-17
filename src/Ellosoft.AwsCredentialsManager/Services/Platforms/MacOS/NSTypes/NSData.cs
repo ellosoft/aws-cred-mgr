@@ -3,6 +3,7 @@ using System.Text;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.NSTypes;
 
+[SupportedOSPlatform("macos")]
 public class NSData : NSObject
 {
     private static readonly IntPtr LengthSelector = GetSelector("length");
@@ -12,8 +13,8 @@ public class NSData : NSObject
 
     public override string ToString()
     {
-        var length = (int)ObjectiveCRuntime.Instance.SendMessage(Handle, LengthSelector);
-        var bytes = ObjectiveCRuntime.Instance.SendMessage(Handle, BytesSelector);
+        var length = (int)ObjectiveCRuntimeInterop.Instance.SendMessage(Handle, LengthSelector);
+        var bytes = ObjectiveCRuntimeInterop.Instance.SendMessage(Handle, BytesSelector);
 
         var buffer = new byte[length];
         Marshal.Copy(bytes, buffer, 0, length);

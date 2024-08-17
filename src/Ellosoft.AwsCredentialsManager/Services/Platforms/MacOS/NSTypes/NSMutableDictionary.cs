@@ -1,5 +1,6 @@
 namespace Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.NSTypes;
 
+[SupportedOSPlatform("macos")]
 public class NSMutableDictionary : NSObject
 {
     private static readonly IntPtr NSClassType = GetClass("NSMutableDictionary");
@@ -8,7 +9,7 @@ public class NSMutableDictionary : NSObject
 
     public NSMutableDictionary()
     {
-        Handle = ObjectiveCRuntime.Instance.SendMessage(NSClassType, CreateDictionarySelector);
+        Handle = ObjectiveCRuntimeInterop.Instance.SendMessage(NSClassType, CreateDictionarySelector);
     }
 
     public void Add(string key, object value)
@@ -16,7 +17,7 @@ public class NSMutableDictionary : NSObject
         var nsKey = new NSString(key);
         var nsValue = ConvertManagedTypeToNSObject(value);
 
-        ObjectiveCRuntime.Instance.SendMessage(Handle, AddKeyValueSelector, nsValue.Handle, nsKey.Handle);
+        ObjectiveCRuntimeInterop.Instance.SendMessage(Handle, AddKeyValueSelector, nsValue.Handle, nsKey.Handle);
     }
 
     private static NSObject ConvertManagedTypeToNSObject(object value) => value switch

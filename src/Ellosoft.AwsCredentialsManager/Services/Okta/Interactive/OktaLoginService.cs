@@ -27,24 +27,13 @@ public interface IOktaLoginService
         string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = OktaConfiguration.DefaultProfileName);
 }
 
-public class OktaLoginService : IOktaLoginService
+public class OktaLoginService(
+    IConfigManager configManager,
+    IUserCredentialsManager userCredentialsManager,
+    OktaClassicAuthenticator classicAuthenticator,
+    OktaClassicAccessTokenProvider oktaClassicAccessTokenProvider)
+    : IOktaLoginService
 {
-    private readonly IConfigManager _configManager;
-    private readonly OktaClassicAuthenticator _oktaAuth;
-    private readonly OktaClassicAccessTokenProvider _oktaAccessTokenProvider;
-
-    private readonly UserCredentialsManager _userCredentialsManager = new();
-
-    public OktaLoginService(
-        IConfigManager configManager,
-        OktaClassicAuthenticator classicAuthenticator,
-        OktaClassicAccessTokenProvider oktaClassicAccessTokenProvider)
-    {
-        _configManager = configManager;
-        _oktaAuth = classicAuthenticator;
-        _oktaAccessTokenProvider = oktaClassicAccessTokenProvider;
-    }
-
     public async Task<AuthenticationResult?> InteractiveLogin(string oktaProfile)
     {
         var oktaConfig = GetOktaConfig(oktaProfile);
@@ -64,7 +53,7 @@ public class OktaLoginService : IOktaLoginService
 
         try
         {
-            var authResult = await _oktaAccessTokenProvider
+            var authResult = await oktaClassicAccessTokenProvider
                 .GetAccessTokenAsync(new Uri(oktaConfig.OktaDomain), userCredentials.Username, userCredentials.Password, preferredMfa);
 
             if (authResult is not null)
@@ -85,7 +74,7 @@ public class OktaLoginService : IOktaLoginService
     {
         try
         {
-            var authResult = await _oktaAuth.AuthenticateAsync(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
+            var authResult = await classicAuthenticator.AuthenticateAsync(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
 
             SaveUserCredentials(userProfileKey, userCredentials, savedCredentials);
 
@@ -101,12 +90,12 @@ public class OktaLoginService : IOktaLoginService
 
     private void SaveUserCredentials(string userProfileKey, UserCredentials userCredentials, bool savedCredentials)
     {
-        if (savedCredentials || !_userCredentialsManager.SupportCredentialsStore)
+        if (savedCredentials || !userCredentialsManager.SupportCredentialsStore)
             return;
 
         if (AnsiConsole.Confirm("Do you want to save your Okta username and password for future logins ?"))
         {
-            _userCredentialsManager.SaveUserCredentials(userProfileKey, userCredentials);
+            userCredentialsManager.SaveUserCredentials(userProfileKey, userCredentials);
 
             return;
         }
@@ -116,19 +105,15 @@ public class OktaLoginService : IOktaLoginService
 
     private UserCredentials GetUserCredentials(string userProfileKey, out bool savedCredentials)
     {
-        UserCredentials? user = null;
         savedCredentials = false;
 
-        if (_userCredentialsManager.SupportCredentialsStore)
+        var user = userCredentialsManager.GetUserCredentials(userProfileKey);
+
+        if (!string.IsNullOrWhiteSpace(user?.Password))
         {
-            user = _userCredentialsManager.GetUserCredentials(userProfileKey);
+            savedCredentials = true;
 
-            if (!string.IsNullOrWhiteSpace(user?.Password))
-            {
-                savedCredentials = true;
-
-                return user;
-            }
+            return user;
         }
 
         AnsiConsole.MarkupLine("Let's get you logged in !");
@@ -144,16 +129,13 @@ public class OktaLoginService : IOktaLoginService
 
     private void ClearStoredPassword(string profileKey, UserCredentials userCredentials)
     {
-        if (!_userCredentialsManager.SupportCredentialsStore)
-            return;
-
         var credentialsWithoutPasswords = userCredentials with { Password = string.Empty };
-        _userCredentialsManager.SaveUserCredentials(profileKey, credentialsWithoutPasswords);
+        userCredentialsManager.SaveUserCredentials(profileKey, credentialsWithoutPasswords);
     }
 
     private OktaConfiguration GetOktaConfig(string profile)
     {
-        if (_configManager.AppConfig.Authentication?.Okta.TryGetValue(profile, out var config) == true)
+        if (configManager.AppConfig.Authentication?.Okta.TryGetValue(profile, out var config) == true)
             return config;
 
         throw new OktaProfileNotFoundException(profile);

@@ -8,7 +8,11 @@ using Ellosoft.AwsCredentialsManager.Services.IO;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.Security;
+using Ellosoft.AwsCredentialsManager.Services.Platforms.Windows.Security;
+using Ellosoft.AwsCredentialsManager.Services.Security;
+using Ellosoft.AwsCredentialsManager.Services.Utilities;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Ellosoft.AwsCredentialsManager;
 
@@ -39,9 +43,40 @@ public static class ServiceRegistration
         services
             .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
 
-        services
-            .AddSingleton<IKeychain, Keychain>();
+        services.AddSingleton<IUserCredentialsManager, UserCredentialsManager>();
+        services.AddSingleton<IClipboardManager, ClipboardManager>();
+        services.AddSingleton<IFileManager, FileManager>();
+
+        if (OperatingSystem.IsMacOS())
+        {
+            RegisterMacOSServices(services);
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            RegisterWindowsServices(services);
+        }
+
+        // fallback implementations
+        services.TryAddSingleton<ISecureStorage, SecureStorage>();
 
         return services;
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static void RegisterWindowsServices(IServiceCollection services)
+    {
+        services.AddSingleton<IProtectedDataService, ProtectedDataService>();
+
+        services.AddSingleton<ISecureStorage, SecureStorageWindows>();
+    }
+
+    [SupportedOSPlatform("macos")]
+    private static void RegisterMacOSServices(IServiceCollection services)
+    {
+        services.AddSingleton<IKeychainService, KeychainService>();
+        services.AddSingleton<IMacOsKeychainInterop, MacOsKeychainInterop>();
+
+        services.AddSingleton<ISecureStorage, SecureStorageMacOS>();
     }
 }

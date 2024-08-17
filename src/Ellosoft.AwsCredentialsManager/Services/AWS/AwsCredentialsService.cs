@@ -11,10 +11,8 @@ namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
 public record AwsCredentialsData(string AccessKeyId, string SecretAccessKey, string SessionToken, DateTime ExpirationDateTime, string RoleArn);
 
-public class AwsCredentialsService
+public interface IAwsCredentialsService
 {
-    internal sealed record ProfileMetadata(string RoleArn, string AccessKey, DateTime Expiration);
-
     /// <summary>
     ///     Assume AWS role and retrieve its credentials by using the SAML authentication assertion
     /// </summary>
@@ -31,6 +29,34 @@ public class AwsCredentialsService
     ///     The AssumeRoleWithSAMLAsync issues an HTTP POST request to https://sts.amazonaws.com, which does not require a region,
     ///     however the region is still required as part of the AmazonSecurityTokenServiceClient constructor validation, therefore USEast2 is being used.
     /// </remarks>
+    Task<AwsCredentialsData> GetAwsCredentials(
+        string samlAssertion,
+        string roleArn,
+        string idp,
+        int expirationInMinutes = 120);
+
+    /// <summary>
+    ///     Store AWS credentials for a specific profile in the AWS credentials file.
+    /// </summary>
+    /// <param name="awsProfileName">The name of the AWS profile where the credentials should be stored.</param>
+    /// <param name="credentials">AWS credentials to be stored.</param>
+    void StoreCredentials(string awsProfileName, AwsCredentialsData credentials);
+
+    /// <summary>
+    ///     Retrieve AWS credentials for a specific profile from the AWS credentials file.
+    /// </summary>
+    /// <param name="awsProfileName">The name of the AWS profile where the credentials should be retrieved.</param>
+    /// <returns>
+    ///     AwsCredentialsData containing retrieved AWS credentials or
+    ///     null if the profile isn't found or if the credential is about expire (15 min threshold).
+    /// </returns>
+    AwsCredentialsData? GetCredentialsFromStore(string awsProfileName);
+}
+
+public class AwsCredentialsService : IAwsCredentialsService
+{
+    internal sealed record ProfileMetadata(string RoleArn, string AccessKey, DateTime Expiration);
+
     public async Task<AwsCredentialsData> GetAwsCredentials(
         string samlAssertion,
         string roleArn,
@@ -64,11 +90,6 @@ public class AwsCredentialsService
         }
     }
 
-    /// <summary>
-    ///     Store AWS credentials for a specific profile in the AWS credentials file.
-    /// </summary>
-    /// <param name="awsProfileName">The name of the AWS profile where the credentials should be stored.</param>
-    /// <param name="credentials">AWS credentials to be stored.</param>
     public void StoreCredentials(string awsProfileName, AwsCredentialsData credentials)
     {
         var options = new CredentialProfileOptions
@@ -86,14 +107,6 @@ public class AwsCredentialsService
         SaveProfileMetadata(awsProfileName, new ProfileMetadata(credentials.RoleArn, credentials.AccessKeyId, credentials.ExpirationDateTime));
     }
 
-    /// <summary>
-    ///     Retrieve AWS credentials for a specific profile from the AWS credentials file.
-    /// </summary>
-    /// <param name="awsProfileName">The name of the AWS profile where the credentials should be retrieved.</param>
-    /// <returns>
-    ///     AwsCredentialsData containing retrieved AWS credentials or
-    ///     null if the profile isn't found or if the credential is about expire (15 min threshold).
-    /// </returns>
     public AwsCredentialsData? GetCredentialsFromStore(string awsProfileName)
     {
         var sharedFile = new CredentialProfileStoreChain();

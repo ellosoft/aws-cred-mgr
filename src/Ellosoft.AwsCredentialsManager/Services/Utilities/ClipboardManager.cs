@@ -1,44 +1,57 @@
 // Copyright (c) 2024 Ellosoft Limited. All rights reserved.
 
-using System.Runtime.InteropServices;
-using CliWrap;
-using CliWrap.Buffered;
+using System.Diagnostics;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Utilities;
 
-public class ClipboardManager : PlatformService
+public interface IClipboardManager
 {
-    private readonly string _clipboardCommand = string.Empty;
-    private readonly bool _isSupportedPlatform;
+    /// <summary>
+    ///     Set the clipboard text
+    /// </summary>
+    /// <param name="text">Text to copy to the clipboard</param>
+    /// <returns>True if the operation was successful, false otherwise</returns>
+    bool SetClipboardTextAsync(string text);
+}
 
-    public ClipboardManager()
+public class ClipboardManager : PlatformServiceSlim, IClipboardManager
+{
+    private readonly string _command = ExecuteMultiPlatformCommand(
+        win: () => "clip",
+        macos: () => "/usr/bin/pbcopy",
+        linux: () => "xclip");
+
+    public bool SetClipboardTextAsync(string text) => ExecuteCliCommand(_command, text) == 0;
+
+    private static int ExecuteCliCommand(string command, string? stdin = null)
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        using var process = new Process();
+
+        process.StartInfo = new ProcessStartInfo
         {
-            _clipboardCommand = "clip";
-            _isSupportedPlatform = true;
-            return;
+            FileName = command,
+            RedirectStandardInput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        process.Start();
+
+        if (stdin is not null)
+        {
+            using var writer = process.StandardInput;
+
+            if (writer.BaseStream.CanWrite)
+            {
+                writer.Write(stdin);
+                writer.Flush();
+            }
+
+            writer.Close();
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            _clipboardCommand = "pbcopy";
-            _isSupportedPlatform = true;
-        }
-    }
+        process.WaitForExit();
 
-    protected override bool IsSupportedPlatform() => _isSupportedPlatform;
-
-    public Task<bool> SetClipboardTextAsync(string text)
-    {
-        return ExecuteMultiPlatformCommand(async () =>
-        {
-            var cmdResult = await Cli.Wrap(_clipboardCommand)
-                .WithStandardInputPipe(PipeSource.FromString(text))
-                .WithValidation(CommandResultValidation.None)
-                .ExecuteBufferedAsync();
-
-            return cmdResult.IsSuccess;
-        });
+        return process.ExitCode;
     }
 }

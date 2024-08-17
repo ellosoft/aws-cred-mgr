@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS;
 
-public interface IObjectiveCRuntime
+public interface IObjectiveCRuntimeInterop
 {
     IntPtr SendMessage(IntPtr receiver, IntPtr selector);
 
@@ -21,13 +21,15 @@ public interface IObjectiveCRuntime
 
 #pragma warning disable S4200
 
-public class ObjectiveCRuntime : IObjectiveCRuntime
+[SupportedOSPlatform("macos")]
+[ExcludeFromCodeCoverage]
+public class ObjectiveCRuntimeInterop : IObjectiveCRuntimeInterop
 {
-    private ObjectiveCRuntime() { }
+    private ObjectiveCRuntimeInterop() { }
 
     private const string LIBRARY_NAME = "/usr/lib/libobjc.dylib";
 
-    public static IObjectiveCRuntime Instance { get; set; } = new ObjectiveCRuntime();
+    public static IObjectiveCRuntimeInterop Instance { get; set; } = new ObjectiveCRuntimeInterop();
 
     [DllImport(LIBRARY_NAME, EntryPoint = "objc_msgSend")]
     private static extern IntPtr SendMessageNative(IntPtr receiver, IntPtr selector);

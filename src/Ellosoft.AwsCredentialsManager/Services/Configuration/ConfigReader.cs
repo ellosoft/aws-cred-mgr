@@ -9,7 +9,12 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Configuration;
 
-public class ConfigReader
+public interface IConfigReader
+{
+    AppConfig Read(string filePath);
+}
+
+public class ConfigReader : IConfigReader
 {
     private static readonly IDeserializer Deserializer = CreateDeserializer();
 

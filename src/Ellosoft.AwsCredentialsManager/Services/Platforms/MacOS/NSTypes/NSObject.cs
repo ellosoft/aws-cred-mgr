@@ -1,5 +1,6 @@
 namespace Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.NSTypes;
 
+[SupportedOSPlatform("macos")]
 public abstract class NSObject : IDisposable
 {
     public IntPtr Handle { get; protected init; }
@@ -17,8 +18,8 @@ public abstract class NSObject : IDisposable
         Handle.SafeReleaseIntPrtMem();
     }
 
-    protected static IntPtr GetClass(string name) => ObjectiveCRuntime.Instance.GetClass(name);
-    protected static IntPtr GetSelector(string name) => ObjectiveCRuntime.Instance.RegisterSelector(name);
+    protected static IntPtr GetClass(string name) => ObjectiveCRuntimeInterop.Instance.GetClass(name);
+    protected static IntPtr GetSelector(string name) => ObjectiveCRuntimeInterop.Instance.RegisterSelector(name);
 
     protected static Lazy<IntPtr> GetClassLazy(string name) => new(() => GetClass(name));
 

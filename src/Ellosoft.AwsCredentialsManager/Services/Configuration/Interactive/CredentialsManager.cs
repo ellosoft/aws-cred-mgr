@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics.CodeAnalysis;
 using Ellosoft.AwsCredentialsManager.Commands;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 

@@ -23,9 +23,9 @@ public static class AppDataDirectory
     ///     Gets the full path to the specified file in the application's data directory.
     /// </summary>
     /// <param name="fileName">The name of the file to get the path for.</param>
-    /// <param name="createDirectory">If true, the directory will be created if it doesn't exist.</param>
+    /// <param name="createDirectory">If true, the directory will be created if it doesn't exist. Default is true.</param>
     /// <returns>The full path to the specified file in the application's data directory.</returns>
-    public static string GetPath(string fileName, bool createDirectory = false)
+    public static string GetPath(string fileName, bool createDirectory = true)
     {
         var path = IOPath.Combine(Path, fileName);
 

@@ -1,5 +1,6 @@
 namespace Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.NSTypes;
 
+[SupportedOSPlatform("macos")]
 public class NSString : NSObject
 {
     private static readonly IntPtr NSClassType = GetClass("NSString");
@@ -7,6 +8,6 @@ public class NSString : NSObject
 
     public NSString(string value)
     {
-        Handle = ObjectiveCRuntime.Instance.SendMessage(NSClassType, CreateStringSelector, value);
+        Handle = ObjectiveCRuntimeInterop.Instance.SendMessage(NSClassType, CreateStringSelector, value);
     }
 }
