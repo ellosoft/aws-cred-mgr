@@ -23,8 +23,10 @@ public static class ServiceRegistration
         services
             .AddSingleton<IFileManager, FileManager>()
             .AddSingleton<IConfigManager, ConfigManager>()
-            .AddSingleton<CredentialsManager>()
-            .AddSingleton<EnvironmentManager>();
+            .AddSingleton<ICredentialsManager, CredentialsManager>()
+            .AddSingleton<IEnvironmentManager, EnvironmentManager>()
+            .AddSingleton<IUserCredentialsManager, UserCredentialsManager>()
+            .AddSingleton<IClipboardManager, ClipboardManager>();
 
         // okta related services
         services
@@ -32,7 +34,7 @@ public static class ServiceRegistration
             .AddSingleton<OktaClassicAccessTokenProvider>()
             .AddSingleton<IOktaLoginService, OktaLoginService>()
             .AddSingleton<IOktaMfaFactorSelector, OktaMfaFactorSelector>()
-            .AddSingleton<AwsOktaSessionManager>()
+            .AddSingleton<IAwsOktaSessionManager, AwsOktaSessionManager>()
             .AddSingleton<OktaSamlService>();
 
         // aws related services
@@ -42,10 +44,6 @@ public static class ServiceRegistration
 
         services
             .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
-
-        services.AddSingleton<IUserCredentialsManager, UserCredentialsManager>();
-        services.AddSingleton<IClipboardManager, ClipboardManager>();
-        services.AddSingleton<IFileManager, FileManager>();
 
         if (OperatingSystem.IsMacOS())
         {
@@ -66,17 +64,19 @@ public static class ServiceRegistration
     [SupportedOSPlatform("windows")]
     private static void RegisterWindowsServices(IServiceCollection services)
     {
-        services.AddSingleton<IProtectedDataService, ProtectedDataService>();
-
         services.AddSingleton<ISecureStorage, SecureStorageWindows>();
+
+        // platform services
+        services.AddSingleton<IProtectedDataService, ProtectedDataService>();
     }
 
     [SupportedOSPlatform("macos")]
     private static void RegisterMacOSServices(IServiceCollection services)
     {
+        services.AddSingleton<ISecureStorage, SecureStorageMacOS>();
+
+        // platform services
         services.AddSingleton<IKeychainService, KeychainService>();
         services.AddSingleton<IMacOsKeychainInterop, MacOsKeychainInterop>();
-
-        services.AddSingleton<ISecureStorage, SecureStorageMacOS>();
     }
 }

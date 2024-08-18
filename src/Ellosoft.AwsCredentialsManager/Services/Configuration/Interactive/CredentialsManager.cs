@@ -5,7 +5,16 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 
-public class CredentialsManager(IConfigManager configManager)
+public interface ICredentialsManager
+{
+    string GetCredentialNameFromUser();
+
+    bool TryGetCredential(string credentialProfile, [NotNullWhen(true)] out CredentialsConfiguration? credentialsConfig);
+
+    void CreateCredential(string name, string? awsProfile, string awsRole, string oktaAppUrl, string oktaProfile);
+}
+
+public class CredentialsManager(IConfigManager configManager) : ICredentialsManager
 {
     public string GetCredentialNameFromUser()
     {

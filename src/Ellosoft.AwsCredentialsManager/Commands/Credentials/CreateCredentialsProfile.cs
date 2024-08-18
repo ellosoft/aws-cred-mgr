@@ -15,7 +15,12 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Name("new")]
 [Description("Create new credential profile")]
 [Examples("new prod")]
-public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Settings>
+public class CreateCredentialsProfile(
+    ICredentialsManager credentialsManager,
+    IOktaLoginService oktaLogin,
+    OktaSamlService oktaSamlService,
+    AwsSamlService awsSamlService)
+    : AsyncCommand<CreateCredentialsProfile.Settings>
 {
     private const string DEFAULT_AWS_PROFILE_VALUE = "[credential name]";
 
@@ -44,30 +49,13 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
         public string OktaUserProfile { get; set; } = OktaConfiguration.DefaultProfileName;
     }
 
-    private readonly CredentialsManager _credentialsManager;
-    private readonly IOktaLoginService _oktaLogin;
-    private readonly OktaSamlService _oktaSamlService;
-    private readonly AwsSamlService _awsSamlService;
-
-    public CreateCredentialsProfile(
-        CredentialsManager credentialsManager,
-        IOktaLoginService oktaLogin,
-        OktaSamlService oktaSamlService,
-        AwsSamlService awsSamlService)
-    {
-        _credentialsManager = credentialsManager;
-        _oktaLogin = oktaLogin;
-        _oktaSamlService = oktaSamlService;
-        _awsSamlService = awsSamlService;
-    }
-
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         var oktaAppUrl = settings.OktaAppUrl ?? await GetAwsAppUrl(settings.OktaUserProfile);
         var awsRole = settings.AwsRoleArn ?? await GetAwsRoleArn(settings.OktaUserProfile, oktaAppUrl);
         var awsProfile = settings.AwsProfile is null or DEFAULT_AWS_PROFILE_VALUE ? null : settings.AwsProfile;
 
-        _credentialsManager.CreateCredential(
+        credentialsManager.CreateCredential(
             name: settings.Name,
             awsProfile: awsProfile,
             awsRole: awsRole,
@@ -83,7 +71,7 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
     {
         AnsiConsole.MarkupLine("Retrieving AWS Apps from OKTA...");
 
-        var accessTokenResult = await _oktaLogin.InteractiveGetAccessToken(oktaUserProfile);
+        var accessTokenResult = await oktaLogin.InteractiveGetAccessToken(oktaUserProfile);
 
         if (accessTokenResult is null)
             throw new CommandException("Unable to retrieve OKTA apps, please try again or use the '--okta-app-url' option to specify an app URL manually");
@@ -121,15 +109,15 @@ public class CreateCredentialsProfile : AsyncCommand<CreateCredentialsProfile.Se
     {
         AnsiConsole.MarkupLine("Retrieving AWS roles...");
 
-        var sessionTokenResult = await _oktaLogin.InteractiveLogin(oktaUserProfile);
+        var sessionTokenResult = await oktaLogin.InteractiveLogin(oktaUserProfile);
 
         if (sessionTokenResult?.SessionToken is null)
             throw new CommandException("Unable to create AWS credential profile, please try again");
 
-        var samlData = await _oktaSamlService.GetAppSamlDataAsync(sessionTokenResult.OktaDomain, oktaAppUrl,
+        var samlData = await oktaSamlService.GetAppSamlDataAsync(sessionTokenResult.OktaDomain, oktaAppUrl,
             sessionTokenResult.SessionToken);
 
-        var awsRoles = await _awsSamlService.GetAwsRolesWithAccountName(samlData);
+        var awsRoles = await awsSamlService.GetAwsRolesWithAccountName(samlData);
 
         if (awsRoles.Count == 0)
             throw new CommandException("Unable to load AWS roles, please use the '--aws-role' option to specify a role manually");

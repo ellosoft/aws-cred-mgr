@@ -1,6 +1,5 @@
 <Project>
     <PropertyGroup>
-        <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
@@ -15,5 +14,10 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
+
+    <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
+        <DefineConstants Condition="'$([System.OperatingSystem]::IsMacOs())' == 'true'">$(DefineConstants);MACOS</DefineConstants>
+        <DefineConstants Condition="'$([System.OperatingSystem]::IsWindows())' == 'true'">$(DefineConstants);WINDOWS</DefineConstants>
+    </PropertyGroup>
 
 </Project>

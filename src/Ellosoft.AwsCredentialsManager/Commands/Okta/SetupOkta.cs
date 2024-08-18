@@ -12,7 +12,7 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Okta;
     "setup",
     "setup -d https://xyz.okta.com -u john --mfa push",
     "setup xyz_profile -d https://xyz.okta.com -u john --mfa push")]
-public class SetupOkta : AsyncCommand<SetupOkta.Settings>
+public class SetupOkta(IOktaLoginService loginService, IConfigManager configManager) : AsyncCommand<SetupOkta.Settings>
 {
     public class Settings : CommonSettings
     {
@@ -34,15 +34,6 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
         public string? PreferredMfaType { get; set; }
     }
 
-    private readonly IOktaLoginService _loginService;
-    private readonly IConfigManager _configManager;
-
-    public SetupOkta(IOktaLoginService loginService, IConfigManager configManager)
-    {
-        _loginService = loginService;
-        _configManager = configManager;
-    }
-
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         AnsiConsole.MarkupLine("Okta Setup");
@@ -56,7 +47,7 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
         var credentials = new UserCredentials(username, password);
         var preferredMfaType = settings.PreferredMfaType is not null ? OktaMfaFactorSelector.GetOktaMfaFactorCode(settings.PreferredMfaType) : null;
 
-        var authResult = await _loginService.Login(oktaDomain, credentials, preferredMfaType, userProfileKey: settings.Profile);
+        var authResult = await loginService.Login(oktaDomain, credentials, preferredMfaType, userProfileKey: settings.Profile);
 
         if (!authResult.Authenticated)
             throw new CommandException("Unable to create profile, please try again");
@@ -88,7 +79,7 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
 
     private void CreateOktaProfile(string profileName, string oktaDomain, string? preferredMfaType)
     {
-        var appConfig = _configManager.AppConfig;
+        var appConfig = configManager.AppConfig;
         appConfig.Authentication ??= new AppConfig.AuthenticationSection();
 
         appConfig.Authentication.Okta[profileName] = new OktaConfiguration
@@ -97,6 +88,6 @@ public class SetupOkta : AsyncCommand<SetupOkta.Settings>
             PreferredMfaType = preferredMfaType
         };
 
-        _configManager.SaveConfig();
+        configManager.SaveConfig();
     }
 }

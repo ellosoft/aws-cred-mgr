@@ -8,10 +8,15 @@ using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 
+public interface IAwsOktaSessionManager
+{
+    Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? outputAwsProfile);
+}
+
 public class AwsOktaSessionManager(
-    CredentialsManager credentialsManager,
+    ICredentialsManager credentialsManager,
     IOktaLoginService loginService,
-    OktaSamlService oktaSamlService)
+    OktaSamlService oktaSamlService) : IAwsOktaSessionManager
 {
     private readonly AwsCredentialsService _awsCredentialsService = new();
     private readonly AwsSamlService _awsSamlService = new();

@@ -12,8 +12,8 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
     "get prod",
     "get prod --aws-profile default")]
 public class GetCredentials(
-    CredentialsManager credentialsManager,
-    AwsOktaSessionManager sessionManager
+    ICredentialsManager credentialsManager,
+    IAwsOktaSessionManager sessionManager
 ) : AsyncCommand<GetCredentials.Settings>
 {
     public class Settings : AwsSettings
