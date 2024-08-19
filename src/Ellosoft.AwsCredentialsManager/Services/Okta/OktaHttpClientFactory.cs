@@ -1,7 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Net;
-
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
 public static class OktaHttpClientFactory
@@ -14,13 +12,7 @@ public static class OktaHttpClientFactory
     {
         const string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0";
 
-        var handler = new HttpClientHandler
-        {
-            CookieContainer = new CookieContainer(),
-            AllowAutoRedirect = false
-        };
-
-        var httpClient = new HttpClient(handler);
+        var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
 
         return httpClient;

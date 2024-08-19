@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Ellosoft.AwsCredentialsManager.Commands.AWS;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
@@ -18,8 +17,8 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 public class CreateCredentialsProfile(
     ICredentialsManager credentialsManager,
     IOktaLoginService oktaLogin,
-    OktaSamlService oktaSamlService,
-    AwsSamlService awsSamlService)
+    IOktaSamlService oktaSamlService,
+    IAwsSamlService awsSamlService)
     : AsyncCommand<CreateCredentialsProfile.Settings>
 {
     private const string DEFAULT_AWS_PROFILE_VALUE = "[credential name]";
@@ -71,12 +70,12 @@ public class CreateCredentialsProfile(
     {
         AnsiConsole.MarkupLine("Retrieving AWS Apps from OKTA...");
 
-        var accessTokenResult = await oktaLogin.InteractiveGetAccessToken(oktaUserProfile);
+        var authenticationResult = await oktaLogin.InteractiveLogin(oktaUserProfile, createSession: true);
 
-        if (accessTokenResult is null)
+        if (authenticationResult?.SessionId is null)
             throw new CommandException("Unable to retrieve OKTA apps, please try again or use the '--okta-app-url' option to specify an app URL manually");
 
-        var awsAppLinks = await GetAwsLinks(accessTokenResult.AuthResult.OktaDomain, accessTokenResult.AccessToken);
+        var awsAppLinks = await GetAwsLinks(authenticationResult.OktaDomain, authenticationResult.SessionId);
 
         if (awsAppLinks.Count == 0)
             throw new CommandException("No AWS apps found in Okta, please use the '--okta-app-url' option to specify an app URL manually");
@@ -90,19 +89,26 @@ public class CreateCredentialsProfile(
                 .AddChoices(awsAppLinks));
 
         return appLink.LinkUrl;
+    }
 
-        static async Task<ICollection<AppLink>> GetAwsLinks(Uri oktaDomain, string accessToken)
-        {
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+    private static async Task<ICollection<AppLink>> GetAwsLinks(Uri oktaDomain, string sessionId)
+    {
+        // TODO: Replace with HttpClientFactory client
+        using var httpClient = new HttpClient();
 
-            var appLinks = await httpClient.GetFromJsonAsync(new Uri(oktaDomain, "/api/v1/users/me/appLinks"), OktaSourceGenerationContext.Default.ListAppLink);
+        var request = new HttpRequestMessage(HttpMethod.Get, new Uri(oktaDomain, "/api/v1/users/me/appLinks"));
+        request.Headers.Add("Cookie", $"sid={sessionId}");
 
-            if (appLinks is not null)
-                return appLinks.Where(app => app.AppName == "amazon_aws").ToList();
+        var httpResponse = await httpClient.SendAsync(request);
+        httpResponse.EnsureSuccessStatusCode();
 
-            throw new InvalidOperationException("Invalid Okta AppLinks response");
-        }
+        var appLinks = await httpResponse.Content.ReadFromJsonAsync(
+            OktaSourceGenerationContext.Default.ListAppLink);
+
+        if (appLinks is not null)
+            return appLinks.Where(app => app.AppName == "amazon_aws").ToList();
+
+        throw new InvalidOperationException("Invalid Okta AppLinks response");
     }
 
     private async Task<string> GetAwsRoleArn(string oktaUserProfile, string oktaAppUrl)

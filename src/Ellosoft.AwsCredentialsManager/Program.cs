@@ -7,6 +7,7 @@ using Ellosoft.AwsCredentialsManager.Commands.Config;
 using Ellosoft.AwsCredentialsManager.Commands.Credentials;
 using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Commands.RDS;
+using Ellosoft.AwsCredentialsManager.Commands.Utils;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade;
@@ -53,6 +54,9 @@ app.Configure(config =>
             cfg.AddCommand<OpenConfig>();
             cfg.AddCommand<OpenAwsConfig>();
         });
+
+    // root commands
+    config.AddCommand<OpenLogs>();
 
     config.PropagateExceptions();
 

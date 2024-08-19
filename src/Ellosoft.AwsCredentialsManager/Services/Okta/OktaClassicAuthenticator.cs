@@ -8,12 +8,21 @@ using Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
+public interface IOktaClassicAuthenticator
+{
+    Task<AuthenticationResult> AuthenticateAsync(Uri oktaDomain, string username, string password, string? preferredMfa);
+
+    Task<CreateSessionResult?> CreateSessionAsync(Uri oktaDomain, string sessionToken);
+}
+
 public class OktaClassicAuthenticator(
+    ILogger<OktaClassicAuthenticator> logger,
     [FromKeyedServices(nameof(OktaHttpClientFactory))] HttpClient httpClient,
-    IOktaMfaFactorSelector mfaFactorSelector)
+    IOktaMfaFactorSelector mfaFactorSelector) : IOktaClassicAuthenticator
 {
     private readonly MfaHandlerProvider _mfaHandlerProvider = new();
 
@@ -42,6 +51,29 @@ public class OktaClassicAuthenticator(
         }
 
         return HandleFailedAuthenticationResponse(oktaDomain, authResponse);
+    }
+
+    public async Task<CreateSessionResult?> CreateSessionAsync(Uri oktaDomain, string sessionToken)
+    {
+        var sessionUrl = new Uri(oktaDomain, "/api/v1/sessions");
+        var sessionRequest = new CreateSessionRequest(sessionToken);
+
+        var sessionResponse = await httpClient.PostAsJsonAsync(
+            sessionUrl, sessionRequest, OktaSourceGenerationContext.Default.CreateSessionRequest);
+
+        if (sessionResponse.IsSuccessStatusCode)
+        {
+            var response = await sessionResponse.Content.ReadFromJsonAsync(OktaSourceGenerationContext.Default.CreateSessionResult);
+
+            return response?.Status == "ACTIVE" ? response : null;
+        }
+
+        var responseBody = await sessionResponse.Content.ReadAsStringAsync();
+
+        logger.LogError("Unable to create Okta session. Status Code: {StatusCode}. Response Body: {ResponseBody}",
+            sessionResponse.StatusCode, responseBody);
+
+        return null;
     }
 
     private async Task<AuthenticationResponse> AuthenticateWithUsernameAndPassword(Uri oktaDomain, string username, string password)

@@ -10,7 +10,7 @@ internal static class LogRegistration
 {
     private const long MAX_LOG_FILE_SIZE = 20 * (1024 ^ 2);
 
-    private static readonly string LogFileName = AppDataDirectory.GetPath($"{AppMetadata.AppName}.log");
+    public static readonly string LogFileName = AppDataDirectory.GetPath($"{AppMetadata.AppName}.log");
 
     public static IServiceCollection SetupLogging(this IServiceCollection services, ILogger logger)
         => services.AddLogging(config => config.AddSerilog(logger));

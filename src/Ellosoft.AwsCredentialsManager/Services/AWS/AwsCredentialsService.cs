@@ -6,6 +6,7 @@ using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
+using Microsoft.Extensions.Logging;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
@@ -53,7 +54,7 @@ public interface IAwsCredentialsService
     AwsCredentialsData? GetCredentialsFromStore(string awsProfileName);
 }
 
-public class AwsCredentialsService : IAwsCredentialsService
+public class AwsCredentialsService(ILogger<AwsCredentialsService> logger) : IAwsCredentialsService
 {
     internal sealed record ProfileMetadata(string RoleArn, string AccessKey, DateTime Expiration);
 
@@ -130,6 +131,27 @@ public class AwsCredentialsService : IAwsCredentialsService
             profileMetadata.RoleArn);
     }
 
+    private ProfileMetadata? GetProfileMetadata(string profileName)
+    {
+        var profileMetadataPath = GetProfileMetadataFilePath(profileName);
+
+        if (!File.Exists(profileMetadataPath))
+            return null;
+
+        var bytes = File.ReadAllBytes(profileMetadataPath);
+
+        try
+        {
+            return JsonSerializer.Deserialize(bytes, SourceGenerationContext.Default.ProfileMetadata);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Unable to read AWS credentials profile metadata");
+
+            return null;
+        }
+    }
+
     private static void SaveProfileMetadata(string profileName, ProfileMetadata metadata)
     {
         var profileMetadataPath = GetProfileMetadataFilePath(profileName);
@@ -140,17 +162,5 @@ public class AwsCredentialsService : IAwsCredentialsService
             JsonSerializer.SerializeToUtf8Bytes(metadata, SourceGenerationContext.Default.ProfileMetadata));
     }
 
-    private static ProfileMetadata? GetProfileMetadata(string profileName)
-    {
-        var profileMetadataPath = GetProfileMetadataFilePath(profileName);
-
-        if (!File.Exists(profileMetadataPath))
-            return null;
-
-        var bytes = File.ReadAllBytes(profileMetadataPath);
-
-        return JsonSerializer.Deserialize(bytes, SourceGenerationContext.Default.ProfileMetadata);
-    }
-
-    private static string GetProfileMetadataFilePath(string profileName) => AppDataDirectory.GetPath($"aws_profiles\\{profileName}");
+    private static string GetProfileMetadataFilePath(string profileName) => AppDataDirectory.GetPath($"aws_profiles/{profileName}");
 }

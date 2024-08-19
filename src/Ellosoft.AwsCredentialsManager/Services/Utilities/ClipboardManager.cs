@@ -11,7 +11,7 @@ public interface IClipboardManager
     /// </summary>
     /// <param name="text">Text to copy to the clipboard</param>
     /// <returns>True if the operation was successful, false otherwise</returns>
-    bool SetClipboardTextAsync(string text);
+    bool SetClipboardText(string text);
 }
 
 public class ClipboardManager : PlatformServiceSlim, IClipboardManager
@@ -21,7 +21,7 @@ public class ClipboardManager : PlatformServiceSlim, IClipboardManager
         macos: () => "/usr/bin/pbcopy",
         linux: () => "xclip");
 
-    public bool SetClipboardTextAsync(string text) => ExecuteCliCommand(_command, text) == 0;
+    public bool SetClipboardText(string text) => ExecuteCliCommand(_command, text) == 0;
 
     private static int ExecuteCliCommand(string command, string? stdin = null)
     {

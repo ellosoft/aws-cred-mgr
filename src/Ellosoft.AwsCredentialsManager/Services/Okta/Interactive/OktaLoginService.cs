@@ -14,15 +14,9 @@ public interface IOktaLoginService
     ///     Execute an interactive Okta user login
     /// </summary>
     /// <param name="oktaProfile">Okta profile</param>
+    /// <param name="createSession">If true, a new Okta session will be created (default: false)</param>
     /// <returns>Authentication result</returns>
-    Task<AuthenticationResult?> InteractiveLogin(string oktaProfile);
-
-    /// <summary>
-    ///     Execute an interactive Okta user login returning an OKTA API access token as result
-    /// </summary>
-    /// <param name="oktaProfile">Okta profile</param>
-    /// <returns>Access token result</returns>
-    Task<AccessTokenResult?> InteractiveGetAccessToken(string oktaProfile);
+    Task<AuthenticationResult?> InteractiveLogin(string oktaProfile, bool createSession = false);
 
     Task<AuthenticationResult> Login(Uri oktaDomain, UserCredentials userCredentials,
         string? preferredMfaType = null, bool savedCredentials = false, string userProfileKey = OktaConfiguration.DefaultProfileName);
@@ -31,43 +25,29 @@ public interface IOktaLoginService
 public class OktaLoginService(
     IConfigManager configManager,
     IUserCredentialsManager userCredentialsManager,
-    OktaClassicAuthenticator classicAuthenticator,
-    OktaClassicAccessTokenProvider oktaClassicAccessTokenProvider)
+    IOktaClassicAuthenticator classicAuthenticator)
     : IOktaLoginService
 {
-    public async Task<AuthenticationResult?> InteractiveLogin(string oktaProfile)
+    public async Task<AuthenticationResult?> InteractiveLogin(string oktaProfile, bool createSession = false)
     {
         var oktaConfig = GetOktaConfig(oktaProfile);
         var userCredentials = GetUserCredentials(oktaProfile, out var savedCredentials);
         var preferredMfa = GetOktaMfaFactorCode(oktaConfig.PreferredMfaType);
 
-        var authResult = await Login(new Uri(oktaConfig.OktaDomain), userCredentials, preferredMfa, savedCredentials, oktaProfile);
+        var oktaDomain = new Uri(oktaConfig.OktaDomain);
+        var authResult = await Login(oktaDomain, userCredentials, preferredMfa, savedCredentials, oktaProfile);
+
+        if (!createSession || authResult is not { Authenticated: true, SessionToken: not null })
+            return authResult;
+
+        var sessionResult = await classicAuthenticator.CreateSessionAsync(oktaDomain, authResult.SessionToken);
+
+        if (sessionResult is not null)
+        {
+            authResult = authResult with { SessionId = sessionResult.Id };
+        }
 
         return authResult;
-    }
-
-    public async Task<AccessTokenResult?> InteractiveGetAccessToken(string oktaProfile)
-    {
-        var oktaConfig = GetOktaConfig(oktaProfile);
-        var userCredentials = GetUserCredentials(oktaProfile, out var savedCredentials);
-        var preferredMfa = GetOktaMfaFactorCode(oktaConfig.PreferredMfaType);
-
-        try
-        {
-            var authResult = await oktaClassicAccessTokenProvider
-                .GetAccessTokenAsync(new Uri(oktaConfig.OktaDomain), userCredentials.Username, userCredentials.Password, preferredMfa);
-
-            if (authResult is not null)
-                SaveUserCredentials(oktaProfile, userCredentials, savedCredentials);
-
-            return authResult;
-        }
-        catch (Exception e) when (e is InvalidUsernameOrPasswordException or PasswordExpiredException)
-        {
-            ClearStoredPassword(oktaProfile, userCredentials);
-
-            return null;
-        }
     }
 
     public async Task<AuthenticationResult> Login(Uri oktaDomain, UserCredentials userCredentials,

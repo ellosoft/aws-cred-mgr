@@ -10,7 +10,10 @@ public record AuthenticationResult
 
     public string? StateToken { get; init; }
 
+    public string? SessionId { get; init; }
+
     public string? SessionToken { get; init; }
 
     public bool Authenticated { get; init; }
 }
+

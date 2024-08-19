@@ -20,27 +20,28 @@ public static class ServiceRegistration
 {
     public static IServiceCollection RegisterAppServices(this IServiceCollection services)
     {
+        // core services
         services
             .AddSingleton<IFileManager, FileManager>()
+            .AddSingleton<IClipboardManager, ClipboardManager>()
             .AddSingleton<IConfigManager, ConfigManager>()
             .AddSingleton<ICredentialsManager, CredentialsManager>()
             .AddSingleton<IEnvironmentManager, EnvironmentManager>()
-            .AddSingleton<IUserCredentialsManager, UserCredentialsManager>()
-            .AddSingleton<IClipboardManager, ClipboardManager>();
+            .AddSingleton<IUserCredentialsManager, UserCredentialsManager>();
 
         // okta related services
         services
-            .AddSingleton<OktaClassicAuthenticator>()
-            .AddSingleton<OktaClassicAccessTokenProvider>()
+            .AddSingleton<IOktaClassicAuthenticator, OktaClassicAuthenticator>()
             .AddSingleton<IOktaLoginService, OktaLoginService>()
             .AddSingleton<IOktaMfaFactorSelector, OktaMfaFactorSelector>()
             .AddSingleton<IAwsOktaSessionManager, AwsOktaSessionManager>()
-            .AddSingleton<OktaSamlService>();
+            .AddSingleton<IOktaSamlService, OktaSamlService>();
 
         // aws related services
         services
-            .AddSingleton<RdsTokenGenerator>()
-            .AddSingleton<AwsSamlService>();
+            .AddSingleton<IRdsTokenGenerator, RdsTokenGenerator>()
+            .AddSingleton<IAwsCredentialsService, AwsCredentialsService>()
+            .AddSingleton<IAwsSamlService, AwsSamlService>();
 
         services
             .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());

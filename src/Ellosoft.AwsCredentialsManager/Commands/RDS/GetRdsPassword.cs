@@ -7,6 +7,7 @@ using Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
+using Ellosoft.AwsCredentialsManager.Services.Utilities;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.RDS;
 
@@ -20,7 +21,8 @@ public class GetRdsPassword(
     IEnvironmentManager envManager,
     ICredentialsManager credentialsManager,
     IAwsOktaSessionManager awsSessionManager,
-    RdsTokenGenerator rdsTokenGenerator)
+    IRdsTokenGenerator rdsTokenGenerator,
+    IClipboardManager clipboardManager)
     : AsyncCommand<GetRdsPassword.Settings>
 {
     public class Settings : AwsSettings
@@ -108,8 +110,11 @@ public class GetRdsPassword(
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
             var dbPassword = rdsTokenGenerator.GenerateDbPassword(awsCredentials, regionEndpoint, hostname, port.Value, username, ttl);
 
-            AnsiConsole.MarkupLine("\r\n[green]DB Password:[/]");
+            AnsiConsole.MarkupLine("[green]DB Password:[/]");
             Console.WriteLine(dbPassword);
+
+            if (clipboardManager.SetClipboardText(dbPassword))
+                AnsiConsole.MarkupLine("[green]\r\nDB Password copied to clipboard[/]");
         }
         catch (ArgumentNullException e)
         {

@@ -10,16 +10,17 @@ namespace Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade;
 
 #pragma warning disable S1075 // URIs should not be hardcoded
 
-public class UpgradeService
+public class UpgradeService(
+    ILogger logger,
+    IAnsiConsole console,
+    IAppMetadata appMetadata,
+    IFileDownloadService downloadService,
+    HttpClient httpClient)
 {
     private const string GITHUB_RELEASES_URL = "https://api.github.com/repos/ellosoft/aws-cred-mgr/releases";
     private const string GITHUB_LATEST_RELEASE_URL = "https://api.github.com/repos/ellosoft/aws-cred-mgr/releases/latest";
 
-    private readonly ILogger _logger;
-    private readonly IAnsiConsole _console;
-    private readonly IAppMetadata _appMetadata;
-    private readonly IFileDownloadService _downloadService;
-    private readonly HttpClient _httpClient;
+    private readonly ILogger _logger = logger.ForContext<UpgradeService>();
 
     public UpgradeService(ILogger logger) : this(
         logger,
@@ -30,20 +31,6 @@ public class UpgradeService
     {
     }
 
-    public UpgradeService(
-        ILogger logger,
-        IAnsiConsole console,
-        IAppMetadata appMetadata,
-        IFileDownloadService downloadService,
-        HttpClient httpClient)
-    {
-        _logger = logger.ForContext<UpgradeService>();
-        _console = console;
-        _appMetadata = appMetadata;
-        _downloadService = downloadService;
-        _httpClient = httpClient;
-    }
-
     public async Task TryUpgradeApp()
     {
         try
@@ -51,7 +38,7 @@ public class UpgradeService
             if (!ShouldCheckForUpgrade())
                 return;
 
-            var currentAppVersion = _appMetadata.GetAppVersion();
+            var currentAppVersion = appMetadata.GetAppVersion();
 
             if (currentAppVersion is null)
                 return;
@@ -66,24 +53,26 @@ public class UpgradeService
             if (!shouldUpdate)
                 return;
 
-            var (executablePath, appFolder) = _appMetadata.GetExecutablePath();
+            var (executablePath, appFolder) = appMetadata.GetExecutablePath();
 
             var executableName = Path.GetFileName(executablePath);
             var newFilePath = Path.Combine(appFolder, executableName + ".new");
             var archivePath = Path.Combine(Path.GetTempPath(), executableName + ".old");
 
-            await _downloadService.DownloadAsync(_httpClient, downloadUrl, newFilePath);
+            await downloadService.DownloadAsync(httpClient, downloadUrl, newFilePath);
 
-            _console.MarkupLine("\r\nInstalling upgrade...");
+            console.MarkupLine("\r\nInstalling upgrade...");
 
             UpgradeApp(executablePath, archivePath, newFilePath);
 
-            _console.MarkupLine("[green]Upgrade complete! The changes will reflect next time you execute the application.\r\n[/]");
+            console.MarkupLine("Upgrade complete! The changes will reflect next time you execute the application.\r\n");
+            console.MarkupLine("If you like this tool, consider giving it a :star: Star on GitHub, it's free and only takes 2 minutes!\r\n" +
+                               "Link: https://github.com/ellosoft/aws-cred-mgr\r\n");
         }
         catch (Exception e)
         {
             _logger.Error(e, "Unable to upgrade app");
-            _console.MarkupLine("[yellow]Unable to upgrade app, try again later or " +
+            console.MarkupLine("[yellow]Unable to upgrade app, try again later or " +
                                 "download the new version from https://github.com/ellosoft/aws-cred-mgr/releases [/]");
         }
     }
@@ -91,9 +80,9 @@ public class UpgradeService
     private async Task<GitHubRelease?> GetLatestRelease(SemanticVersion currentAppVersion)
     {
         if (!currentAppVersion.IsPreRelease)
-            return await _httpClient.GetFromJsonAsync(GITHUB_LATEST_RELEASE_URL, GithubSourceGenerationContext.Default.GitHubRelease);
+            return await httpClient.GetFromJsonAsync(GITHUB_LATEST_RELEASE_URL, GithubSourceGenerationContext.Default.GitHubRelease);
 
-        var releases = await _httpClient.GetFromJsonAsync(GITHUB_RELEASES_URL, GithubSourceGenerationContext.Default.ListGitHubRelease);
+        var releases = await httpClient.GetFromJsonAsync(GITHUB_RELEASES_URL, GithubSourceGenerationContext.Default.ListGitHubRelease);
 
         return releases?.Find(r => r.PreRelease);
     }
@@ -102,7 +91,7 @@ public class UpgradeService
     {
         var preReleaseTag = latestRelease.PreRelease ? "(Pre-release)" : String.Empty;
 
-        _console.MarkupLine(
+        console.MarkupLine(
             $"""
              New version available:
              [b]Current Version:[/] {currentAppVersion}
@@ -111,7 +100,7 @@ public class UpgradeService
 
              """);
 
-        return _console.Confirm("[yellow]Do you want to upgrade now ?[/]");
+        return console.Confirm("[yellow]Do you want to upgrade now ?[/]");
     }
 
     private static bool TryGetDownloadAssetAndVersion(

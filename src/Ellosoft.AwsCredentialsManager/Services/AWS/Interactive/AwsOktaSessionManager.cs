@@ -16,11 +16,10 @@ public interface IAwsOktaSessionManager
 public class AwsOktaSessionManager(
     ICredentialsManager credentialsManager,
     IOktaLoginService loginService,
-    OktaSamlService oktaSamlService) : IAwsOktaSessionManager
+    IOktaSamlService oktaSamlService,
+    IAwsCredentialsService awsCredentialsService,
+    IAwsSamlService awsSamlService) : IAwsOktaSessionManager
 {
-    private readonly AwsCredentialsService _awsCredentialsService = new();
-    private readonly AwsSamlService _awsSamlService = new();
-
     public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? outputAwsProfile)
     {
         if (!credentialsManager.TryGetCredential(credentialProfile, out var credentialsConfig))
@@ -38,7 +37,7 @@ public class AwsOktaSessionManager(
 
     private bool TryResumeSession(string awsProfile, string roleArn, [NotNullWhen(true)] out AwsCredentialsData? credentialsData)
     {
-        credentialsData = _awsCredentialsService.GetCredentialsFromStore(awsProfile);
+        credentialsData = awsCredentialsService.GetCredentialsFromStore(awsProfile);
 
         if (credentialsData is null || credentialsData.RoleArn != roleArn)
             return false;
@@ -76,16 +75,16 @@ public class AwsOktaSessionManager(
         if (idp is null)
             return null;
 
-        var awsCredentialsData = await _awsCredentialsService.GetAwsCredentials(samlData.SamlAssertion, credentialsConfig.RoleArn, idp);
+        var awsCredentialsData = await awsCredentialsService.GetAwsCredentials(samlData.SamlAssertion, credentialsConfig.RoleArn, idp);
 
-        _awsCredentialsService.StoreCredentials(awsProfile, awsCredentialsData);
+        awsCredentialsService.StoreCredentials(awsProfile, awsCredentialsData);
 
         return awsCredentialsData;
     }
 
     private string? GetRoleIdp(string credentialProfile, string roleArn, string samlAssertion)
     {
-        var roles = _awsSamlService.GetAwsRolesAndIdpFromSamlAssertion(samlAssertion);
+        var roles = awsSamlService.GetAwsRolesAndIdpFromSamlAssertion(samlAssertion);
 
         if (roles.TryGetValue(roleArn, out var idp))
             return idp;
@@ -107,7 +106,7 @@ public class AwsOktaSessionManager(
     {
         if (outputAwsProfile is not null && outputAwsProfile != credentialProfile)
         {
-            _awsCredentialsService.StoreCredentials(outputAwsProfile, credentialsData);
+            awsCredentialsService.StoreCredentials(outputAwsProfile, credentialsData);
         }
 
         return new SessionAWSCredentials(credentialsData.AccessKeyId, credentialsData.SecretAccessKey, credentialsData.SessionToken);
