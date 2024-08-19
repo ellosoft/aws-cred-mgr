@@ -41,20 +41,6 @@ jobs:
           directory: output-win/
           path: aws-cred-mgr.exe
           filename: aws-cred-mgr-${{ github.ref_name }}-win-x64.zip
-      - name: Zip Output MacOS x64
-        uses: thedoctor0/zip-release@0.7.6
-        with:
-          type: "zip"
-          directory: output-osx/
-          path: aws-cred-mgr
-          filename: aws-cred-mgr-${{ github.ref_name }}-osx-x64.zip
-      - name: Zip Output MacOS ARM
-        uses: thedoctor0/zip-release@0.7.6
-        with:
-          type: "zip"
-          directory: output-osxarm/
-          path: aws-cred-mgr
-          filename: aws-cred-mgr-${{ github.ref_name }}-osx-arm64.zip
 
 # End - Temporary steps to enable the migration of zip to binary
 
@@ -76,6 +62,7 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'beta') }}
           files: |
+            output-win/aws-cred-mgr-win-x64.zip
             output-win/aws-cred-mgr-win-x64.exe
             output-osx/aws-cred-mgr-osx-x64
             output-osxarm/aws-cred-mgr-osx-arm64
