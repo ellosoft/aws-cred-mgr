@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics;
 using Ellosoft.AwsCredentialsManager;
 using Ellosoft.AwsCredentialsManager.Commands;
 using Ellosoft.AwsCredentialsManager.Commands.Config;
@@ -62,7 +61,7 @@ app.Configure(config =>
 #if DEBUG
     config.ValidateExamples();
 
-    if (Debugger.IsAttached)
+    if (System.Diagnostics.Debugger.IsAttached)
         args = "rds pwd local".Split(' ');
 #endif
 });
