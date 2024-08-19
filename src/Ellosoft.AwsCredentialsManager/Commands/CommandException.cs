@@ -2,9 +2,4 @@
 
 namespace Ellosoft.AwsCredentialsManager.Commands;
 
-public class CommandException : Exception
-{
-    public CommandException(string message) : base(message)
-    {
-    }
-}
+public class CommandException(string message) : Exception(message);

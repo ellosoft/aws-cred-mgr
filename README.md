@@ -8,6 +8,8 @@ AWS Credential Manager (`aws-cred-mgr`) is a command-line interface (CLI) tool d
 -   **Credential Management**: Create and list AWS credentials, manage profiles with ease.
 -   **RDS Token Management**: Obtain RDS passwords for your databases securely.
 
+### [Request new features here](https://github.com/ellosoft/aws-cred-mgr/issues/new?assignees=vgmello-ellosoft&labels=enhancement&projects=&template=feature_request.md&title=%5BFEATURE%5D)
+
 ## Installation
 
 To install aws-cred-mgr, download the latest version from the [GitHub Release](https://github.com/ellosoft/aws-cred-mgr/releases) page
@@ -66,11 +68,14 @@ aws-cred-mgr config
 -   Open user config: `aws-cred-mgr config`
 -   Open AWS credentials file: `aws-cred-mgr config aws`
 
-## Security Note for Windows Users
+## Security Note for Windows and macOS Users
 
-On Windows systems, `aws-cred-mgr` securely stores your Okta credentials using the Data Protection API (DPAPI). This ensures that your sensitive information is encrypted and can only be accessed by your user account on your computer.
+On Windows systems, `aws-cred-mgr` securely stores your Okta credentials using the Data Protection API (DPAPI).
+This ensures that your sensitive information is encrypted and can only be accessed by your user account on your computer.
 
-MacOS support is still under development
+On macOs systems, `aws-cred-mgr` securely stores your Okta credentials using the native Keychain API.
+
+Linux support is still under development
 
 ## Full Configuration Example
 
@@ -157,6 +162,16 @@ This project has adopted the code of conduct defined by the Contributor Covenant
 -   **[YamlDotNet](https://github.com/aaubry/YamlDotNet)**: A .NET library for YAML serialization and deserialization.
 
 Each of these libraries may be licensed differently, so we recommend you to review their licenses if you plan to use `aws-cred-mgr` in your own projects.
+
+## Trademarks
+
+This repository makes use of libraries and technologies related to AWS (Amazon Web Services) and Okta.
+Please note that “AWS” and “Amazon Web Services” are trademarks or registered trademarks of Amazon.com, Inc. or its affiliates.
+Similarly, “Okta” is a trademark or registered trademark of Okta, Inc. All other trademarks and registered trademarks are the property
+of their respective owners.
+
+This repository is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc., Okta, Inc.,
+or any of their subsidiaries or affiliates. The use of these names is solely for descriptive purposes to identify the relevant technologies.
 
 ## License
 

@@ -7,6 +7,7 @@ namespace Ellosoft.AwsCredentialsManager.Services;
 
 public interface IAppMetadata
 {
+
     public SemanticVersion? GetAppVersion();
 
     (string executablePath, string appFolder) GetExecutablePath();
@@ -14,6 +15,8 @@ public interface IAppMetadata
 
 public class AppMetadata : IAppMetadata
 {
+    public const string AppName = "aws-cred-mgr";
+
     public SemanticVersion? GetAppVersion()
     {
         var versionValue = Assembly.GetEntryAssembly()?

@@ -4,22 +4,20 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 
-public class EnvironmentManager
+public interface IEnvironmentManager
+{
+    EnvironmentConfiguration GetOrCreateEnvironment(string? environment);
+
+    EnvironmentConfiguration? GetEnvironment(string environment);
+}
+
+public class EnvironmentManager(IConfigManager configManager, ICredentialsManager credentialsManager) : IEnvironmentManager
 {
     private sealed record Environment(string EnvironmentName, EnvironmentConfiguration? Configuration);
 
-    private readonly IConfigManager _configManager;
-    private readonly CredentialsManager _credentialsManager;
-
-    public EnvironmentManager(IConfigManager configManager, CredentialsManager credentialsManager)
-    {
-        _configManager = configManager;
-        _credentialsManager = credentialsManager;
-    }
-
     public EnvironmentConfiguration GetOrCreateEnvironment(string? environment)
     {
-        var appConfig = _configManager.AppConfig;
+        var appConfig = configManager.AppConfig;
 
         if (environment is not null && appConfig.Environments.TryGetValue(environment, out var existingEnv))
             return existingEnv;
@@ -46,7 +44,7 @@ public class EnvironmentManager
     }
 
     public EnvironmentConfiguration? GetEnvironment(string environment) =>
-        _configManager.AppConfig.Environments.TryGetValue(environment, out var env) ? env : null;
+        configManager.AppConfig.Environments.GetValueOrDefault(environment);
 
     private EnvironmentConfiguration CreateNewEnvironment(string? environment = null)
     {
@@ -54,15 +52,15 @@ public class EnvironmentManager
 
         AnsiConsole.MarkupLine($"Creating environment [green i]{environmentName}[/]");
 
-        var credentialName = _credentialsManager.GetCredentialNameFromUser();
+        var credentialName = credentialsManager.GetCredentialNameFromUser();
         var environmentConfig = new EnvironmentConfiguration { Credential = credentialName };
 
-        while (!_configManager.AppConfig.Environments.TryAdd(environmentName, environmentConfig))
+        while (!configManager.AppConfig.Environments.TryAdd(environmentName, environmentConfig))
         {
             environmentName = AnsiConsole.Ask<string>("This environment already exists, please choose another name:");
         }
 
-        _configManager.SaveConfig();
+        configManager.SaveConfig();
 
         AnsiConsole.MarkupLine("Environment created");
 

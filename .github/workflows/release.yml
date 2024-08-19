@@ -1,11 +1,16 @@
-name: .NET Release
+name: .NET Release Workflow
 on:
   push:
     tags:
       - "*"
+permissions:
+  id-token: write
+  contents: write
+  attestations: write
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  release:
+    name: Build & Release
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -14,18 +19,63 @@ jobs:
           dotnet-version: 8.0.x
       - name: Restore dependencies
         run: dotnet restore
-      - name: Build & Publish
-        run: dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} -r win-x64 -o win-output
-      - name: Zip Output
+      - name: Build & Publish Windows
+        run: |
+          dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
+          -r win-x64 -o output-win
+      - name: Build & Publish MacOS x64
+        run: |
+          dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
+          -r osx-x64 -o output-osx
+      - name: Build & Publish MacOS ARM
+        run: |
+          dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
+          -r osx-arm64 -o output-osxarm
+
+# Start - Temporary steps to enable the migration of zip to binary
+
+      - name: Zip Output Windows
         uses: thedoctor0/zip-release@0.7.6
         with:
           type: "zip"
-          directory: win-output/
+          directory: output-win/
           path: aws-cred-mgr.exe
           filename: aws-cred-mgr-${{ github.ref_name }}-win-x64.zip
+      - name: Zip Output MacOS x64
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: "zip"
+          directory: output-osx/
+          path: aws-cred-mgr
+          filename: aws-cred-mgr-${{ github.ref_name }}-osx-x64.zip
+      - name: Zip Output MacOS ARM
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: "zip"
+          directory: output-osxarm/
+          path: aws-cred-mgr
+          filename: aws-cred-mgr-${{ github.ref_name }}-osx-arm64.zip
+
+# End - Temporary steps to enable the migration of zip to binary
+
+      - name: Rename Executables
+        run: |
+          mv output-win/aws-cred-mgr.exe output-win/aws-cred-mgr-win-x64.exe
+          mv output-osx/aws-cred-mgr output-osx/aws-cred-mgr-osx-x64
+          mv output-osxarm/aws-cred-mgr output-osxarm/aws-cred-mgr-osx-arm64
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            output-win/aws-cred-mgr-win-x64.exe
+            output-osx/aws-cred-mgr-osx-x64
+            output-osxarm/aws-cred-mgr-osx-arm64
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'beta') }}
-          files: win-output/aws-cred-mgr-${{ github.ref_name }}-win-x64.zip
+          files: |
+            output-win/aws-cred-mgr-win-x64.exe
+            output-osx/aws-cred-mgr-osx-x64
+            output-osxarm/aws-cred-mgr-osx-arm64

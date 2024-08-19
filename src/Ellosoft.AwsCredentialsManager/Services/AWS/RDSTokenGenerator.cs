@@ -10,7 +10,7 @@ using Amazon.Runtime.Internal.Util;
 
 namespace Ellosoft.AwsCredentialsManager.Services.AWS;
 
-public class RdsTokenGenerator
+public interface IRdsTokenGenerator
 {
     /// <summary>
     ///     Generates an RDS DB password using AWS credentials
@@ -26,6 +26,17 @@ public class RdsTokenGenerator
     ///     This method is based on the <see cref="RDSAuthTokenGenerator" />,
     ///     however it allows the DB password lifetime to be changed from the hard code 15 minutes.
     /// </remarks>
+    string GenerateDbPassword(
+        AWSCredentials awsCredentials,
+        RegionEndpoint region,
+        string hostname,
+        int port,
+        string dbUser,
+        int ttlInMinutes);
+}
+
+public class RdsTokenGenerator : IRdsTokenGenerator
+{
     public string GenerateDbPassword(
         AWSCredentials awsCredentials,
         RegionEndpoint region,

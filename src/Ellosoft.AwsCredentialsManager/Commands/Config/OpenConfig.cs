@@ -15,7 +15,7 @@ public class OpenConfig(IConfigManager configManager, IFileManager fileManager) 
         if (!File.Exists(configManager.AppConfigPath))
             configManager.SaveConfig();
 
-        fileManager.OpenFile(configManager.AppConfigPath);
+        fileManager.OpenFileUsingDefaultApp(configManager.AppConfigPath);
 
         return 0;
     }

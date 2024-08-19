@@ -7,6 +7,7 @@ using Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
+using Ellosoft.AwsCredentialsManager.Services.Utilities;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.RDS;
 
@@ -15,7 +16,14 @@ namespace Ellosoft.AwsCredentialsManager.Commands.RDS;
 [Examples(
     "pwd prod_db",
     "pwd -h localhost -p 5432 -u john")]
-public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
+public class GetRdsPassword(
+    IConfigManager configManager,
+    IEnvironmentManager envManager,
+    ICredentialsManager credentialsManager,
+    IAwsOktaSessionManager awsSessionManager,
+    IRdsTokenGenerator rdsTokenGenerator,
+    IClipboardManager clipboardManager)
+    : AsyncCommand<GetRdsPassword.Settings>
 {
     public class Settings : AwsSettings
     {
@@ -45,34 +53,14 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
         public string? Environment { get; set; }
     }
 
-    private readonly IConfigManager _configManager;
-    private readonly EnvironmentManager _envManager;
-    private readonly CredentialsManager _credentialsManager;
-    private readonly AwsOktaSessionManager _awsSessionManager;
-    private readonly RdsTokenGenerator _rdsTokenGenerator;
-
-    public GetRdsPassword(
-        IConfigManager configManager,
-        EnvironmentManager envManager,
-        CredentialsManager credentialsManager,
-        AwsOktaSessionManager awsSessionManager,
-        RdsTokenGenerator rdsTokenGenerator)
-    {
-        _configManager = configManager;
-        _envManager = envManager;
-        _credentialsManager = credentialsManager;
-        _awsSessionManager = awsSessionManager;
-        _rdsTokenGenerator = rdsTokenGenerator;
-    }
-
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         if (settings.Profile is null)
             return await HandleAdHocRequest(settings);
 
-        var dbConfig = GetDbConfig(_configManager.AppConfig, settings.Profile, settings.Environment);
+        var dbConfig = GetDbConfig(configManager.AppConfig, settings.Profile, settings.Environment);
 
-        ApplyTemplateValues(dbConfig, _configManager.AppConfig.Templates);
+        ApplyTemplateValues(dbConfig, configManager.AppConfig.Templates);
 
         await GenerateDbPassword(
             dbConfig.Credential,
@@ -88,7 +76,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
 
     private async Task<int> HandleAdHocRequest(Settings settings)
     {
-        var credentialName = _credentialsManager.GetCredentialNameFromUser();
+        var credentialName = credentialsManager.GetCredentialNameFromUser();
 
         AnsiConsole.MarkupLine($"Getting RDS password using [green i]{credentialName}[/] credential profile");
 
@@ -114,16 +102,20 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             ArgumentNullException.ThrowIfNull(username);
             ArgumentNullException.ThrowIfNull(region);
 
-            var awsCredentials = await _awsSessionManager.CreateOrResumeSessionAsync(credential, null);
+            var awsCredentials = await awsSessionManager.CreateOrResumeSessionAsync(credential, null);
 
             if (awsCredentials is null)
                 throw new CommandException($"Unable to resume or create AWS session for credential '{credential}'");
 
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-            var dbPassword = _rdsTokenGenerator.GenerateDbPassword(awsCredentials, regionEndpoint, hostname, port.Value, username, ttl);
+            var dbPassword = rdsTokenGenerator.GenerateDbPassword(awsCredentials, regionEndpoint, hostname, port.Value, username, ttl);
 
-            AnsiConsole.MarkupLine("\r\n[green]DB Password:[/]");
+            AnsiConsole.MarkupLine("[green]DB Password:[/]");
             Console.WriteLine(dbPassword);
+            Console.WriteLine();
+
+            if (configManager.ToolConfig.CopyToClipboard && clipboardManager.SetClipboardText(dbPassword))
+                AnsiConsole.MarkupLine("[green]DB Password copied to clipboard[/]");
         }
         catch (ArgumentNullException e)
         {
@@ -140,7 +132,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             return;
         }
 
-        var environment = _envManager.GetOrCreateEnvironment(environmentName);
+        var environment = envManager.GetOrCreateEnvironment(environmentName);
 
         var dbConfig = new DatabaseConfiguration
         {
@@ -163,7 +155,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
             profileName = AnsiConsole.Ask<string>("There is already a RDS profile with that name, please choose another one:");
         }
 
-        _configManager.SaveConfig();
+        configManager.SaveConfig();
 
         AnsiConsole.MarkupLine($"[bold green]'{profileName}' RDS profile created[/]");
     }
@@ -172,7 +164,7 @@ public class GetRdsPassword : AsyncCommand<GetRdsPassword.Settings>
     {
         if (environmentName is not null)
         {
-            var env = _envManager.GetEnvironment(environmentName);
+            var env = envManager.GetEnvironment(environmentName);
 
             if (env is not null && env.Rds.TryGetValue(rdsProfile, out var dbConfig))
             {
