@@ -4,6 +4,7 @@ using System.Collections;
 using System.Reflection;
 using System.Text;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -49,9 +50,6 @@ public class ConfigReader : IConfigReader
         }
 
         var rawConfigContent = yamlContent.ToString();
-
-        static AppConfig DeserializeAppConfig(string content)
-            => Deserializer.Deserialize<AppConfig?>(content) ?? new AppConfig();
 
         if (!hasVariables)
             return DeserializeAppConfig(rawConfigContent);
@@ -168,6 +166,20 @@ public class ConfigReader : IConfigReader
             .IgnoreUnmatchedProperties()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
+
+    private static AppConfig DeserializeAppConfig(string content)
+    {
+        try
+        {
+            return Deserializer.Deserialize<AppConfig?>(content) ?? new AppConfig();
+        }
+        catch (YamlException e)
+        {
+            throw new InvalidOperationException($"Invalid configuration found at line {e.Start.Line} column {e.Start.Column}. " +
+                                                $"Update your configuration and try again." + Environment.NewLine +
+                                                $"[green]Tip[/]: Use the [green i]aws-cred-mgr config[/] command to open the configuration file");
+        }
+    }
 
     private static string GetYamlName(string value) => UnderscoredNamingConvention.Instance.Apply(value);
 }

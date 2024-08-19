@@ -11,19 +11,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
-public class OktaClassicAuthenticator
+public class OktaClassicAuthenticator(
+    [FromKeyedServices(nameof(OktaHttpClientFactory))] HttpClient httpClient,
+    IOktaMfaFactorSelector mfaFactorSelector)
 {
-    private readonly HttpClient _httpClient;
     private readonly MfaHandlerProvider _mfaHandlerProvider = new();
-    private readonly IOktaMfaFactorSelector _mfaFactorSelector;
-
-    public OktaClassicAuthenticator(
-        [FromKeyedServices(nameof(OktaHttpClientFactory))] HttpClient httpClient,
-        IOktaMfaFactorSelector mfaFactorSelector)
-    {
-        _httpClient = httpClient;
-        _mfaFactorSelector = mfaFactorSelector;
-    }
 
     public async Task<AuthenticationResult> AuthenticateAsync(Uri oktaDomain, string username, string password, string? preferredMfa)
     {
@@ -62,7 +54,7 @@ public class OktaClassicAuthenticator
             Password = password
         };
 
-        using var httpResponse = await _httpClient.PostAsJsonAsync(authUrl, authRequest, OktaSourceGenerationContext.Default.AuthenticationRequest);
+        using var httpResponse = await httpClient.PostAsJsonAsync(authUrl, authRequest, OktaSourceGenerationContext.Default.AuthenticationRequest);
 
         if (httpResponse.IsSuccessStatusCode)
         {
@@ -104,7 +96,7 @@ public class OktaClassicAuthenticator
             }
         }
 
-        var selectedFactor = _mfaFactorSelector.GetMfaFactor(preferredMfaType, availableMfaFactors);
+        var selectedFactor = mfaFactorSelector.GetMfaFactor(preferredMfaType, availableMfaFactors);
 
         factorResponse = await ExecuteMfaFactorHandler(oktaDomain, selectedFactor, authResponse.StateToken);
 
@@ -113,7 +105,7 @@ public class OktaClassicAuthenticator
 
     private async Task<AuthenticationResponse> ExecuteMfaFactorHandler(Uri oktaDomain, OktaFactor factor, string stateToken)
     {
-        var handler = _mfaHandlerProvider.GetOktaFactorHandler(_httpClient, factor.FactorType);
+        var handler = _mfaHandlerProvider.GetOktaFactorHandler(httpClient, factor.FactorType);
 
         var mfaVerificationResponse = await handler.VerifyFactorAsync(oktaDomain, factor, stateToken);
 

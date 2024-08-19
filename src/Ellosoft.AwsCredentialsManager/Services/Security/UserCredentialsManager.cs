@@ -2,9 +2,8 @@
 
 using System.Text.Json;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
-using Ellosoft.AwsCredentialsManager.Services.Security;
 
-namespace Ellosoft.AwsCredentialsManager.Services.Configuration;
+namespace Ellosoft.AwsCredentialsManager.Services.Security;
 
 public interface IUserCredentialsManager
 {

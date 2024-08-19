@@ -10,6 +10,7 @@ using Ellosoft.AwsCredentialsManager.Commands.RDS;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade;
+using Ellosoft.AwsCredentialsManager.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
 
@@ -27,7 +28,7 @@ var app = new CommandApp(registrar);
 
 app.Configure(config =>
 {
-    config.SetApplicationName("aws-cred-mgr");
+    config.SetApplicationName(AppMetadata.AppName);
     config.SetInterceptor(new LogInterceptor());
 
     config
@@ -59,7 +60,7 @@ app.Configure(config =>
     config.ValidateExamples();
 
     if (Debugger.IsAttached)
-        args = "cred new test1".Split(' ');
+        args = "cred new test".Split(' ');
 #endif
 });
 
@@ -74,6 +75,11 @@ catch (CommandException e)
 catch (Exception e)
 {
     logger.Error(e, "Unexpected error");
+
+    if (e is CommandRuntimeException && e.InnerException is not null)
+    {
+        e = e.InnerException;
+    }
 
     if (logger.IsEnabled(LogEventLevel.Debug))
         AnsiConsole.WriteException(e);

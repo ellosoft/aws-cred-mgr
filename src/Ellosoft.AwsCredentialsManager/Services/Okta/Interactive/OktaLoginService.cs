@@ -4,6 +4,7 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
+using Ellosoft.AwsCredentialsManager.Services.Security;
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 

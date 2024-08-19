@@ -5,12 +5,8 @@ using static Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels.Okta
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 
-public class OktaPushFactorHandler : OktaFactorHandler
+public class OktaPushFactorHandler(HttpClient httpClient) : OktaFactorHandler(httpClient)
 {
-    public OktaPushFactorHandler(HttpClient httpClient) : base(httpClient)
-    {
-    }
-
     public override async Task<FactorVerificationResponse> VerifyFactorAsync(Uri oktaDomain, OktaFactor factor, string stateToken)
     {
         var verifyFactorRequest = new VerifyPushFactorRequest { StateToken = stateToken };
@@ -19,33 +15,46 @@ public class OktaPushFactorHandler : OktaFactorHandler
             Default.FactorVerificationResponsePushOktaFactor);
 
         var factorResult = mfaAuthResponse.FactorResult;
+        var challengeMsgShown = false;
 
         AnsiConsole.WriteLine("Okta push sent... Please check your phone");
         AnsiConsole.WriteLine("Waiting response...");
 
         while (factorResult == FactorResult.Waiting)
         {
-            await Task.Delay(2000);
+            await Task.Delay(5_000);
 
             mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyPushFactorRequest,
                 Default.FactorVerificationResponsePushOktaFactor);
 
             factorResult = mfaAuthResponse.FactorResult;
 
-            Verify3NumberPushMfaChallenge(mfaAuthResponse);
+            if (!challengeMsgShown && ChallengeRequired(mfaAuthResponse, out var factorChallenge))
+            {
+                Show3NumberPushMfaChallengeMessage(factorChallenge);
+                challengeMsgShown = true;
+            }
         }
 
         return mfaAuthResponse;
     }
 
-    private static void Verify3NumberPushMfaChallenge(FactorVerificationResponse<PushOktaFactor> authResponse)
+    private static void Show3NumberPushMfaChallengeMessage(long factorChallenge)
     {
-        var factorChallenge = authResponse.Embedded.Factor?.Embedded?.Challenge.CorrectAnswer;
+        AnsiConsole.MarkupLine(
+            $"[yellow][[Extra Verification Required]][/] Please select the following number in your Okta Verify App: [bold yellow]{factorChallenge}[/]");
+    }
 
-        if (factorChallenge is not null)
+    private static bool ChallengeRequired(FactorVerificationResponse<PushOktaFactor> authResponse, out long factorChallenge)
+    {
+        var correctAnswer = authResponse.Embedded.Factor?.Embedded?.Challenge.CorrectAnswer;
+        if (correctAnswer is not null)
         {
-            AnsiConsole.MarkupLine(
-                $"[yellow][[Extra Verification Required]][/] Please select the following number in your Okta Verify App: [bold yellow]{factorChallenge}[/]");
+            factorChallenge = correctAnswer.Value;
+            return true;
         }
+
+        factorChallenge = 0;
+        return false;
     }
 }
