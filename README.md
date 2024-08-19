@@ -68,7 +68,7 @@ aws-cred-mgr config
 -   Open user config: `aws-cred-mgr config`
 -   Open AWS credentials file: `aws-cred-mgr config aws`
 
-## Security Note for Windows Users
+## Security Note for Windows and macOS Users
 
 On Windows systems, `aws-cred-mgr` securely stores your Okta credentials using the Data Protection API (DPAPI).
 This ensures that your sensitive information is encrypted and can only be accessed by your user account on your computer.

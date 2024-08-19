@@ -42,6 +42,7 @@ public class ConfigWriter : IConfigWriter
         WriteProperty(writer, nameof(AppConfig.Templates), config.Templates);
         WriteProperty(writer, nameof(AppConfig.Credentials), config.Credentials);
         WriteProperty(writer, nameof(AppConfig.Environments), config.Environments);
+        WriteProperty(writer, nameof(AppConfig.Config), config.Config);
 
         CreateBackupFile(fileName);
         File.WriteAllText(fileName, writer.ToString(), Encoding.UTF8);

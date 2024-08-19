@@ -112,9 +112,10 @@ public class GetRdsPassword(
 
             AnsiConsole.MarkupLine("[green]DB Password:[/]");
             Console.WriteLine(dbPassword);
+            Console.WriteLine();
 
-            if (clipboardManager.SetClipboardText(dbPassword))
-                AnsiConsole.MarkupLine("[green]\r\nDB Password copied to clipboard[/]");
+            if (configManager.ToolConfig.CopyToClipboard && clipboardManager.SetClipboardText(dbPassword))
+                AnsiConsole.MarkupLine("[green]DB Password copied to clipboard[/]");
         }
         catch (ArgumentNullException e)
         {

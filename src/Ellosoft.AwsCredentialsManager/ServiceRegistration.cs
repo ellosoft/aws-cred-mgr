@@ -1,5 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
 using Ellosoft.AwsCredentialsManager.Services.AWS;
 using Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
@@ -45,6 +46,10 @@ public static class ServiceRegistration
 
         services
             .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
+
+        services
+            .AddSingleton<ICommandInterceptor, LogInterceptor>()
+            .AddSingleton<ICommandInterceptor, ConfigInterceptor>();
 
         if (OperatingSystem.IsMacOS())
         {

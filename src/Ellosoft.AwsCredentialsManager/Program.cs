@@ -30,7 +30,6 @@ var app = new CommandApp(registrar);
 app.Configure(config =>
 {
     config.SetApplicationName(AppMetadata.AppName);
-    config.SetInterceptor(new LogInterceptor());
 
     config
         .AddBranch<OktaBranch>(okta =>
@@ -64,7 +63,7 @@ app.Configure(config =>
     config.ValidateExamples();
 
     if (Debugger.IsAttached)
-        args = "cred new test".Split(' ');
+        args = "rds pwd local".Split(' ');
 #endif
 });
 
