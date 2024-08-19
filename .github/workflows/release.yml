@@ -62,7 +62,7 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'beta') }}
           files: |
-            output-win/aws-cred-mgr-win-x64.zip
+            output-win/aws-cred-mgr-${{ github.ref_name }}-win-x64.zip
             output-win/aws-cred-mgr-win-x64.exe
             output-osx/aws-cred-mgr-osx-x64
             output-osxarm/aws-cred-mgr-osx-arm64
