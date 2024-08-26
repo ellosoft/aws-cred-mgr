@@ -84,8 +84,8 @@ jobs:
 
       - name: Sign MacOS Binaries
         run: |
-          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osxarm/aws-cred-mgr
-          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osx/aws-cred-mgr
+          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osxarm/aws-cred-mgr-osx-arm64
+          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osx/aws-cred-mgr-osx-x64
 
       # - name: Notarize MacOS Binaries
       #   run: |
