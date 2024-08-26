@@ -38,13 +38,10 @@ jobs:
 
       # Start - Temporary steps to enable the migration of zip to binary
 
-      - name: Zip Output Windows
-        uses: thedoctor0/zip-release@0.7.6
-        with:
-          type: "zip"
-          directory: output-win/
-          path: aws-cred-mgr.exe
-          filename: aws-cred-mgr-${{ github.ref_name }}-win-x64.zip
+      - name: Zip Windows Output
+        run: |
+          cd output-win
+          zip aws-cred-mgr-win-x64.zip aws-cred-mgr.exe
 
       # End - Temporary steps to enable the migration of zip to binary
 
@@ -64,6 +61,9 @@ jobs:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_DEV_ID: ${{ secrets.APPLE_DEV_ID }}
+          APPLE_DEV_PASSWORD: ${{ secrets.APPLE_DEV_PASSWORD }}
         run: |
           # create variables
           CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
@@ -84,21 +84,30 @@ jobs:
 
       - name: Sign MacOS Binaries
         run: |
-          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osxarm/aws-cred-mgr-osx-arm64
-          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osx/aws-cred-mgr-osx-x64
+          codesign --force -v --timestamp --options runtime --no-strict --prefix com.ellosoft. --sign "Developer ID Application: Ellosoft Limited ($APPLE_TEAM_ID)" --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osxarm/aws-cred-mgr-osx-arm64
+          codesign --force -v --timestamp --options runtime --no-strict --prefix com.ellosoft. --sign "Developer ID Application: Ellosoft Limited ($APPLE_TEAM_ID)" --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osx/aws-cred-mgr-osx-x64
 
-      # - name: Notarize MacOS Binaries
-      #   run: |
-      #     xcrun altool --notarize-app --primary-bundle-id "com.ellosoft.aws-cred-mgr" --username "${{ secrets.APPLE_ID_USERNAME }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --file output-osxarm/aws-cred-mgr
-      #     xcrun altool --notarize-app --primary-bundle-id "com.ellosoft.aws-cred-mgr" --username "${{ secrets.APPLE_ID_USERNAME }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --file output-osx/aws-cred-mgr
+      - name: Notarize MacOS ARM Binaries
+        run: |
+          cd output-osxarm
+          zip aws-cred-mgr-osx-arm64.zip aws-cred-mgr-osx-arm64
+          xcrun notarytool submit aws-cred-mgr-osx-arm64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
+          xcrun stapler staple aws-cred-mgr-osx-arm64
 
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-path: |
-            output-win/aws-cred-mgr-win-x64.exe
-            output-osx/aws-cred-mgr-osx-x64
-            output-osxarm/aws-cred-mgr-osx-arm64
+      - name: Notarize MacOS x64 Binaries
+        run: |
+          cd output-osx
+          zip aws-cred-mgr-osx-x64.zip aws-cred-mgr-osx-x64
+          xcrun notarytool submit aws-cred-mgr-osx-x64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
+          xcrun stapler staple aws-cred-mgr-osx-x64
+
+      # - name: Generate artifact attestation
+      #   uses: actions/attest-build-provenance@v1
+      #   with:
+      #     subject-path: |
+      #       output-win/aws-cred-mgr-win-x64.exe
+      #       output-osx/aws-cred-mgr-osx-x64
+      #       output-osxarm/aws-cred-mgr-osx-arm64
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -106,7 +115,7 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'beta') }}
           files: |
-            output-win/aws-cred-mgr-${{ github.ref_name }}-win-x64.zip
+            output-win/aws-cred-mgr-win-x64.zip
             output-win/aws-cred-mgr-win-x64.exe
             output-osx/aws-cred-mgr-osx-x64
             output-osxarm/aws-cred-mgr-osx-arm64
