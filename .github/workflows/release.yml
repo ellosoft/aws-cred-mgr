@@ -17,22 +17,26 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+
       - name: Restore dependencies
         run: dotnet restore
+
       - name: Build & Publish Windows
         run: |
           dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
           -r win-x64 -o output-win
+
       - name: Build & Publish MacOS x64
         run: |
           dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
           -r osx-x64 -o output-osx
+
       - name: Build & Publish MacOS ARM
         run: |
           dotnet publish src/Ellosoft.AwsCredentialsManager/Ellosoft.AwsCredentialsManager.csproj -c Release -p:Version=${{ github.ref_name }} \
           -r osx-arm64 -o output-osxarm
 
-# Start - Temporary steps to enable the migration of zip to binary
+      # Start - Temporary steps to enable the migration of zip to binary
 
       - name: Zip Output Windows
         uses: thedoctor0/zip-release@0.7.6
@@ -42,13 +46,52 @@ jobs:
           path: aws-cred-mgr.exe
           filename: aws-cred-mgr-${{ github.ref_name }}-win-x64.zip
 
-# End - Temporary steps to enable the migration of zip to binary
+      # End - Temporary steps to enable the migration of zip to binary
 
       - name: Rename Executables
         run: |
           mv output-win/aws-cred-mgr.exe output-win/aws-cred-mgr-win-x64.exe
           mv output-osx/aws-cred-mgr output-osx/aws-cred-mgr-osx-x64
           mv output-osxarm/aws-cred-mgr output-osxarm/aws-cred-mgr-osx-arm64
+
+      - name: Change MacOs Permissions
+        run: |
+          chmod +x output-osx/aws-cred-mgr-osx-x64
+          chmod +x output-osxarm/aws-cred-mgr-osx-arm64
+
+      - name: Import Apple Certificate and Key
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # import certificate and provisioning profile from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Sign MacOS Binaries
+        run: |
+          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osxarm/aws-cred-mgr
+          codesign --deep --force -v --timestamp --sign "Developer ID Application: Ellosoft Limited (W8X5JTYQ6D)" --options=runtime --no-strict --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osx/aws-cred-mgr
+
+      # - name: Notarize MacOS Binaries
+      #   run: |
+      #     xcrun altool --notarize-app --primary-bundle-id "com.ellosoft.aws-cred-mgr" --username "${{ secrets.APPLE_ID_USERNAME }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --file output-osxarm/aws-cred-mgr
+      #     xcrun altool --notarize-app --primary-bundle-id "com.ellosoft.aws-cred-mgr" --username "${{ secrets.APPLE_ID_USERNAME }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --file output-osx/aws-cred-mgr
+
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
@@ -56,6 +99,7 @@ jobs:
             output-win/aws-cred-mgr-win-x64.exe
             output-osx/aws-cred-mgr-osx-x64
             output-osxarm/aws-cred-mgr-osx-arm64
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:

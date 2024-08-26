@@ -1,5 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
+using System.Text;
 using Ellosoft.AwsCredentialsManager;
 using Ellosoft.AwsCredentialsManager.Commands;
 using Ellosoft.AwsCredentialsManager.Commands.Config;
@@ -13,6 +14,8 @@ using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade;
 using Ellosoft.AwsCredentialsManager.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
+
+Console.OutputEncoding = Encoding.UTF8;
 
 var logger = LogRegistration.CreateNewLogger();
 
@@ -29,6 +32,7 @@ var app = new CommandApp(registrar);
 app.Configure(config =>
 {
     config.SetApplicationName(AppMetadata.AppName);
+    config.UseAssemblyInformationalVersion();
 
     config
         .AddBranch<OktaBranch>(okta =>

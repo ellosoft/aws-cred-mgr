@@ -2,17 +2,11 @@
 
 #pragma warning disable IDE0005
 
-using Ellosoft.AwsCredentialsManager.Commands.Config;
-using Ellosoft.AwsCredentialsManager.Commands.Credentials;
-using Ellosoft.AwsCredentialsManager.Commands.Okta;
-using Ellosoft.AwsCredentialsManager.Commands.RDS;
-using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Microsoft.Extensions.DependencyInjection;
 using Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.Security;
 using Ellosoft.AwsCredentialsManager.Services.Security;
 using FluentAssertions;
 using Spectre.Console.Cli;
-using Spectre.Console.Testing;
 
 namespace Ellosoft.AwsCredentialsManager.Tests;
 
@@ -31,38 +25,20 @@ public class ServiceRegistrationTests
         _serviceProvider = _services.BuildServiceProvider();
     }
 
-    [Theory]
-    // okta
-    [InlineData(typeof(SetupOkta))]
-    // config
-    [InlineData(typeof(OpenAwsConfig))]
-    [InlineData(typeof(OpenConfig))]
-    // credentials
-    [InlineData(typeof(CreateCredentialsProfile))]
-    [InlineData(typeof(GetCredentials))]
-    [InlineData(typeof(ListCredentialsProfiles))]
-    // rds
-    [InlineData(typeof(GetRdsPassword))]
-    [InlineData(typeof(ListRdsProfiles))]
-    public void GetService_UsingCommands_ShouldResolveDependentServices(Type commandType)
+    [Fact]
+    public void GetService_UsingCommands_ShouldResolveDependentServices()
     {
-        var registrar = new TypeRegistrar(_services);
+        var commandTypes = typeof(ServiceRegistration).Assembly.GetTypes().Where(type =>
+            type is { IsAbstract: false, IsInterface: false } &&
+            typeof(ICommand).IsAssignableFrom(type)).ToList();
 
-        var app = new CommandAppTester(registrar);
-        app.Configure(config => config.PropagateExceptions());
+        var serviceProvider = _services.BuildServiceProvider();
 
-        var setDefaultCommandMethod = app.GetType().GetMethod(nameof(CommandAppTester.SetDefaultCommand));
-        var genericMethod = setDefaultCommandMethod!.MakeGenericMethod(commandType);
-        genericMethod.Invoke(app, [null, null]);
+        var commands = commandTypes
+            .Select(t => ActivatorUtilities.CreateInstance(serviceProvider, t))
+            .ToList();
 
-        try
-        {
-            _ = app.Run("__default_command");
-        }
-        catch (Exception ex)
-        {
-            ex.InnerException?.Message.Should().NotContain("Unable to resolve service for type");
-        }
+        commands.Should().NotBeEmpty();
     }
 
 #if MACOS
@@ -91,5 +67,17 @@ public class ServiceRegistrationTests
         var resolvedServices = _serviceProvider.GetServices(serviceType).ToList();
 
         resolvedServices.Should().Contain(s => s!.GetType().IsAssignableTo(implementationType));
+    }
+
+    public static class CommandExecutePatch
+    {
+        // ReSharper disable once InconsistentNaming
+        // ReSharper disable once UnusedMember.Local
+        public static bool Prefix(ref object __result)
+        {
+            __result = Task.FromResult(0);
+
+            return false;
+        }
     }
 }
