@@ -1,8 +1,9 @@
 name: .NET Release Workflow
 on:
   push:
-    tags:
-      - "*"
+    # tags:
+    #   - "*"
+    branches: ["*"]
 permissions:
   id-token: write
   contents: write
@@ -81,17 +82,17 @@ jobs:
           codesign --force -v --timestamp --options runtime --no-strict --prefix com.ellosoft. --sign "Developer ID Application: Ellosoft Limited ($APPLE_TEAM_ID)" --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osxarm/aws-cred-mgr-osx-arm64
           codesign --force -v --timestamp --options runtime --no-strict --prefix com.ellosoft. --sign "Developer ID Application: Ellosoft Limited ($APPLE_TEAM_ID)" --entitlements ./Ellosoft.AwsCredentialsManager.entitlements ./output-osx/aws-cred-mgr-osx-x64
 
-      - name: Notarize MacOS ARM Binaries
-        env:
-          APPLE_DEV_ID: ${{ secrets.APPLE_DEV_ID }}
-          APPLE_DEV_PASSWORD: ${{ secrets.APPLE_DEV_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          cd output-osxarm
-          zip aws-cred-mgr-osx-arm64.zip aws-cred-mgr-osx-arm64
-          xcrun notarytool submit aws-cred-mgr-osx-arm64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
-          chmod 755 aws-cred-mgr-osx-arm64
-          xcrun stapler staple aws-cred-mgr-osx-arm64
+      # - name: Notarize MacOS ARM Binaries
+      #   env:
+      #     APPLE_DEV_ID: ${{ secrets.APPLE_DEV_ID }}
+      #     APPLE_DEV_PASSWORD: ${{ secrets.APPLE_DEV_PASSWORD }}
+      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      #   run: |
+      #     cd output-osxarm
+      #     zip aws-cred-mgr-osx-arm64.zip aws-cred-mgr-osx-arm64
+      #     xcrun notarytool submit aws-cred-mgr-osx-arm64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
+      #     chmod 755 aws-cred-mgr-osx-arm64
+      #     xcrun stapler staple aws-cred-mgr-osx-arm64
 
       - name: Notarize MacOS x64 Binaries
         env:
