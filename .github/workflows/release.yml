@@ -51,11 +51,6 @@ jobs:
           mv output-osx/aws-cred-mgr output-osx/aws-cred-mgr-osx-x64
           mv output-osxarm/aws-cred-mgr output-osxarm/aws-cred-mgr-osx-arm64
 
-      - name: Change MacOs Permissions
-        run: |
-          chmod +x output-osx/aws-cred-mgr-osx-x64
-          chmod +x output-osxarm/aws-cred-mgr-osx-arm64
-
       - name: Import Apple Certificate and Key
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
@@ -95,6 +90,7 @@ jobs:
           cd output-osxarm
           zip aws-cred-mgr-osx-arm64.zip aws-cred-mgr-osx-arm64
           xcrun notarytool submit aws-cred-mgr-osx-arm64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
+          chmod 755 aws-cred-mgr-osx-arm64
           xcrun stapler staple aws-cred-mgr-osx-arm64
 
       - name: Notarize MacOS x64 Binaries
@@ -106,6 +102,7 @@ jobs:
           cd output-osx
           zip aws-cred-mgr-osx-x64.zip aws-cred-mgr-osx-x64
           xcrun notarytool submit aws-cred-mgr-osx-x64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
+          chmod 755 aws-cred-mgr-osx-x64
           xcrun stapler staple aws-cred-mgr-osx-x64
 
       # - name: Generate artifact attestation
