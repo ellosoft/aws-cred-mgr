@@ -20,7 +20,10 @@ Console.OutputEncoding = Encoding.UTF8;
 var logger = LogRegistration.CreateNewLogger();
 
 var upgradeService = new UpgradeService(logger);
-await upgradeService.TryUpgradeApp();
+var upgraded = await upgradeService.TryUpgradeApp();
+
+if (upgraded)
+    return 0;
 
 var services = new ServiceCollection()
     .SetupLogging(logger)

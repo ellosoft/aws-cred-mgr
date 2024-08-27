@@ -31,27 +31,27 @@ public class UpgradeService(
     {
     }
 
-    public async Task TryUpgradeApp()
+    public async Task<bool> TryUpgradeApp()
     {
         try
         {
             if (!ShouldCheckForUpgrade())
-                return;
+                return false;
 
             var currentAppVersion = appMetadata.GetAppVersion();
 
             if (currentAppVersion is null)
-                return;
+                return false;
 
             var latestRelease = await GetLatestRelease(currentAppVersion);
 
             if (!TryGetDownloadAssetAndVersion(latestRelease, out var downloadUrl, out var latestVersion) || latestVersion <= currentAppVersion)
-                return;
+                return false;
 
             var shouldUpdate = CheckIfUserWantsToUpdate(currentAppVersion, latestRelease);
 
             if (!shouldUpdate)
-                return;
+                return false;
 
             var (executablePath, appFolder) = appMetadata.GetExecutablePath();
 
@@ -66,14 +66,18 @@ public class UpgradeService(
             UpgradeApp(executablePath, archivePath, newFilePath);
 
             console.MarkupLine("Upgrade complete! The changes will reflect next time you execute the application.\r\n");
-            console.MarkupLine("If you like this tool, consider giving it a :star: Star on GitHub, it's free and only takes 2 minutes!\r\n" +
+            console.MarkupLine("If you like this tool, consider giving it a Star:star: on GitHub, it's free and only takes 2 minutes!\r\n" +
                                "Link: https://github.com/ellosoft/aws-cred-mgr\r\n");
+
+            return true;
         }
         catch (Exception e)
         {
             _logger.Error(e, "Unable to upgrade app");
             console.MarkupLine("[yellow]Unable to upgrade app, try again later or " +
-                                "download the new version from https://github.com/ellosoft/aws-cred-mgr/releases [/]");
+                               "download the new version from https://github.com/ellosoft/aws-cred-mgr/releases [/]");
+
+            return false;
         }
     }
 
@@ -127,6 +131,9 @@ public class UpgradeService(
     {
         if (File.Exists(archivePath))
             File.Delete(archivePath);
+
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(newFile, UnixFileMode.UserRead | UnixFileMode.UserExecute);
 
         File.Move(executablePath, archivePath);
         File.Move(newFile, executablePath);
