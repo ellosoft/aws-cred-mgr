@@ -4,14 +4,16 @@ namespace Ellosoft.AwsCredentialsManager.Infrastructure;
 
 public interface IFileDownloadService
 {
-    Task DownloadFileAsync(HttpClient httpClient, string downloadUrl, Stream destinationStream);
+    Task DownloadAsync(HttpClient httpClient, string downloadUrl, string destinationFilePath);
 }
 
 public class FileDownloadService : IFileDownloadService
 {
-    public Task DownloadFileAsync(HttpClient httpClient, string downloadUrl, Stream destinationStream)
+    public async Task DownloadAsync(HttpClient httpClient, string downloadUrl, string destinationFilePath)
     {
-        return AnsiConsole.Progress()
+        await using var destinationStream = new FileStream(destinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+
+        await AnsiConsole.Progress()
             .HideCompleted(true)
             .AutoClear(true)
             .StartAsync(async ctx =>
@@ -40,7 +42,6 @@ public class FileDownloadService : IFileDownloadService
                 }
 
                 await destinationStream.FlushAsync();
-                destinationStream.Position = 0;
 
                 downloadTask.StopTask();
             });

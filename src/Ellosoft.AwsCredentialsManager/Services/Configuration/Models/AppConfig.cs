@@ -17,6 +17,10 @@ public class AppConfig
 
     public Dictionary<string, EnvironmentConfiguration> Environments { get; set; } = new();
 
+    public ToolConfiguration? Config { get; set; } = new();
+
+    internal VariablesSection? Variables { get; set; }
+
     public class AuthenticationSection
     {
         public Dictionary<string, OktaConfiguration> Okta { get; set; } = new();
@@ -26,6 +30,4 @@ public class AppConfig
     {
         public Dictionary<string, DatabaseConfiguration> Rds { get; set; } = new();
     }
-
-    internal VariablesSection? Variables { get; set; }
 }

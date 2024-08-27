@@ -17,7 +17,7 @@ public class OpenAwsConfig(IFileManager fileManager) : Command
         if (!File.Exists(awsCredentialsPath))
             throw new CommandException($"The file {awsCredentialsPath} does not exist");
 
-        fileManager.OpenFile(awsCredentialsPath);
+        fileManager.OpenFileUsingDefaultApp(awsCredentialsPath);
 
         return 0;
     }

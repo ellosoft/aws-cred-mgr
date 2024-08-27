@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ellosoft.AwsCredentialsManager.Infrastructure.Cli;

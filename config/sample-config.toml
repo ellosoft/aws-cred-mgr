@@ -1,0 +1,57 @@
+[variables]
+rds_username = "my.user"
+default_pwd_lifetime = 15
+
+[authentication.okta.default]
+okta_domain = "https://xyz.okta.com/"
+preferred_mfa_type = "push"
+auth_type = "classic"
+
+[credentials.my_aws_dev_account]
+role_arn = "arn:aws:iam::123:role:/my_aws_role_arn"
+aws_profile = "default"
+okta_app_url = "https://xyz.okta.com/home/amazon_aws/abc/272"
+okta_profile = "default"
+
+[credentials.my_aws_prod_account]
+role_arn = "arn:aws:iam::456:role:/my_aws_prod_role_arn"
+aws_profile = "prod"
+okta_app_url = "https://xyz.okta.com/home/amazon_aws/def/789"
+okta_profile = "default"
+
+[templates.rds.orders_db]
+hostname = "rds-hostname.aws.endpoint"
+port = 5432
+username = "${rds_username}"
+region = "us-east-2"
+
+[templates.rds.products_db]
+hostname = "products-rds.aws.endpoint"
+port = 5432
+username = "${rds_username}"
+region = "us-west-2"
+
+[environments.dev]
+credential = "my_aws_dev_account"
+
+[environments.dev.rds.orders_db]
+hostname = "dev-orders.rds.amazonaws.com"
+template = "orders_db"
+
+[environments.dev.rds.products_db]
+hostname = "dev-products.rds.amazonaws.com"
+port = 5432
+username = "${rds_username}"
+ttl = "${default_pwd_lifetime}"
+region = "us-west-2"
+
+[environments.prod]
+credential = "my_aws_prod_account"
+
+[environments.prod.rds.orders_db]
+hostname = "prod-orders.rds.amazonaws.com"
+template = "orders_db"
+
+[environments.prod.rds.products_db]
+hostname = "prod-products.rds.amazonaws.com"
+template = "products_db"

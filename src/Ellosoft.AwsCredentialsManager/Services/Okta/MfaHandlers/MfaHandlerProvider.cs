@@ -2,7 +2,12 @@
 
 namespace Ellosoft.AwsCredentialsManager.Services.Okta.MfaHandlers;
 
-public class MfaHandlerProvider
+public interface IMfaHandlerProvider
+{
+    IOktaMfaHandler GetOktaFactorHandler(HttpClient httpClient, string factorType);
+}
+
+public class MfaHandlerProvider : IMfaHandlerProvider
 {
     public IOktaMfaHandler GetOktaFactorHandler(HttpClient httpClient, string factorType)
     {

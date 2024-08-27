@@ -1,17 +1,21 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Diagnostics;
+using System.Text;
 using Ellosoft.AwsCredentialsManager;
 using Ellosoft.AwsCredentialsManager.Commands;
 using Ellosoft.AwsCredentialsManager.Commands.Config;
 using Ellosoft.AwsCredentialsManager.Commands.Credentials;
 using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Commands.RDS;
+using Ellosoft.AwsCredentialsManager.Commands.Utils;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Logging;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Upgrade;
+using Ellosoft.AwsCredentialsManager.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
+
+Console.OutputEncoding = Encoding.UTF8;
 
 var logger = LogRegistration.CreateNewLogger();
 
@@ -27,8 +31,8 @@ var app = new CommandApp(registrar);
 
 app.Configure(config =>
 {
-    config.SetApplicationName("aws-cred-mgr");
-    config.SetInterceptor(new LogInterceptor());
+    config.SetApplicationName(AppMetadata.AppName);
+    config.UseAssemblyInformationalVersion();
 
     config
         .AddBranch<OktaBranch>(okta =>
@@ -53,13 +57,16 @@ app.Configure(config =>
             cfg.AddCommand<OpenAwsConfig>();
         });
 
+    // root commands
+    config.AddCommand<OpenLogs>();
+
     config.PropagateExceptions();
 
 #if DEBUG
     config.ValidateExamples();
 
-    if (Debugger.IsAttached)
-        args = "rds pwd test_db".Split(' ');
+    if (System.Diagnostics.Debugger.IsAttached)
+        args = "rds pwd local".Split(' ');
 #endif
 });
 
@@ -74,6 +81,11 @@ catch (CommandException e)
 catch (Exception e)
 {
     logger.Error(e, "Unexpected error");
+
+    if (e is CommandRuntimeException && e.InnerException is not null)
+    {
+        e = e.InnerException;
+    }
 
     if (logger.IsEnabled(LogEventLevel.Debug))
         AnsiConsole.WriteException(e);

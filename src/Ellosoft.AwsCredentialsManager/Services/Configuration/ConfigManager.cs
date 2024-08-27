@@ -8,6 +8,8 @@ public interface IConfigManager
 {
     AppConfig AppConfig { get; }
 
+    ActiveToolConfiguration ToolConfig { get; }
+
     string AppConfigPath { get; }
 
     /// <summary>
@@ -24,11 +26,17 @@ public class ConfigManager : IConfigManager
     private readonly ConfigReader _configReader = new();
     private readonly ConfigWriter _configWriter = new();
 
+    public ConfigManager()
+    {
+        AppConfig = GetConfiguration();
+        ToolConfig = new ActiveToolConfiguration(AppConfig.Config ?? new());
+    }
+
     public string AppConfigPath => InternalAppConfigPath;
 
-    public ConfigManager() => AppConfig = GetConfiguration();
-
     public AppConfig AppConfig { get; }
+
+    public ActiveToolConfiguration ToolConfig { get; }
 
     public void SaveConfig() => _configWriter.Write(AppConfigPath, AppConfig);
 

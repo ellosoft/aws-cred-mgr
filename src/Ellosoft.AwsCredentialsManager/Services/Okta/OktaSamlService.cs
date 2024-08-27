@@ -6,7 +6,12 @@ namespace Ellosoft.AwsCredentialsManager.Services.Okta;
 
 public record SamlData(string SamlAssertion, string SignInUrl, string RelayState);
 
-public class OktaSamlService
+public interface IOktaSamlService
+{
+    Task<SamlData> GetAppSamlDataAsync(Uri oktaDomain, string oktaAppUrl, string sessionToken);
+}
+
+public class OktaSamlService : IOktaSamlService
 {
     public async Task<SamlData> GetAppSamlDataAsync(Uri oktaDomain, string oktaAppUrl, string sessionToken)
     {

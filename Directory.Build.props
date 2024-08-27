@@ -1,9 +1,11 @@
 <Project>
     <PropertyGroup>
-        <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <CodeAnalysisRuleSet>..\..\ellosoft.ruleset</CodeAnalysisRuleSet>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,5 +14,10 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
+
+    <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
+        <DefineConstants Condition="'$([System.OperatingSystem]::IsMacOs())' == 'true'">$(DefineConstants);MACOS</DefineConstants>
+        <DefineConstants Condition="'$([System.OperatingSystem]::IsWindows())' == 'true'">$(DefineConstants);WINDOWS</DefineConstants>
+    </PropertyGroup>
 
 </Project>

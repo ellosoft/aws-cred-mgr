@@ -1,33 +1,37 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace Ellosoft.AwsCredentialsManager.Services.IO;
 
 public interface IFileManager
 {
-    void OpenFile(string filePath);
+    void OpenFileUsingDefaultApp(string filePath);
+
+    bool FileExists(string filePath);
+
+    public byte[] ReadFile(string filePath);
+
+    void SaveFile(string filePath, byte[] data);
+
+    void DeleteFile(string filePath);
 }
 
-public class FileManager : IFileManager
+[ExcludeFromCodeCoverage]
+public class FileManager : PlatformServiceSlim, IFileManager
 {
-    public void OpenFile(string filePath)
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            Process.Start("explorer", $"\"{filePath}\"");
+    private readonly string _openCommand = ExecuteMultiPlatformCommand(
+        win: () => "explorer",
+        macos: () => "open",
+        linux: () => "xdg-open");
 
-            return;
-        }
+    public void OpenFileUsingDefaultApp(string filePath) => Process.Start(_openCommand, $"\"{filePath}\"");
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            Process.Start("open", $"\"{filePath}\"");
+    public bool FileExists(string filePath) => File.Exists(filePath);
 
-            return;
-        }
+    public byte[] ReadFile(string filePath) => File.ReadAllBytes(filePath);
 
-        throw new InvalidOperationException("Unsupported operating system.");
-    }
+    public void SaveFile(string filePath, byte[] data) => File.WriteAllBytes(filePath, data);
+
+    public void DeleteFile(string filePath) => File.Delete(filePath);
 }

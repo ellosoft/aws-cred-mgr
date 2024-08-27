@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
-using System.Reflection;
 using Ellosoft.AwsCredentialsManager.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -11,7 +10,7 @@ internal static class LogRegistration
 {
     private const long MAX_LOG_FILE_SIZE = 20 * (1024 ^ 2);
 
-    private static readonly string LogFileName = AppDataDirectory.GetPath($"{Assembly.GetExecutingAssembly().GetName().Name}.log");
+    public static readonly string LogFileName = AppDataDirectory.GetPath($"{AppMetadata.AppName}.log");
 
     public static IServiceCollection SetupLogging(this IServiceCollection services, ILogger logger)
         => services.AddLogging(config => config.AddSerilog(logger));
