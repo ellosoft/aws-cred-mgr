@@ -3,7 +3,8 @@ on:
   push:
     # tags:
     #   - "*"
-    branches: ["*"]
+    branches:
+      - "**"
 permissions:
   id-token: write
   contents: write
