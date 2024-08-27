@@ -90,28 +90,24 @@ jobs:
           cd output-osxarm
           zip aws-cred-mgr-osx-arm64.zip aws-cred-mgr-osx-arm64
           xcrun notarytool submit aws-cred-mgr-osx-arm64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
-          chmod +x aws-cred-mgr-osx-arm64
-          # xcrun stapler staple aws-cred-mgr-osx-arm64
 
-      # - name: Notarize MacOS x64 Binaries
-      #   env:
-      #     APPLE_DEV_ID: ${{ secrets.APPLE_DEV_ID }}
-      #     APPLE_DEV_PASSWORD: ${{ secrets.APPLE_DEV_PASSWORD }}
-      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      #   run: |
-      #     cd output-osx
-      #     zip aws-cred-mgr-osx-x64.zip aws-cred-mgr-osx-x64
-      #     xcrun notarytool submit aws-cred-mgr-osx-x64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
-      #     chmod +x aws-cred-mgr-osx-x64
-      #     # xcrun stapler staple aws-cred-mgr-osx-x64
+      - name: Notarize MacOS x64 Binaries
+        env:
+          APPLE_DEV_ID: ${{ secrets.APPLE_DEV_ID }}
+          APPLE_DEV_PASSWORD: ${{ secrets.APPLE_DEV_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cd output-osx
+          zip aws-cred-mgr-osx-x64.zip aws-cred-mgr-osx-x64
+          xcrun notarytool submit aws-cred-mgr-osx-x64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
 
-      # - name: Generate artifact attestation
-      #   uses: actions/attest-build-provenance@v1
-      #   with:
-      #     subject-path: |
-      #       output-win/aws-cred-mgr-win-x64.exe
-      #       output-osx/aws-cred-mgr-osx-x64
-      #       output-osxarm/aws-cred-mgr-osx-arm64
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            output-win/aws-cred-mgr-win-x64.exe
+            output-osx/aws-cred-mgr-osx-x64
+            output-osxarm/aws-cred-mgr-osx-arm64
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -122,4 +118,4 @@ jobs:
             output-win/aws-cred-mgr-win-x64.zip
             output-win/aws-cred-mgr-win-x64.exe
             output-osxarm/aws-cred-mgr-osx-arm64
-          # output-osx/aws-cred-mgr-osx-x64
+            output-osx/aws-cred-mgr-osx-x64
