@@ -399,3 +399,5 @@ FodyWeavers.xsd
 
 #Output folder for release
 output-*/*
+
+.idea/*
