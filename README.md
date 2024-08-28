@@ -68,6 +68,13 @@ aws-cred-mgr config
 -   Open user config: `aws-cred-mgr config`
 -   Open AWS credentials file: `aws-cred-mgr config aws`
 
+### Configuration
+
+The `config` section in the YAML file allows you to set global tool configurations:
+
+-   `copy_to_clipboard`: When set to `true`, the tool will automatically copy generated passwords to the clipboard. Default is `true`.
+-   `aws_ignore_configured_endpoints`: When set to `true`, the tool will ignore any pre-configured AWS endpoints. This can be useful in certain network environments. Default is `true`.
+
 ## Security Note for Windows and macOS Users
 
 On Windows systems, `aws-cred-mgr` securely stores your Okta credentials using the Data Protection API (DPAPI).
@@ -132,6 +139,10 @@ environments:
                 hostname: test.endpoint
                 template: orders_db
     ...
+
+# config:
+#    copy_to_clipboard: true
+#    aws_ignore_configured_endpoints: true
 ```
 
 ## Support
