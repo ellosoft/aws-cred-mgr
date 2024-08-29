@@ -24,11 +24,18 @@ curl https://raw.githubusercontent.com/ellosoft/aws-cred-mgr/main/scripts/instal
 winget install ellosoft-aws-cred-mgr
 ```
 
+#### PowerShell (in case winget is blocked by your organization)
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/ellosoft/aws-cred-mgr/main/scripts/install-aws-cred-mgr.ps1 | iex
+```
+
 ### Manual
 
 You can manually install `aws-cred-mgr` by downloading the latest version from the [GitHub Release](https://github.com/ellosoft/aws-cred-mgr/releases) page.
 
-> Note: On Linux or MacOs systems you need to make the binary executable before you can use it. You can do this by running `chmod +x aws-cred-mgr` in the terminal.
+> [!Note]
+> On Linux or MacOs systems you need to make the binary executable before you can use it. You can do this by running `chmod +x aws-cred-mgr` in the terminal.
 
 ## Usage
 
