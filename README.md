@@ -10,6 +10,10 @@ AWS Credential Manager (`aws-cred-mgr`) is a command-line interface (CLI) tool d
 
 ### [Request new features here](https://github.com/ellosoft/aws-cred-mgr/issues/new?assignees=vgmello-ellosoft&labels=enhancement&projects=&template=feature_request.md&title=%5BFEATURE%5D)
 
+## Demo
+
+![image](docs/images/setup.gif)
+
 ## Installation
 
 ### MacOS
