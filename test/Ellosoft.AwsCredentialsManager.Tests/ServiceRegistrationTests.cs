@@ -5,7 +5,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.Security;
 using Ellosoft.AwsCredentialsManager.Services.Security;
-using FluentAssertions;
 using Spectre.Console.Cli;
 
 namespace Ellosoft.AwsCredentialsManager.Tests;

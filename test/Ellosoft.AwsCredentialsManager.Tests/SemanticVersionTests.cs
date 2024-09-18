@@ -1,7 +1,6 @@
 // Copyright (c) 2023 Ellosoft Limited. All rights reserved.
 
 using Ellosoft.AwsCredentialsManager.Infrastructure;
-using FluentAssertions;
 
 namespace Ellosoft.AwsCredentialsManager.Tests;
 

@@ -44,8 +44,9 @@ public static class ServiceRegistration
             .AddSingleton<IAwsCredentialsService, AwsCredentialsService>()
             .AddSingleton<IAwsSamlService, AwsSamlService>();
 
-        services
-            .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
+        services.AddHttpClient(nameof(OktaHttpClient), OktaHttpClient.Configure);
+        services.AddKeyedSingleton(nameof(OktaHttpClient), (provider, _)
+            => provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(OktaHttpClient)));
 
         services
             .AddSingleton<ICommandInterceptor, LogInterceptor>()
