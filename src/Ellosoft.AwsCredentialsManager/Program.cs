@@ -27,7 +27,7 @@ if (upgraded)
 
 var services = new ServiceCollection()
     .SetupLogging(logger)
-    .RegisterAppServices();
+    .AddAppServices();
 
 var registrar = new TypeRegistrar(services);
 var app = new CommandApp(registrar);
@@ -69,7 +69,7 @@ app.Configure(config =>
     config.ValidateExamples();
 
     if (System.Diagnostics.Debugger.IsAttached)
-        args = "rds pwd local".Split(' ');
+        args = "okta setup".Split(' ');
 #endif
 });
 

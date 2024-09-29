@@ -19,7 +19,7 @@ namespace Ellosoft.AwsCredentialsManager;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection RegisterAppServices(this IServiceCollection services)
+    public static IServiceCollection AddAppServices(this IServiceCollection services)
     {
         // core services
         services

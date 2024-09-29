@@ -16,12 +16,8 @@ public class TestFixture : IAsyncLifetime
 
     public WebApplication App { get; private set; } = null!;
 
-    public IServiceCollection Services { get; private set; } = null!;
-
     public async Task InitializeAsync()
     {
-        Services = ConfigureTestServices(new ServiceCollection());
-
         App = CreateTestApp();
         App.MapControllers();
         await App.StartAsync();
@@ -53,7 +49,7 @@ public class TestFixture : IAsyncLifetime
         return builder.Build();
     }
 
-    private static IServiceCollection ConfigureTestServices(IServiceCollection services)
+    private static void ConfigureTestServices(IServiceCollection services)
     {
         // configure test services
         services.AddTransient<HttpMessageHandlerBuilder, TestHttpMessageHandlerBuilder>();
@@ -61,8 +57,6 @@ public class TestFixture : IAsyncLifetime
         services.AddControllers().AddApplicationPart(typeof(IntegrationTest).Assembly);
 
         // add app services
-        services.RegisterAppServices();
-
-        return services;
+        services.AddAppServices();
     }
 }

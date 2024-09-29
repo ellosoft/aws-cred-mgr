@@ -1,7 +1,5 @@
 // Copyright (c) 2024 Ellosoft Limited. All rights reserved.
 
-using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
-using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Spectre.Console.Testing;
@@ -12,11 +10,11 @@ public class TestCommandApp
 {
     private readonly CommandApp _app;
 
-    public TestCommandApp(IServiceCollection services)
+    public TestCommandApp(IServiceProvider servicesProvider)
     {
-        Console = new TestConsole().Width(int.MaxValue);
+        Console = new TestConsole().EmitAnsiSequences().Interactive().Width(int.MaxValue);
 
-        _app = new CommandApp(new TypeRegistrar(services));
+        _app = new CommandApp(new TestTypeRegistrar(servicesProvider));
         _app.Configure(config =>
         {
             config.PropagateExceptions();

@@ -1,6 +1,6 @@
 // Copyright (c) 2024 Ellosoft Limited. All rights reserved.
 
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
 
 namespace Ellosoft.AwsCredentialsManager.Tests.Integration;
 
@@ -15,7 +15,7 @@ public class IntegrationTest
 
     private TestFixture TestFixture { get; }
 
-    protected IServiceCollection Services => TestFixture.Services;
+    protected WebApplication TestApp => TestFixture.App;
 }
 
 [CollectionDefinition(nameof(IntegrationTest))]

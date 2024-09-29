@@ -19,7 +19,7 @@ public class ServiceRegistrationTests
         _services = new ServiceCollection();
 
         _services.AddLogging();
-        _services.RegisterAppServices();
+        _services.AddAppServices();
 
         _serviceProvider = _services.BuildServiceProvider();
     }

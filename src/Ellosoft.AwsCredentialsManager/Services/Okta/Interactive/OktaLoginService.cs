@@ -23,6 +23,7 @@ public interface IOktaLoginService
 }
 
 public class OktaLoginService(
+    IAnsiConsole console,
     IConfigManager configManager,
     IUserCredentialsManager userCredentialsManager,
     IOktaClassicAuthenticator classicAuthenticator)
@@ -74,14 +75,14 @@ public class OktaLoginService(
         if (savedCredentials || !userCredentialsManager.SupportCredentialsStore)
             return;
 
-        if (AnsiConsole.Confirm("Do you want to save your Okta username and password for future logins ?"))
+        if (console.Confirm("Do you want to save your Okta username and password for future logins ?"))
         {
             userCredentialsManager.SaveUserCredentials(userProfileKey, userCredentials);
 
             return;
         }
 
-        AnsiConsole.MarkupLine("[yellow]Ok... :([/]");
+        console.MarkupLine("[yellow]Ok... :([/]");
     }
 
     private UserCredentials GetUserCredentials(string userProfileKey, out bool savedCredentials)

@@ -12,7 +12,7 @@ public class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture testFixt
     [Fact]
     public void OktaSetup_Interactive_ShouldCreateNewProfile()
     {
-        var app = new TestCommandApp(Services);
+        var app = new TestCommandApp(TestApp.Services);
         app.Configure(config =>
         {
             config.AddBranch<OktaBranch>(okta =>
@@ -24,6 +24,7 @@ public class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture testFixt
         app.Console.Input.PushTextWithEnter("https://xyz.okta.com");
         app.Console.Input.PushTextWithEnter("john");
         app.Console.Input.PushTextWithEnter("john's password");
+        app.Console.Input.PushKey(ConsoleKey.Enter);
 
         var (exitCode, output) = app.Run("okta", "setup");
 
