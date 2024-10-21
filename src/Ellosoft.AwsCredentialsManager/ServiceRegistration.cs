@@ -80,10 +80,10 @@ public static class ServiceRegistration
     [SupportedOSPlatform("macos")]
     private static void RegisterMacOSServices(IServiceCollection services)
     {
-        services.AddSingleton<ISecureStorage, SecureStorageMacOS>();
+        services.TryAddSingleton<ISecureStorage, SecureStorageMacOS>();
 
         // platform services
-        services.AddSingleton<IKeychainService, KeychainService>();
-        services.AddSingleton<IMacOsKeychainInterop, MacOsKeychainInterop>();
+        services.TryAddSingleton<IKeychainService, KeychainService>();
+        services.TryAddSingleton<IMacOsKeychainInterop, MacOsKeychainInterop>();
     }
 }

@@ -4,7 +4,6 @@ using Ellosoft.AwsCredentialsManager.Tests.Integration.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http;
 using Serilog;
 using Serilog.Events;
 
@@ -15,6 +14,8 @@ public class TestFixture : IAsyncLifetime
     public ITestOutputHelper? TestOutputHelper { get; set; }
 
     public WebApplication App { get; private set; } = null!;
+
+    public ILogger Logger { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
@@ -40,23 +41,19 @@ public class TestFixture : IAsyncLifetime
 
         // configure logging
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Override("Ellosoft", LogEventLevel.Verbose)
+            .MinimumLevel.Warning()
+            .MinimumLevel.Override("Ellosoft", LogEventLevel.Warning)
             .WriteTo.Sink(new TestLogEventSink(() => TestOutputHelper))
             .CreateLogger();
 
         builder.Logging.AddSerilog(Log.Logger);
+        Logger = Log.Logger;
 
         return builder.Build();
     }
 
     private static void ConfigureTestServices(IServiceCollection services)
     {
-        // configure test services
-        services.AddTransient<HttpMessageHandlerBuilder, TestHttpMessageHandlerBuilder>();
-        services.AddHttpClient();
         services.AddControllers().AddApplicationPart(typeof(IntegrationTest).Assembly);
-
-        // add app services
-        services.AddAppServices();
     }
 }

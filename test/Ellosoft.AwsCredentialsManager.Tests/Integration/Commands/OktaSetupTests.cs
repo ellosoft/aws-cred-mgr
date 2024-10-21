@@ -2,18 +2,15 @@
 
 using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
-using Ellosoft.AwsCredentialsManager.Tests.Integration.Utils;
 
 namespace Ellosoft.AwsCredentialsManager.Tests.Integration.Commands;
 
-public class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture testFixture)
-    : IntegrationTest(outputHelper, testFixture)
+public class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture testFixture) : IntegrationTest(outputHelper, testFixture)
 {
     [Fact]
     public void OktaSetup_Interactive_ShouldCreateNewProfile()
     {
-        var app = new TestCommandApp(TestApp.Services);
-        app.Configure(config =>
+        App.Configure(config =>
         {
             config.AddBranch<OktaBranch>(okta =>
             {
@@ -21,12 +18,12 @@ public class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture testFixt
             });
         });
 
-        app.Console.Input.PushTextWithEnter("https://xyz.okta.com");
-        app.Console.Input.PushTextWithEnter("john");
-        app.Console.Input.PushTextWithEnter("john's password");
-        app.Console.Input.PushKey(ConsoleKey.Enter);
+        App.Console.Input.PushTextWithEnter("https://xyz.okta.com");
+        App.Console.Input.PushTextWithEnter("john");
+        App.Console.Input.PushTextWithEnter("john's password");
+        App.Console.Input.PushTextWithEnter("Y");
 
-        var (exitCode, output) = app.Run("okta", "setup");
+        var (exitCode, output) = App.Run("okta", "setup");
 
         exitCode.Should().Be(0);
         output.Should().Contain("All good");
