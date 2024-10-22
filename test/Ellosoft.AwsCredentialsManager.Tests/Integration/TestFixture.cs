@@ -54,6 +54,8 @@ public class TestFixture : IAsyncLifetime
 
     private static void ConfigureTestServices(IServiceCollection services)
     {
-        services.AddControllers().AddApplicationPart(typeof(IntegrationTest).Assembly);
+        services
+            .AddControllers(opt => opt.Filters.Add<TestRequestsFilter>())
+            .AddApplicationPart(typeof(IntegrationTest).Assembly);
     }
 }

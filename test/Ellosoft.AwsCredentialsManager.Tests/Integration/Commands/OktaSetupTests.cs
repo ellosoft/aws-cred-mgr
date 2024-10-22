@@ -2,6 +2,8 @@
 
 using Ellosoft.AwsCredentialsManager.Commands.Okta;
 using Ellosoft.AwsCredentialsManager.Infrastructure.Cli;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
+using Ellosoft.AwsCredentialsManager.Tests.Integration.Utils;
 
 namespace Ellosoft.AwsCredentialsManager.Tests.Integration.Commands;
 
@@ -27,5 +29,12 @@ public class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture testFixt
 
         exitCode.Should().Be(0);
         output.Should().Contain("All good");
+
+        TestRequestsFilter.Requests.Should().ContainKey(TestCorrelationId)
+            .WhoseValue[0].RequestModel.Should().BeOfType<AuthenticationRequest>()
+            .Which.Should().BeEquivalentTo(new AuthenticationRequest
+            {
+                Username = "john", Password = "john's password"
+            });
     }
 }

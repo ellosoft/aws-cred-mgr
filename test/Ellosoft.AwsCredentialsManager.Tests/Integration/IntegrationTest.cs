@@ -1,9 +1,9 @@
 // Copyright (c) 2024 Ellosoft Limited. All rights reserved.
 
 using Ellosoft.AwsCredentialsManager.Tests.Integration.Utils;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http;
 using Serilog;
 
@@ -19,13 +19,8 @@ public class IntegrationTest
 
         var services = new ServiceCollection();
 
-        // configure test services
-        services.AddTransient<HttpMessageHandlerBuilder>(_ =>
-            new TestHttpMessageHandlerBuilder(TestFixture.App.Services, TestFixture.App.GetTestServer()));
-        services.AddHttpClient();
-        services.AddLogging(config => config.AddSerilog(TestFixture.Logger));
+        ConfigureTestServices(services);
 
-        // add app services
         services.AddAppServices();
 
         App = new TestCommandApp(services);
@@ -35,7 +30,21 @@ public class IntegrationTest
 
     protected TestCommandApp App { get; }
 
-    protected WebApplication TestWebApp => TestFixture.App;
+    protected string TestCorrelationId { get; } = Guid.NewGuid().ToString();
+
+    private void ConfigureTestServices(ServiceCollection services)
+    {
+        services.AddLogging(config => config.AddSerilog(TestFixture.Logger));
+        AddIntegrationTestHttpClient(TestFixture.App, services);
+    }
+
+    private void AddIntegrationTestHttpClient(IHost app, ServiceCollection services)
+    {
+        services.AddTransient<HttpMessageHandlerBuilder>(_ =>
+            new TestHttpMessageHandlerBuilder(app.Services, app.GetTestServer(), TestCorrelationId));
+
+        services.AddHttpClient();
+    }
 }
 
 [CollectionDefinition(nameof(IntegrationTest))]
