@@ -22,7 +22,7 @@ public class OktaPushFactorHandler(HttpClient httpClient) : OktaFactorHandler(ht
 
         while (factorResult == FactorResult.Waiting)
         {
-            await Task.Delay(5_000);
+            await Task.Delay(2_000);
 
             mfaAuthResponse = await VerifyFactorAsync(oktaDomain, factor.Id, verifyFactorRequest, Default.VerifyPushFactorRequest,
                 Default.FactorVerificationResponsePushOktaFactor);
