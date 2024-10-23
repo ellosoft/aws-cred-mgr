@@ -35,4 +35,10 @@ public class OktaController : ControllerBase
             }
         });
     }
+
+    [HttpGet("app/amazon_aws/{appId}/sso/saml")]
+    public IActionResult GetSamlAssertion()
+    {
+        return Ok("fake-saml-assertion");
+    }
 }

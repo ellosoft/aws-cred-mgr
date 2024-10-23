@@ -6,7 +6,7 @@ namespace Ellosoft.AwsCredentialsManager.Tests.Integration.Utils;
 
 public class TestRequestContext
 {
-    public HttpRequest Request { get; set; } = null!;
+    public HttpRequestMessage Request { get; set; } = null!;
 
     public HttpResponse Response { get; set; } = null!;
 

@@ -19,8 +19,8 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse(versionValue, out var actualVersion);
 
-        Assert.True(result);
-        Assert.Equal(versionValue, actualVersion!.ToString());
+        result.Should().BeTrue();
+        actualVersion.Should().BeEquivalentTo(versionValue);
     }
 
     [Theory]
@@ -29,9 +29,9 @@ public class SemanticVersionTests
     [InlineData("0.0.1-alpha.0.1")]
     public void TryParse_Invalid_Tests(string versionValue)
     {
-        var result = SemanticVersion.TryParse(versionValue, out var actualVersion);
+        var result = SemanticVersion.TryParse(versionValue, out _);
 
-        Assert.False(result);
+        result.Should().BeFalse();
     }
 
     [Theory]
@@ -53,7 +53,7 @@ public class SemanticVersionTests
 
         var result = v1!.CompareTo(v2);
 
-        Assert.Equal(expectedResult, result);
+        result.Should().Be(expectedResult);
     }
 
     [Fact]
@@ -95,6 +95,6 @@ public class SemanticVersionTests
     public void Equal_Tests(string v1, string v2)
     {
         var result = new SemanticVersion(v1) == new SemanticVersion(v2);
-        Assert.True(result);
+        result.Should().BeTrue();
     }
 }

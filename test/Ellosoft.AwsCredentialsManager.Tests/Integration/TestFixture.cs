@@ -4,8 +4,10 @@ using Ellosoft.AwsCredentialsManager.Tests.Integration.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Serilog;
 using Serilog.Events;
+using Spectre.Console;
 
 namespace Ellosoft.AwsCredentialsManager.Tests.Integration;
 
@@ -13,26 +15,29 @@ public class TestFixture : IAsyncLifetime
 {
     public ITestOutputHelper? TestOutputHelper { get; set; }
 
-    public WebApplication App { get; private set; } = null!;
+    public WebApplication WebApp { get; private set; } = null!;
 
-    public ILogger Logger { get; private set; } = null!;
+    public IServiceProvider Services => WebApp.Services;
 
     public async Task InitializeAsync()
     {
-        App = CreateTestApp();
-        App.MapControllers();
-        await App.StartAsync();
+        WebApp = CreateTestApp();
+        WebApp.MapControllers();
+        await WebApp.StartAsync();
     }
 
     public async Task DisposeAsync()
     {
         await Log.CloseAndFlushAsync();
-        await App.DisposeAsync();
+        await WebApp.DisposeAsync();
     }
 
     private WebApplication CreateTestApp()
     {
         var builder = WebApplication.CreateSlimBuilder();
+
+        builder.Services.AddAppServices();
+        builder.Services.AddSingleton<IAnsiConsole>(_ => Substitute.For<IAnsiConsole>());
 
         ConfigureTestServices(builder.Services);
 
@@ -42,12 +47,11 @@ public class TestFixture : IAsyncLifetime
         // configure logging
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Warning()
-            .MinimumLevel.Override("Ellosoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("Ellosoft", LogEventLevel.Verbose)
             .WriteTo.Sink(new TestLogEventSink(() => TestOutputHelper))
             .CreateLogger();
 
         builder.Logging.AddSerilog(Log.Logger);
-        Logger = Log.Logger;
 
         return builder.Build();
     }

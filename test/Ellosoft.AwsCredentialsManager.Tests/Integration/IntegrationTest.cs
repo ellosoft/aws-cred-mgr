@@ -1,5 +1,6 @@
 // Copyright (c) 2024 Ellosoft Limited. All rights reserved.
 
+using Bogus;
 using Ellosoft.AwsCredentialsManager.Tests.Integration.Utils;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,6 @@ public class IntegrationTest
         TestFixture.TestOutputHelper = outputHelper;
 
         var services = new ServiceCollection();
-
         ConfigureTestServices(services);
 
         services.AddAppServices();
@@ -26,16 +26,18 @@ public class IntegrationTest
         App = new TestCommandApp(services);
     }
 
-    private TestFixture TestFixture { get; }
+    protected string TestCorrelationId { get; } = Guid.NewGuid().ToString();
+
+    protected Faker Faker { get; } = new();
+
+    protected TestFixture TestFixture { get; }
 
     protected TestCommandApp App { get; }
 
-    protected string TestCorrelationId { get; } = Guid.NewGuid().ToString();
-
     private void ConfigureTestServices(ServiceCollection services)
     {
-        services.AddLogging(config => config.AddSerilog(TestFixture.Logger));
-        AddIntegrationTestHttpClient(TestFixture.App, services);
+        services.AddLogging(config => config.AddSerilog());
+        AddIntegrationTestHttpClient(TestFixture.WebApp, services);
     }
 
     private void AddIntegrationTestHttpClient(IHost app, ServiceCollection services)
