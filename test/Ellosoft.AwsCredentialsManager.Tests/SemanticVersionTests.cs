@@ -20,7 +20,7 @@ public class SemanticVersionTests
         var result = SemanticVersion.TryParse(versionValue, out var actualVersion);
 
         result.Should().BeTrue();
-        actualVersion.Should().BeEquivalentTo(versionValue);
+        actualVersion!.ToString().Should().BeEquivalentTo(versionValue);
     }
 
     [Theory]
