@@ -19,7 +19,7 @@ namespace Ellosoft.AwsCredentialsManager;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection RegisterAppServices(this IServiceCollection services)
+    public static IServiceCollection AddAppServices(this IServiceCollection services)
     {
         // core services
         services
@@ -44,8 +44,9 @@ public static class ServiceRegistration
             .AddSingleton<IAwsCredentialsService, AwsCredentialsService>()
             .AddSingleton<IAwsSamlService, AwsSamlService>();
 
-        services
-            .AddKeyedSingleton(nameof(OktaHttpClientFactory), OktaHttpClientFactory.CreateHttpClient());
+        services.AddHttpClient(nameof(OktaHttpClient), OktaHttpClient.Configure);
+        services.AddKeyedSingleton(nameof(OktaHttpClient), (provider, _)
+            => provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(OktaHttpClient)));
 
         services
             .AddSingleton<ICommandInterceptor, LogInterceptor>()
@@ -79,10 +80,10 @@ public static class ServiceRegistration
     [SupportedOSPlatform("macos")]
     private static void RegisterMacOSServices(IServiceCollection services)
     {
-        services.AddSingleton<ISecureStorage, SecureStorageMacOS>();
+        services.TryAddSingleton<ISecureStorage, SecureStorageMacOS>();
 
         // platform services
-        services.AddSingleton<IKeychainService, KeychainService>();
-        services.AddSingleton<IMacOsKeychainInterop, MacOsKeychainInterop>();
+        services.TryAddSingleton<IKeychainService, KeychainService>();
+        services.TryAddSingleton<IMacOsKeychainInterop, MacOsKeychainInterop>();
     }
 }

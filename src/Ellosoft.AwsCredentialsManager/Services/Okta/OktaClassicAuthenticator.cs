@@ -21,7 +21,7 @@ public interface IOktaClassicAuthenticator
 
 public class OktaClassicAuthenticator(
     ILogger<OktaClassicAuthenticator> logger,
-    [FromKeyedServices(nameof(OktaHttpClientFactory))] HttpClient httpClient,
+    [FromKeyedServices(nameof(OktaHttpClient))] HttpClient httpClient,
     IOktaMfaFactorSelector mfaFactorSelector) : IOktaClassicAuthenticator
 {
     private readonly MfaHandlerProvider _mfaHandlerProvider = new();

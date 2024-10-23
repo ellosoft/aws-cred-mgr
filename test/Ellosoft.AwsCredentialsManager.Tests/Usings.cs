@@ -1,3 +1,5 @@
-// Copyright (c) 2023 Ellosoft Limited. All rights reserved.
+// Copyright (c) 2024 Ellosoft Limited. All rights reserved.
 
 global using Xunit;
+global using Xunit.Abstractions;
+global using FluentAssertions;

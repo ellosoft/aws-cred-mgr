@@ -13,9 +13,6 @@ public abstract class NSObject : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposing) return;
-
-        Handle.SafeReleaseIntPrtMem();
     }
 
     protected static IntPtr GetClass(string name) => ObjectiveCRuntimeInterop.Instance.GetClass(name);

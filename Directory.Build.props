@@ -9,7 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="SonarAnalyzer.CSharp" Version="9.*" developmentDependency="true">
+        <PackageReference Include="SonarAnalyzer.CSharp" developmentDependency="true">
+            <Version>9.*</Version>
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

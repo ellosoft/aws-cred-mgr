@@ -5,7 +5,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.Security;
 using Ellosoft.AwsCredentialsManager.Services.Security;
-using FluentAssertions;
+using NSubstitute;
+using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Ellosoft.AwsCredentialsManager.Tests;
@@ -19,8 +20,9 @@ public class ServiceRegistrationTests
     {
         _services = new ServiceCollection();
 
+        _services.AddSingleton<IAnsiConsole>(_ => Substitute.For<IAnsiConsole>());
         _services.AddLogging();
-        _services.RegisterAppServices();
+        _services.AddAppServices();
 
         _serviceProvider = _services.BuildServiceProvider();
     }
