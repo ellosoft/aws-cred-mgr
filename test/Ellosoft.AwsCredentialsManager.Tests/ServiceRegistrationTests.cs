@@ -40,7 +40,7 @@ public class ServiceRegistrationTests
             .Select(t => ActivatorUtilities.CreateInstance(serviceProvider, t))
             .ToList();
 
-        commands.Should().NotBeEmpty();
+        commands.ShouldNotBeEmpty();
     }
 
 #if MACOS
@@ -64,11 +64,12 @@ public class ServiceRegistrationTests
     }
 #endif
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "S1144:Unused private method", Justification = "Method is used, false positive")]
     private void TestServiceResolution(Type serviceType, Type implementationType)
     {
         var resolvedServices = _serviceProvider.GetServices(serviceType).ToList();
 
-        resolvedServices.Should().Contain(s => s!.GetType().IsAssignableTo(implementationType));
+        resolvedServices.ShouldContain(s => s!.GetType().IsAssignableTo(implementationType));
     }
 
     public static class CommandExecutePatch

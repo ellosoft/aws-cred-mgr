@@ -32,26 +32,26 @@ public sealed class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture t
 
         var (exitCode, output) = App.Run("okta", "setup", _profileName);
 
-        exitCode.Should().Be(0);
-        output.Should().Contain("All good");
+        exitCode.ShouldBe(0);
+        output.ShouldContain("All good");
 
-        TestRequestsFilter.Requests.Should().ContainKey(TestCorrelationId);
+        TestRequestsFilter.Requests.ShouldContainKey(TestCorrelationId);
         TestRequestsFilter.Requests[TestCorrelationId][0]
-            .RequestModel.Should().BeEquivalentTo(new AuthenticationRequest
+            .RequestModel.ShouldBe(new AuthenticationRequest
             {
                 Username = username, Password = password
             });
 
         TestRequestsFilter.Requests[TestCorrelationId][0]
-            .Request.RequestUri.Should().BeEquivalentTo(new Uri($"{domain}/api/v1/authn"));
+            .Request.RequestUri.ShouldBe(new Uri($"{domain}/api/v1/authn"));
 
         var userCredentialsService = TestFixture.WebApp.Services.GetRequiredService<IUserCredentialsManager>();
 
         var userCredentials = userCredentialsService.GetUserCredentials(_profileName);
 
-        userCredentials.Should().NotBeNull();
-        userCredentials!.Username.Should().Be(username);
-        userCredentials.Password.Should().Be(password);
+        userCredentials.ShouldNotBeNull();
+        userCredentials!.Username.ShouldBe(username);
+        userCredentials.Password.ShouldBe(password);
     }
 
     public void Dispose()

@@ -19,8 +19,8 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse(versionValue, out var actualVersion);
 
-        result.Should().BeTrue();
-        actualVersion!.ToString().Should().BeEquivalentTo(versionValue);
+        result.ShouldBeTrue();
+        actualVersion!.ToString().ShouldBe(versionValue);
     }
 
     [Theory]
@@ -31,7 +31,7 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse(versionValue, out _);
 
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Theory]
@@ -53,7 +53,7 @@ public class SemanticVersionTests
 
         var result = v1!.CompareTo(v2);
 
-        result.Should().Be(expectedResult);
+        result.ShouldBe(expectedResult);
     }
 
     [Fact]
@@ -85,8 +85,8 @@ public class SemanticVersionTests
             "10.0.1"
         }.Select(v => new SemanticVersion(v));
 
-        sortedData.Should().BeInAscendingOrder();
-        sortedData.Should().Equal(expectedResult);
+        sortedData.ShouldBeInOrder();
+        sortedData.ShouldBe(expectedResult);
     }
 
     [Theory]
@@ -95,6 +95,6 @@ public class SemanticVersionTests
     public void Equal_Tests(string v1, string v2)
     {
         var result = new SemanticVersion(v1) == new SemanticVersion(v2);
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 }

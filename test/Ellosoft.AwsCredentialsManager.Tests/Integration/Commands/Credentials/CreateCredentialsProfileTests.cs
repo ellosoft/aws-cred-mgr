@@ -20,13 +20,13 @@ public class CreateCredentialsProfileTests(ITestOutputHelper outputHelper, TestF
 
         var (exitCode, output) = App.Run("new", profileName);
 
-        exitCode.Should().Be(0);
-        output.Should().Contain($"'{profileName}' credentials created");
+        exitCode.ShouldBe(0);
+        output.ShouldContain($"'{profileName}' credentials created");
 
         var credentialsManager = TestFixture.WebApp.Services.GetRequiredService<ICredentialsManager>();
         credentialsManager.TryGetCredential(profileName, out var credentialsConfig);
 
-        credentialsConfig.Should().NotBeNull();
+        credentialsConfig.ShouldNotBeNull();
         // credentialsConfig.RoleArn.Should().Be(awsRoleArn);
         // credentialsConfig.OktaProfile.Should().Be(profileName);
         // credentialsConfig.OktaAppUrl.Should().Be(oktaAppUrl);
