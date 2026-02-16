@@ -10,7 +10,7 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Config;
 [Examples("user")]
 public class OpenConfig(IConfigManager configManager, IFileManager fileManager) : Command
 {
-    public override int Execute(CommandContext context)
+    public override int Execute(CommandContext context, CancellationToken cancellationToken)
     {
         if (!File.Exists(configManager.AppConfigPath))
             configManager.SaveConfig();

@@ -10,7 +10,7 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Utils;
 [Examples("logs")]
 public class OpenLogs(IFileManager fileManager) : Command
 {
-    public override int Execute(CommandContext context)
+    public override int Execute(CommandContext context, CancellationToken cancellationToken)
     {
         if (!File.Exists(LogRegistration.LogFileName))
             AnsiConsole.MarkupLine("[yellow]Unable to find log file[/]");

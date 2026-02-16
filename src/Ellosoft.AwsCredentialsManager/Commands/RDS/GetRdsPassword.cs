@@ -53,7 +53,7 @@ public class GetRdsPassword(
         public string? Environment { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         if (settings.Profile is null)
             return await HandleAdHocRequest(settings);

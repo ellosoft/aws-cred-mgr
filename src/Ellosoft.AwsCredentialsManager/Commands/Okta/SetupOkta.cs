@@ -34,7 +34,7 @@ public class SetupOkta(IOktaLoginService loginService, IConfigManager configMana
         public string? PreferredMfaType { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("Okta Setup");
 
