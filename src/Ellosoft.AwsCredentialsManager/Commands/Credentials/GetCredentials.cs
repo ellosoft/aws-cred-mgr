@@ -28,7 +28,7 @@ public class GetCredentials(
         public string? AwsProfile { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var credential = settings.Credential ?? credentialsManager.GetCredentialNameFromUser();
 

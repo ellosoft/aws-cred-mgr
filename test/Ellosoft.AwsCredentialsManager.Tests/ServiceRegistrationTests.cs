@@ -64,7 +64,7 @@ public class ServiceRegistrationTests
     }
 #endif
 
-    private void TestServiceResolution(Type serviceType, Type implementationType)
+    internal void TestServiceResolution(Type serviceType, Type implementationType)
     {
         var resolvedServices = _serviceProvider.GetServices(serviceType).ToList();
 

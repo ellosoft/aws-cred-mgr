@@ -10,7 +10,7 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Config;
 [Examples("aws")]
 public class OpenAwsConfig(IFileManager fileManager) : Command
 {
-    public override int Execute(CommandContext context)
+    public override int Execute(CommandContext context, CancellationToken cancellationToken)
     {
         var awsCredentialsPath = Path.Combine(AppDataDirectory.UserProfileDirectory, ".aws", "credentials");
 

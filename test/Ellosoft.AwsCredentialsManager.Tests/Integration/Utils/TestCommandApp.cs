@@ -22,11 +22,7 @@ public class TestCommandApp
             config.PropagateExceptions();
             config.ConfigureConsole(Console);
 
-            config.SetInterceptor(new CallbackCommandInterceptor((ctx, s) =>
-            {
-                Context = ctx;
-                Settings = s;
-            }));
+            config.SetInterceptor(new TestCommandInterceptor(this));
         });
 
         // TODO: Remove this once all commands start using the IAnsiConsole interface
@@ -51,5 +47,18 @@ public class TestCommandApp
             .Trim();
 
         return (result, output);
+    }
+
+    private sealed class TestCommandInterceptor(TestCommandApp app) : ICommandInterceptor
+    {
+        public void Intercept(CommandContext context, CommandSettings settings)
+        {
+            app.Context = context;
+            app.Settings = settings;
+        }
+
+        public void InterceptResult(CommandContext context, CommandSettings settings, ref int result)
+        {
+        }
     }
 }

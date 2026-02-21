@@ -21,7 +21,7 @@ public class ListRdsProfiles : Command<ListRdsProfiles.Settings>
 
     public ListRdsProfiles(IConfigManager configManager) => _configManager = configManager;
 
-    public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
+    public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings, CancellationToken cancellationToken)
     {
         var environments = settings.Environment is null
             ? _configManager.AppConfig.Environments

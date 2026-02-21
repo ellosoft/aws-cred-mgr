@@ -82,7 +82,7 @@ public class AwsCredentialsService(ILogger<AwsCredentialsService> logger) : IAws
                 response.Credentials.AccessKeyId,
                 response.Credentials.SecretAccessKey,
                 response.Credentials.SessionToken,
-                response.Credentials.Expiration,
+                response.Credentials.Expiration ?? DateTime.UtcNow.AddHours(1),
                 roleArn);
         }
         catch (Exception ex)

@@ -19,7 +19,7 @@ public class ListCredentialsProfiles(IConfigManager configManager) : Command<Lis
         public string OktaUserProfile { get; set; } = OktaConfiguration.DefaultProfileName;
     }
 
-    public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
+    public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings, CancellationToken cancellationToken)
     {
         var credentials = configManager.AppConfig.Credentials;
 
