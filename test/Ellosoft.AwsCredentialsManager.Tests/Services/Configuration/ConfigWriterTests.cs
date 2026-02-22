@@ -37,11 +37,11 @@ public sealed class ConfigWriterTests : IDisposable
         _configWriter.Write(filePath, config);
 
         var readConfig = _configReader.Read(filePath);
-        readConfig.Credentials.Should().ContainKey("test_profile");
-        readConfig.Credentials["test_profile"].RoleArn.Should().Be("arn:aws:iam::123:role:/test_role");
-        readConfig.Credentials["test_profile"].AwsProfile.Should().Be("default");
-        readConfig.Credentials["test_profile"].OktaAppUrl.Should().Be("https://test.okta.com/home/amazon_aws/abc/272");
-        readConfig.Credentials["test_profile"].OktaProfile.Should().Be("default");
+        readConfig.Credentials.ShouldContainKey("test_profile");
+        readConfig.Credentials["test_profile"].RoleArn.ShouldBe("arn:aws:iam::123:role:/test_role");
+        readConfig.Credentials["test_profile"].AwsProfile.ShouldBe("default");
+        readConfig.Credentials["test_profile"].OktaAppUrl.ShouldBe("https://test.okta.com/home/amazon_aws/abc/272");
+        readConfig.Credentials["test_profile"].OktaProfile.ShouldBe("default");
     }
 
     [Fact]
@@ -69,9 +69,9 @@ public sealed class ConfigWriterTests : IDisposable
         _configWriter.Write(outputPath, config);
 
         var content = File.ReadAllText(outputPath);
-        content.Should().Contain("---");
-        content.Should().Contain("my_var");
-        content.Should().Contain("test_value");
+        content.ShouldContain("---");
+        content.ShouldContain("my_var");
+        content.ShouldContain("test_value");
     }
 
     [Fact]
@@ -82,8 +82,8 @@ public sealed class ConfigWriterTests : IDisposable
 
         var act = () => _configWriter.Write(filePath, config);
 
-        act.Should().NotThrow();
-        File.Exists(filePath).Should().BeTrue();
+        Should.NotThrow(act);
+        File.Exists(filePath).ShouldBeTrue();
     }
 
     public void Dispose()

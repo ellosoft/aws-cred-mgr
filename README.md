@@ -1,12 +1,14 @@
 # AWS Credential Manager (aws-cred-mgr)
 
+![.NET Build](https://img.shields.io/github/actions/workflow/status/ellosoft/aws-cred-mgr/build.yml?branch=main&style=flat-square&label=build) ![License](https://img.shields.io/github/license/ellosoft/aws-cred-mgr?style=flat-square)
+
 AWS Credential Manager (`aws-cred-mgr`) is a command-line interface (CLI) tool designed to simplify the management of local AWS credentials (including AWS RDS), especially for users authenticating with Okta. This utility offers a seamless experience for configuring Okta authentication, creating and managing AWS credential profiles, and handling RDS tokens effectively.
 
 ## Features
 
--   **Okta Authentication**: Easily setup Okta authentication for you user
--   **Credential Management**: Create and list AWS credentials, manage profiles with ease.
--   **RDS Token Management**: Obtain RDS passwords for your databases securely.
+- **Okta Authentication**: Easily setup Okta authentication for you user
+- **Credential Management**: Create and list AWS credentials, manage profiles with ease.
+- **RDS Token Management**: Obtain RDS passwords for your databases securely.
 
 ### [Request new features here](https://github.com/ellosoft/aws-cred-mgr/issues/new?assignees=vgmello-ellosoft&labels=enhancement&projects=&template=feature_request.md&title=%5BFEATURE%5D)
 
@@ -51,8 +53,8 @@ aws-cred-mgr okta setup
 
 #### Examples
 
--   Simply run `aws-cred-mgr okta setup` to use interactive mode.
--   Set up with domain and username: `aws-cred-mgr okta setup -d https://xyz.okta.com -u john --mfa push`
+- Simply run `aws-cred-mgr okta setup` to use interactive mode.
+- Set up with domain and username: `aws-cred-mgr okta setup -d https://xyz.okta.com -u john --mfa push`
 
 ### Credential Management
 
@@ -62,15 +64,15 @@ aws-cred-mgr cred [COMMAND]
 
 #### Subcommands
 
--   `new`: Create a new credential profile.
--   `get`: Get AWS credentials for an existing credential profile
--   `list` (alias `ls`): List all saved credential profiles.
+- `new`: Create a new credential profile.
+- `get`: Get AWS credentials for an existing credential profile
+- `list` (alias `ls`): List all saved credential profiles.
 
 #### Examples
 
--   Create a new credential profile named `prod`: `aws-cred-mgr cred new prod`
--   List credentials: `aws-cred-mgr cred ls`
--   Get the AWS credentials for `prod` and stores it in ~/.aws/credentials: `aws-cred-mgr cred get prod`
+- Create a new credential profile named `prod`: `aws-cred-mgr cred new prod`
+- List credentials: `aws-cred-mgr cred ls`
+- Get the AWS credentials for `prod` and stores it in ~/.aws/credentials: `aws-cred-mgr cred get prod`
 
 ### RDS Token Management
 
@@ -80,9 +82,9 @@ aws-cred-mgr rds [COMMAND]
 
 #### Examples
 
--   Get RDS password : `aws-cred-mgr rds pwd`
--   Get RDS password for `prod_db`: `aws-cred-mgr rds pwd prod_db`
--   Get RDS password with all options: `aws-cred-mgr rds pwd -h localhost -p 5432 -u john`
+- Get RDS password : `aws-cred-mgr rds pwd`
+- Get RDS password for `prod_db`: `aws-cred-mgr rds pwd prod_db`
+- Get RDS password with all options: `aws-cred-mgr rds pwd -h localhost -p 5432 -u john`
 
 ### Config Files
 
@@ -92,15 +94,15 @@ aws-cred-mgr config
 
 #### Examples
 
--   Open user config: `aws-cred-mgr config`
--   Open AWS credentials file: `aws-cred-mgr config aws`
+- Open user config: `aws-cred-mgr config`
+- Open AWS credentials file: `aws-cred-mgr config aws`
 
 ### Configuration
 
 The `config` section in the YAML file allows you to set global tool configurations:
 
--   `copy_to_clipboard`: When set to `true`, the tool will automatically copy generated passwords to the clipboard. Default is `true`.
--   `aws_ignore_configured_endpoints`: When set to `true`, the tool will ignore any pre-configured AWS endpoints. This can be useful in certain network environments. Default is `true`.
+- `copy_to_clipboard`: When set to `true`, the tool will automatically copy generated passwords to the clipboard. Default is `true`.
+- `aws_ignore_configured_endpoints`: When set to `true`, the tool will ignore any pre-configured AWS endpoints. This can be useful in certain network environments. Default is `true`.
 
 ## Security Note for Windows and macOS Users
 
@@ -192,12 +194,12 @@ This project has adopted the code of conduct defined by the Contributor Covenant
 
 `aws-cred-mgr` makes use of several open-source libraries. We extend our gratitude to the developers and contributors of these libraries:
 
--   **[AngleSharp](https://github.com/AngleSharp/AngleSharp)**: A .NET library for parsing, manipulating, and rendering HTML and CSS documents.
--   **[AWSSDK](https://github.com/aws/aws-sdk-net)**: The official AWS SDK for the .NET Framework.
--   **[Serilog.Extensions.Logging](https://github.com/serilog/serilog-extensions-logging)**: An extension to `Microsoft.Extensions.Logging` that integrates Serilog.
--   **[Serilog.Sinks.File](https://github.com/serilog/serilog-sinks-file)**: A Serilog sink that writes log events to text files.
--   **[Spectre.Console](https://github.com/spectreconsole/spectre.console)**: A library for building command line interfaces.
--   **[YamlDotNet](https://github.com/aaubry/YamlDotNet)**: A .NET library for YAML serialization and deserialization.
+- **[AngleSharp](https://github.com/AngleSharp/AngleSharp)**: A .NET library for parsing, manipulating, and rendering HTML and CSS documents.
+- **[AWSSDK](https://github.com/aws/aws-sdk-net)**: The official AWS SDK for the .NET Framework.
+- **[Serilog.Extensions.Logging](https://github.com/serilog/serilog-extensions-logging)**: An extension to `Microsoft.Extensions.Logging` that integrates Serilog.
+- **[Serilog.Sinks.File](https://github.com/serilog/serilog-sinks-file)**: A Serilog sink that writes log events to text files.
+- **[Spectre.Console](https://github.com/spectreconsole/spectre.console)**: A library for building command line interfaces.
+- **[YamlDotNet](https://github.com/aaubry/YamlDotNet)**: A .NET library for YAML serialization and deserialization.
 
 Each of these libraries may be licensed differently, so we recommend you to review their licenses if you plan to use `aws-cred-mgr` in your own projects.
 

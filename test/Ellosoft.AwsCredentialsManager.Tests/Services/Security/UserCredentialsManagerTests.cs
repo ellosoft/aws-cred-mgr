@@ -44,9 +44,9 @@ public class UserCredentialsManagerTests
 
         var result = _manager.GetUserCredentials("test_key");
 
-        result.Should().NotBeNull();
-        result!.Username.Should().Be("testuser");
-        result.Password.Should().Be("testpass");
+        result.ShouldNotBeNull();
+        result!.Username.ShouldBe("testuser");
+        result.Password.ShouldBe("testpass");
     }
 
     [Fact]
@@ -62,6 +62,6 @@ public class UserCredentialsManagerTests
 
         var result = _manager.GetUserCredentials("missing_key");
 
-        result.Should().BeNull();
+        result.ShouldBeNull();
     }
 }

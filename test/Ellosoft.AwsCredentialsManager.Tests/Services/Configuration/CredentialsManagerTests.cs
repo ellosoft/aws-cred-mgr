@@ -31,11 +31,11 @@ public class CredentialsManagerTests
 
         var result = _credentialsManager.TryGetCredential("test_profile", out var config);
 
-        result.Should().BeTrue();
-        config.Should().NotBeNull();
-        config!.RoleArn.Should().Be("arn:aws:iam::123:role/TestRole");
-        config.OktaAppUrl.Should().Be("https://test.okta.com/home/amazon_aws/abc/272");
-        config.OktaProfile.Should().Be("default");
+        result.ShouldBeTrue();
+        config.ShouldNotBeNull();
+        config!.RoleArn.ShouldBe("arn:aws:iam::123:role/TestRole");
+        config.OktaAppUrl.ShouldBe("https://test.okta.com/home/amazon_aws/abc/272");
+        config.OktaProfile.ShouldBe("default");
     }
 
     [Fact]
@@ -43,8 +43,8 @@ public class CredentialsManagerTests
     {
         var result = _credentialsManager.TryGetCredential("nonexistent", out var config);
 
-        result.Should().BeFalse();
-        config.Should().BeNull();
+        result.ShouldBeFalse();
+        config.ShouldBeNull();
     }
 
     [Theory]
@@ -63,7 +63,7 @@ public class CredentialsManagerTests
 
         var result = _credentialsManager.TryGetCredential("incomplete_profile", out _);
 
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Fact]
@@ -76,12 +76,12 @@ public class CredentialsManagerTests
             "https://test.okta.com/home/amazon_aws/xyz/123",
             "default");
 
-        _appConfig.Credentials.Should().ContainKey("new_profile");
+        _appConfig.Credentials.ShouldContainKey("new_profile");
         var cred = _appConfig.Credentials["new_profile"];
-        cred.RoleArn.Should().Be("arn:aws:iam::456:role/NewRole");
-        cred.AwsProfile.Should().Be("my_aws_profile");
-        cred.OktaAppUrl.Should().Be("https://test.okta.com/home/amazon_aws/xyz/123");
-        cred.OktaProfile.Should().Be("default");
+        cred.RoleArn.ShouldBe("arn:aws:iam::456:role/NewRole");
+        cred.AwsProfile.ShouldBe("my_aws_profile");
+        cred.OktaAppUrl.ShouldBe("https://test.okta.com/home/amazon_aws/xyz/123");
+        cred.OktaProfile.ShouldBe("default");
         _configManager.Received(1).SaveConfig();
     }
 }
