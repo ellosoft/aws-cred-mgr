@@ -10,14 +10,16 @@ determine_os_and_arch() {
     fi
 
     ARCH=$(uname -m)
-    if [ "$ARCH" = "x86_64" ]; then
+    if [[ "$ARCH" = "x86_64" ]]; then
         ARCH="x64"
-    elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+    elif [[ "$ARCH" = "arm64" || "$ARCH" = "aarch64" ]]; then
         ARCH="arm64"
     else
         echo "Unsupported architecture: $ARCH"
         exit 1
     fi
+
+    return 0
 }
 
 get_latest_github_release_url() {
@@ -26,7 +28,7 @@ get_latest_github_release_url() {
         | cut -d : -f 2,3 \
         | tr -d '\" \t')
 
-    if [ -z "$LATEST_RELEASE_URL" ]; then
+    if [[ -z "$LATEST_RELEASE_URL" ]]; then
         echo "Failed to find the latest release URL for $OS-$ARCH"
         exit 1
     fi
@@ -47,7 +49,7 @@ update_shell_profile() {
     local profile_file="$1"
     local path_export="export PATH=\"$INSTALL_DIR:\$PATH\""
 
-    if [ -f "$profile_file" ]; then
+    if [[ -f "$profile_file" ]]; then
         if ! grep -q "$path_export" "$profile_file"; then
             echo "" >> "$profile_file"
             echo "# AWS Credential Manager" >> "$profile_file"
