@@ -32,17 +32,23 @@ get_latest_github_release_url() {
         echo "Failed to find the latest release URL for $OS-$ARCH"
         exit 1
     fi
+
+    return 0
 }
 
 create_install_dir() {
     INSTALL_DIR="$HOME/.aws_cred_mgr/bin"
     mkdir -p "$INSTALL_DIR"
+
+    return 0
 }
 
 download_tool() {
     echo "Downloading aws-cred-mgr for $OS-$ARCH..."
     curl -L "$LATEST_RELEASE_URL" -o "$INSTALL_DIR/aws-cred-mgr"
     chmod 750 "$INSTALL_DIR/aws-cred-mgr"
+
+    return 0
 }
 
 update_shell_profile() {
@@ -57,6 +63,8 @@ update_shell_profile() {
             echo "Updated $profile_file"
         fi
     fi
+
+    return 0
 }
 
 install_aws_cred_mgr() {
@@ -78,6 +86,8 @@ install_aws_cred_mgr() {
     echo "To use aws-cred-mgr in the current session, run one of the following based on your shell:"
     echo "  source ~/.bashrc  # for Bash"
     echo "  source ~/.zshrc   # for Zsh (including Oh My Zsh)"
+
+    return 0
 }
 
 install_aws_cred_mgr
