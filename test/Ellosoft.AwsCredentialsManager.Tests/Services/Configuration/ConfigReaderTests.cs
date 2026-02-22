@@ -41,18 +41,18 @@ public sealed class ConfigReaderTests : IDisposable
 
         var config = _configReader.Read(filePath);
 
-        config.Authentication.Should().NotBeNull();
-        config.Authentication!.Okta.Should().ContainKey("default");
-        config.Authentication.Okta["default"].OktaDomain.Should().Be("https://test.okta.com/");
-        config.Authentication.Okta["default"].PreferredMfaType.Should().Be("push");
-        config.Authentication.Okta["default"].AuthType.Should().Be("classic");
+        config.Authentication.ShouldNotBeNull();
+        config.Authentication!.Okta.ShouldContainKey("default");
+        config.Authentication.Okta["default"].OktaDomain.ShouldBe("https://test.okta.com/");
+        config.Authentication.Okta["default"].PreferredMfaType.ShouldBe("push");
+        config.Authentication.Okta["default"].AuthType.ShouldBe("classic");
 
-        config.Credentials.Should().ContainKey("test_profile");
+        config.Credentials.ShouldContainKey("test_profile");
         var cred = config.Credentials["test_profile"];
-        cred.RoleArn.Should().Be("arn:aws:iam::123:role:/test_role");
-        cred.AwsProfile.Should().Be("default");
-        cred.OktaAppUrl.Should().Be("https://test.okta.com/home/amazon_aws/abc/272");
-        cred.OktaProfile.Should().Be("default");
+        cred.RoleArn.ShouldBe("arn:aws:iam::123:role:/test_role");
+        cred.AwsProfile.ShouldBe("default");
+        cred.OktaAppUrl.ShouldBe("https://test.okta.com/home/amazon_aws/abc/272");
+        cred.OktaProfile.ShouldBe("default");
     }
 
     [Fact]
@@ -75,12 +75,12 @@ public sealed class ConfigReaderTests : IDisposable
 
         var config = _configReader.Read(filePath);
 
-        config.Templates.Should().NotBeNull();
-        config.Templates!.Rds.Should().ContainKey("test_db");
-        config.Templates.Rds["test_db"].Username.Should().Be("test_value");
-        config.Templates.Rds["test_db"].Hostname.Should().Be("test.host");
-        config.Templates.Rds["test_db"].Port.Should().Be(5432);
-        config.Templates.Rds["test_db"].Region.Should().Be("us-east-2");
+        config.Templates.ShouldNotBeNull();
+        config.Templates!.Rds.ShouldContainKey("test_db");
+        config.Templates.Rds["test_db"].Username.ShouldBe("test_value");
+        config.Templates.Rds["test_db"].Hostname.ShouldBe("test.host");
+        config.Templates.Rds["test_db"].Port.ShouldBe(5432);
+        config.Templates.Rds["test_db"].Region.ShouldBe("us-east-2");
     }
 
     [Fact]
@@ -90,9 +90,9 @@ public sealed class ConfigReaderTests : IDisposable
 
         var config = _configReader.Read(filePath);
 
-        config.Should().NotBeNull();
-        config.Credentials.Should().BeEmpty();
-        config.Authentication.Should().BeNull();
+        config.ShouldNotBeNull();
+        config.Credentials.ShouldBeEmpty();
+        config.Authentication.ShouldBeNull();
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public sealed class ConfigReaderTests : IDisposable
 
         var act = () => _configReader.Read(filePath);
 
-        act.Should().Throw<InvalidOperationException>();
+        Should.Throw<InvalidOperationException>(act);
     }
 
     public void Dispose()

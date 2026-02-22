@@ -1,5 +1,8 @@
 # AWS Credential Manager (aws-cred-mgr)
 
+<a href="https://github.com/ellosoft/aws-cred-mgr/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/ellosoft/aws-cred-mgr/build.yml?branch=main&amp;style=flat-square&amp;label=build"></a>
+<a href="https://github.com/ellosoft/aws-cred-mgr/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ellosoft/aws-cred-mgr?style=flat-square"></a>
+
 AWS Credential Manager (`aws-cred-mgr`) is a command-line interface (CLI) tool designed to simplify the management of local AWS credentials (including AWS RDS), especially for users authenticating with Okta. This utility offers a seamless experience for configuring Okta authentication, creating and managing AWS credential profiles, and handling RDS tokens effectively.
 
 ## Features

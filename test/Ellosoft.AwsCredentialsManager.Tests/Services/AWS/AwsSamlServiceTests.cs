@@ -38,9 +38,9 @@ public class AwsSamlServiceTests
 
         var result = _samlService.GetAwsRolesAndIdpFromSamlAssertion(encoded);
 
-        result.Should().HaveCount(1);
-        result.Should().ContainKey("arn:aws:iam::123:role/TestRole");
-        result["arn:aws:iam::123:role/TestRole"].Should().Be("arn:aws:iam::123:saml-provider/okta");
+        result.Count.ShouldBe(1);
+        result.ShouldContainKey("arn:aws:iam::123:role/TestRole");
+        result["arn:aws:iam::123:role/TestRole"].ShouldBe("arn:aws:iam::123:saml-provider/okta");
     }
 
     [Fact]
@@ -52,11 +52,11 @@ public class AwsSamlServiceTests
 
         var result = _samlService.GetAwsRolesAndIdpFromSamlAssertion(encoded);
 
-        result.Should().HaveCount(2);
-        result.Should().ContainKey("arn:aws:iam::123:role/RoleA");
-        result.Should().ContainKey("arn:aws:iam::456:role/RoleB");
-        result["arn:aws:iam::123:role/RoleA"].Should().Be("arn:aws:iam::123:saml-provider/okta");
-        result["arn:aws:iam::456:role/RoleB"].Should().Be("arn:aws:iam::456:saml-provider/okta");
+        result.Count.ShouldBe(2);
+        result.ShouldContainKey("arn:aws:iam::123:role/RoleA");
+        result.ShouldContainKey("arn:aws:iam::456:role/RoleB");
+        result["arn:aws:iam::123:role/RoleA"].ShouldBe("arn:aws:iam::123:saml-provider/okta");
+        result["arn:aws:iam::456:role/RoleB"].ShouldBe("arn:aws:iam::456:saml-provider/okta");
     }
 
     [Theory]
@@ -66,7 +66,7 @@ public class AwsSamlServiceTests
     {
         var act = () => _samlService.GetAwsRolesAndIdpFromSamlAssertion(assertion!);
 
-        act.Should().Throw<Exception>();
+        Should.Throw<Exception>(act);
     }
 
     [Fact]
@@ -88,6 +88,6 @@ public class AwsSamlServiceTests
 
         var result = _samlService.GetAwsRolesAndIdpFromSamlAssertion(encoded);
 
-        result.Should().BeEmpty();
+        result.ShouldBeEmpty();
     }
 }
