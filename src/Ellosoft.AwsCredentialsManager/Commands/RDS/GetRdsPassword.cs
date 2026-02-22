@@ -80,9 +80,9 @@ public class GetRdsPassword(
 
         AnsiConsole.MarkupLine($"Getting RDS password using [green i]{credentialName}[/] credential profile");
 
-        var hostname = settings.Hostname ?? AnsiConsole.Ask<string>("Enter the DB hostname:");
-        var port = settings.Port ?? AnsiConsole.Ask<int>("Enter the DB port:");
-        var username = settings.Username ?? AnsiConsole.Ask<string>("Enter the DB username:");
+        var hostname = settings.Hostname ?? await AnsiConsole.AskAsync<string>("Enter the DB hostname:");
+        var port = settings.Port ?? await AnsiConsole.AskAsync<int>("Enter the DB port:");
+        var username = settings.Username ?? await AnsiConsole.AskAsync<string>("Enter the DB username:");
         var region = settings.GetRegion();
 
         await GenerateDbPassword(credentialName, hostname, port, username, region.SystemName, settings.Ttl);

@@ -10,14 +10,16 @@ determine_os_and_arch() {
     fi
 
     ARCH=$(uname -m)
-    if [ "$ARCH" = "x86_64" ]; then
+    if [[ "$ARCH" = "x86_64" ]]; then
         ARCH="x64"
-    elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+    elif [[ "$ARCH" = "arm64" || "$ARCH" = "aarch64" ]]; then
         ARCH="arm64"
     else
         echo "Unsupported architecture: $ARCH"
         exit 1
     fi
+
+    return 0
 }
 
 get_latest_github_release_url() {
@@ -26,28 +28,34 @@ get_latest_github_release_url() {
         | cut -d : -f 2,3 \
         | tr -d '\" \t')
 
-    if [ -z "$LATEST_RELEASE_URL" ]; then
+    if [[ -z "$LATEST_RELEASE_URL" ]]; then
         echo "Failed to find the latest release URL for $OS-$ARCH"
         exit 1
     fi
+
+    return 0
 }
 
 create_install_dir() {
     INSTALL_DIR="$HOME/.aws_cred_mgr/bin"
     mkdir -p "$INSTALL_DIR"
+
+    return 0
 }
 
 download_tool() {
     echo "Downloading aws-cred-mgr for $OS-$ARCH..."
     curl -L "$LATEST_RELEASE_URL" -o "$INSTALL_DIR/aws-cred-mgr"
     chmod 750 "$INSTALL_DIR/aws-cred-mgr"
+
+    return 0
 }
 
 update_shell_profile() {
     local profile_file="$1"
     local path_export="export PATH=\"$INSTALL_DIR:\$PATH\""
 
-    if [ -f "$profile_file" ]; then
+    if [[ -f "$profile_file" ]]; then
         if ! grep -q "$path_export" "$profile_file"; then
             echo "" >> "$profile_file"
             echo "# AWS Credential Manager" >> "$profile_file"
@@ -55,6 +63,8 @@ update_shell_profile() {
             echo "Updated $profile_file"
         fi
     fi
+
+    return 0
 }
 
 install_aws_cred_mgr() {
@@ -76,6 +86,8 @@ install_aws_cred_mgr() {
     echo "To use aws-cred-mgr in the current session, run one of the following based on your shell:"
     echo "  source ~/.bashrc  # for Bash"
     echo "  source ~/.zshrc   # for Zsh (including Oh My Zsh)"
+
+    return 0
 }
 
 install_aws_cred_mgr

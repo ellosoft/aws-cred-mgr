@@ -16,7 +16,7 @@ public class OktaTotpFactorHandler : OktaFactorHandler
     {
         while (true)
         {
-            var passCode = AnsiConsole.Ask<int>("Enter the code displaying on your authenticator app:");
+            var passCode = await AnsiConsole.AskAsync<int>("Enter the code displaying on your authenticator app:");
 
             var verifyFactorRequest = new VerifyTotpFactorRequest
             {

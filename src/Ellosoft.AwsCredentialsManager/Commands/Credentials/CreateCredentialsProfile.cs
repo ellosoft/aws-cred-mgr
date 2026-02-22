@@ -80,7 +80,7 @@ public class CreateCredentialsProfile(
         if (awsAppLinks.Count == 0)
             throw new CommandException("No AWS apps found in Okta, please use the '--okta-app-url' option to specify an app URL manually");
 
-        var appLink = AnsiConsole.Prompt(
+        var appLink = await AnsiConsole.PromptAsync(
             new SelectionPrompt<AppLink>()
                 .Title("Select your [green]AWS Okta App[/]:")
                 .PageSize(10)
@@ -141,6 +141,6 @@ public class CreateCredentialsProfile(
         foreach (var accountGroup in rolesGroupedByAccount)
             choices.AddChoiceGroup($"[blue]{accountGroup.Key}[/]", accountGroup);
 
-        return AnsiConsole.Prompt(choices);
+        return await AnsiConsole.PromptAsync(choices);
     }
 }
