@@ -1,4 +1,6 @@
 name: .NET Build & Test Workflow
+permissions:
+  contents: read
 on:
   push:
     branches: ["main", "develop"]
