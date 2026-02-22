@@ -75,27 +75,32 @@ public class ConfigReader : IConfigReader
         if (type.IsPrimitive || type == typeof(string) || type == typeof(DateTime))
             return;
 
-        var complexYamlObj = (IDictionary<object, object>)yamlObject;
+        if (yamlObject is not IDictionary<object, object> complexYamlObj)
+            return;
 
         if (obj is IDictionary dictionary)
         {
-            foreach (DictionaryEntry entry in dictionary)
-            {
-                if (!complexYamlObj.TryGetValue(GetYamlName(entry.Key.ToString()!), out var yamlValue))
-                    continue;
-
-                if (yamlValue is string stringValue && stringValue.Contains("${"))
-                    throw new NotSupportedException($"Variables are not support for the key {entry.Key}");
-
-                UpdateConfigMetadata(entry.Value!, (IDictionary<object, object>)yamlValue);
-            }
-
+            UpdateDictionaryMetadata(dictionary, complexYamlObj);
             return;
         }
 
         foreach (var property in type.GetProperties())
         {
             CheckPropertyForVariable(property, obj, complexYamlObj);
+        }
+    }
+
+    private static void UpdateDictionaryMetadata(IDictionary dictionary, IDictionary<object, object> complexYamlObj)
+    {
+        foreach (DictionaryEntry entry in dictionary)
+        {
+            if (!complexYamlObj.TryGetValue(GetYamlName(entry.Key.ToString()!), out var yamlValue))
+                continue;
+
+            if (yamlValue is string stringValue && stringValue.Contains("${"))
+                throw new NotSupportedException($"Variables are not supported for the key {entry.Key}");
+
+            UpdateConfigMetadata(entry.Value!, yamlValue);
         }
     }
 

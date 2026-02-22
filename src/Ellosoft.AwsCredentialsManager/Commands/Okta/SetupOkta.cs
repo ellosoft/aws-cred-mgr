@@ -39,8 +39,8 @@ public class SetupOkta(IOktaLoginService loginService, IConfigManager configMana
         AnsiConsole.MarkupLine("Okta Setup");
 
         var oktaDomain = GetOktaDomainUrl(settings);
-        var username = settings.Username ?? AnsiConsole.Ask<string>("Enter your [green]Okta[/] username:");
-        var password = AnsiConsole.Prompt(new TextPrompt<string>("Enter your [green]Okta[/] password:").Secret());
+        var username = settings.Username ?? await AnsiConsole.AskAsync<string>("Enter your [green]Okta[/] username:");
+        var password = await AnsiConsole.PromptAsync(new TextPrompt<string>("Enter your [green]Okta[/] password:").Secret());
 
         AnsiConsole.WriteLine();
 
