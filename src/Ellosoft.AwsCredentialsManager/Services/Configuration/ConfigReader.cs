@@ -98,10 +98,9 @@ public class ConfigReader : IConfigReader
                 continue;
 
             if (yamlValue is string stringValue && stringValue.Contains("${"))
-                throw new NotSupportedException($"Variables are not support for the key {entry.Key}");
+                throw new NotSupportedException($"Variables are not supported for the key {entry.Key}");
 
-            if (entry.Value is not null)
-                UpdateConfigMetadata(entry.Value, yamlValue);
+            UpdateConfigMetadata(entry.Value!, yamlValue);
         }
     }
 
