@@ -6,7 +6,11 @@ authentication:
   okta:
     default:
       okta_domain: https://xyz.okta.com/
+      # preferred_mfa_type accepts: push | fingerprint | totp | code | app
+      # (fingerprint maps to Okta Verify push; app maps to TOTP code entry)
       preferred_mfa_type: push
+      # preferred_mfa_type: app
+      # preferred_mfa_type: fingerprint
       auth_type: classic
 
 credentials:

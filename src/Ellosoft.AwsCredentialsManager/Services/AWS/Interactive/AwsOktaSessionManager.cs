@@ -10,7 +10,7 @@ namespace Ellosoft.AwsCredentialsManager.Services.AWS.Interactive;
 
 public interface IAwsOktaSessionManager
 {
-    Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? outputAwsProfile);
+    Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? outputAwsProfile, bool forceRenew = false);
 }
 
 public class AwsOktaSessionManager(
@@ -20,14 +20,14 @@ public class AwsOktaSessionManager(
     IAwsCredentialsService awsCredentialsService,
     IAwsSamlService awsSamlService) : IAwsOktaSessionManager
 {
-    public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? outputAwsProfile)
+    public async Task<AWSCredentials?> CreateOrResumeSessionAsync(string credentialProfile, string? outputAwsProfile, bool forceRenew = false)
     {
         if (!credentialsManager.TryGetCredential(credentialProfile, out var credentialsConfig))
             return null;
 
         var awsProfile = credentialsConfig.GetAwsProfileSafe(credentialProfile);
 
-        if (TryResumeSession(awsProfile, credentialsConfig.RoleArn, out var awsCredentialsData))
+        if (!forceRenew && TryResumeSession(awsProfile, credentialsConfig.RoleArn, out var awsCredentialsData))
             return CreateAwsCredentials(awsCredentialsData, awsProfile, outputAwsProfile);
 
         var newCredential = await CreateSessionAsync(credentialProfile, awsProfile, credentialsConfig);

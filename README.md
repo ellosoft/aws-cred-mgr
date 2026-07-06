@@ -57,6 +57,18 @@ aws-cred-mgr okta setup
 
 - Simply run `aws-cred-mgr okta setup` to use interactive mode.
 - Set up with domain and username: `aws-cred-mgr okta setup -d https://xyz.okta.com -u john --mfa push`
+- Prefer Okta Verify app TOTP codes: `aws-cred-mgr okta setup --mfa app`
+- Prefer Okta Verify push (including phone fingerprint approval): `aws-cred-mgr okta setup --mfa fingerprint`
+
+Supported `--mfa` / `preferred_mfa_type` values:
+
+| Value | Okta factor | Experience |
+| --- | --- | --- |
+| `push`, `fingerprint` | Okta Verify push | Approve a push notification (biometric unlock happens in the Okta Verify app) |
+| `totp`, `code`, `app` | Okta Verify TOTP | Enter the 6-digit code from the Okta Verify app |
+
+> [!Note]
+> `fingerprint` maps to Okta Verify **push** (phone biometric). Desktop Okta FastPass / Touch ID / Windows Hello (`signed_nonce`) is not supported yet.
 
 ### Credential Management
 
@@ -75,6 +87,7 @@ aws-cred-mgr cred [COMMAND]
 - Create a new credential profile named `prod`: `aws-cred-mgr cred new prod`
 - List credentials: `aws-cred-mgr cred ls`
 - Get the AWS credentials for `prod` and stores it in ~/.aws/credentials: `aws-cred-mgr cred get prod`
+- Force renew AWS credentials even if the current session is still valid: `aws-cred-mgr cred get prod --force-renew`
 
 ### RDS Token Management
 
@@ -87,6 +100,7 @@ aws-cred-mgr rds [COMMAND]
 - Get RDS password : `aws-cred-mgr rds pwd`
 - Get RDS password for `prod_db`: `aws-cred-mgr rds pwd prod_db`
 - Get RDS password with all options: `aws-cred-mgr rds pwd -h localhost -p 5432 -u john`
+- Force renew the underlying AWS session before generating an RDS password: `aws-cred-mgr rds pwd prod_db --force-renew`
 
 ### Config Files
 
@@ -129,7 +143,7 @@ authentication:
     okta:
         default: # default Okta profile name, additional profiles can also be created
             okta_domain: https://xyz.okta.com/
-            preferred_mfa_type: push
+            preferred_mfa_type: push # also: fingerprint | totp | code | app
             auth_type: classic
 
 credentials:
