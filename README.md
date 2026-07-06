@@ -75,6 +75,7 @@ aws-cred-mgr cred [COMMAND]
 - Create a new credential profile named `prod`: `aws-cred-mgr cred new prod`
 - List credentials: `aws-cred-mgr cred ls`
 - Get the AWS credentials for `prod` and stores it in ~/.aws/credentials: `aws-cred-mgr cred get prod`
+- Force renew AWS credentials even if the current session is still valid: `aws-cred-mgr cred get prod --force-renew`
 
 ### RDS Token Management
 
@@ -87,6 +88,7 @@ aws-cred-mgr rds [COMMAND]
 - Get RDS password : `aws-cred-mgr rds pwd`
 - Get RDS password for `prod_db`: `aws-cred-mgr rds pwd prod_db`
 - Get RDS password with all options: `aws-cred-mgr rds pwd -h localhost -p 5432 -u john`
+- Force renew the underlying AWS session before generating an RDS password: `aws-cred-mgr rds pwd prod_db --force-renew`
 
 ### Config Files
 
@@ -129,7 +131,7 @@ authentication:
     okta:
         default: # default Okta profile name, additional profiles can also be created
             okta_domain: https://xyz.okta.com/
-            preferred_mfa_type: push
+            preferred_mfa_type: push # also: totp | code
             auth_type: classic
 
 credentials:

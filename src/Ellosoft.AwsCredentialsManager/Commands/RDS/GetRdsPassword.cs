@@ -15,7 +15,8 @@ namespace Ellosoft.AwsCredentialsManager.Commands.RDS;
 [Description("Get AWS RDS DB password")]
 [Examples(
     "pwd prod_db",
-    "pwd -h localhost -p 5432 -u john")]
+    "pwd -h localhost -p 5432 -u john",
+    "pwd prod_db --force-renew")]
 public class GetRdsPassword(
     IConfigManager configManager,
     IEnvironmentManager envManager,
@@ -51,6 +52,10 @@ public class GetRdsPassword(
         [CommandOption("--env")]
         [Description("Environment name")]
         public string? Environment { get; set; }
+
+        [CommandOption("-f|--force-renew")]
+        [Description("Renew AWS credentials even if the current session is still valid")]
+        public bool ForceRenew { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
@@ -68,7 +73,8 @@ public class GetRdsPassword(
             dbConfig.Port,
             dbConfig.Username,
             dbConfig.Region,
-            dbConfig.GetTtl()
+            dbConfig.GetTtl(),
+            settings.ForceRenew
         );
 
         return 0;
@@ -85,14 +91,14 @@ public class GetRdsPassword(
         var username = settings.Username ?? await AnsiConsole.AskAsync<string>("Enter the DB username:");
         var region = settings.GetRegion();
 
-        await GenerateDbPassword(credentialName, hostname, port, username, region.SystemName, settings.Ttl);
+        await GenerateDbPassword(credentialName, hostname, port, username, region.SystemName, settings.Ttl, settings.ForceRenew);
 
         CreateNewRdsProfile(credentialName, hostname, port, username, settings.Ttl, region.SystemName, settings.Environment);
 
         return 0;
     }
 
-    private async Task GenerateDbPassword(string? credential, string? hostname, int? port, string? username, string? region, int ttl)
+    private async Task GenerateDbPassword(string? credential, string? hostname, int? port, string? username, string? region, int ttl, bool forceRenew = false)
     {
         try
         {
@@ -102,7 +108,7 @@ public class GetRdsPassword(
             ArgumentNullException.ThrowIfNull(username);
             ArgumentNullException.ThrowIfNull(region);
 
-            var awsCredentials = await awsSessionManager.CreateOrResumeSessionAsync(credential, null);
+            var awsCredentials = await awsSessionManager.CreateOrResumeSessionAsync(credential, null, forceRenew);
 
             if (awsCredentials is null)
                 throw new CommandException($"Unable to resume or create AWS session for credential '{credential}'");

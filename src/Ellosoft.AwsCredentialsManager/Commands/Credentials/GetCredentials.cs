@@ -10,7 +10,8 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
 [Description("Get AWS credentials for an existing credential profile")]
 [Examples(
     "get prod",
-    "get prod --aws-profile default")]
+    "get prod --aws-profile default",
+    "get prod --force-renew")]
 public class GetCredentials(
     ICredentialsManager credentialsManager,
     IAwsOktaSessionManager sessionManager
@@ -26,13 +27,17 @@ public class GetCredentials(
         [Description("AWS profile to use (profile used in AWS CLI)")]
         [DefaultValue("default")]
         public string? AwsProfile { get; set; }
+
+        [CommandOption("-f|--force-renew")]
+        [Description("Renew AWS credentials even if the current session is still valid")]
+        public bool ForceRenew { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var credential = settings.Credential ?? credentialsManager.GetCredentialNameFromUser();
 
-        var awsCredentials = await sessionManager.CreateOrResumeSessionAsync(credential, settings.AwsProfile);
+        var awsCredentials = await sessionManager.CreateOrResumeSessionAsync(credential, settings.AwsProfile, settings.ForceRenew);
 
         if (awsCredentials is null)
             return 1;

@@ -32,11 +32,11 @@ public class OktaMfaFactorSelector : IOktaMfaFactorSelector
 
     public static string GetOktaMfaFactorCode(string simplifiedMfaName)
     {
-        return simplifiedMfaName switch
+        return simplifiedMfaName.ToLowerInvariant() switch
         {
             "push" => "push",
-            "totp" => "token:software:totp",
-            "code" => "token:software:totp",
+            "totp" or "code" => "token:software:totp",
+            "token:software:totp" => "token:software:totp",
             _ => throw new NotSupportedException($"MFA type '{simplifiedMfaName}' is not yet supported")
         };
     }
