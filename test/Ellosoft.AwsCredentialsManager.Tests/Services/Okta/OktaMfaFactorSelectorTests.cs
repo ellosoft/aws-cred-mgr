@@ -8,13 +8,9 @@ public class OktaMfaFactorSelectorTests
 {
     [Theory]
     [InlineData("push", "push")]
-    [InlineData("fingerprint", "push")]
     [InlineData("PUSH", "push")]
-    [InlineData("Fingerprint", "push")]
     [InlineData("totp", "token:software:totp")]
     [InlineData("code", "token:software:totp")]
-    [InlineData("app", "token:software:totp")]
-    [InlineData("APP", "token:software:totp")]
     [InlineData("token:software:totp", "token:software:totp")]
     public void GetOktaMfaFactorCode_SupportedValues_ShouldNormalize(string input, string expected)
     {
@@ -27,6 +23,8 @@ public class OktaMfaFactorSelectorTests
     [InlineData("sms")]
     [InlineData("duo")]
     [InlineData("signed_nonce")]
+    [InlineData("fingerprint")]
+    [InlineData("app")]
     [InlineData("")]
     public void GetOktaMfaFactorCode_UnsupportedValues_ShouldThrow(string input)
     {

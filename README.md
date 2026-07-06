@@ -57,18 +57,6 @@ aws-cred-mgr okta setup
 
 - Simply run `aws-cred-mgr okta setup` to use interactive mode.
 - Set up with domain and username: `aws-cred-mgr okta setup -d https://xyz.okta.com -u john --mfa push`
-- Prefer Okta Verify app TOTP codes: `aws-cred-mgr okta setup --mfa app`
-- Prefer Okta Verify push (including phone fingerprint approval): `aws-cred-mgr okta setup --mfa fingerprint`
-
-Supported `--mfa` / `preferred_mfa_type` values:
-
-| Value | Okta factor | Experience |
-| --- | --- | --- |
-| `push`, `fingerprint` | Okta Verify push | Approve a push notification (biometric unlock happens in the Okta Verify app) |
-| `totp`, `code`, `app` | Okta Verify TOTP | Enter the 6-digit code from the Okta Verify app |
-
-> [!Note]
-> `fingerprint` maps to Okta Verify **push** (phone biometric). Desktop Okta FastPass / Touch ID / Windows Hello (`signed_nonce`) is not supported yet.
 
 ### Credential Management
 
@@ -143,7 +131,7 @@ authentication:
     okta:
         default: # default Okta profile name, additional profiles can also be created
             okta_domain: https://xyz.okta.com/
-            preferred_mfa_type: push # also: fingerprint | totp | code | app
+            preferred_mfa_type: push # also: totp | code
             auth_type: classic
 
 credentials:

@@ -30,7 +30,7 @@ public class SetupOkta(IOktaLoginService loginService, IConfigManager configMana
         public string? Username { get; set; }
 
         [CommandOption("--mfa")]
-        [Description("Your preferred MFA type <push|fingerprint|totp|code|app>")]
+        [Description("Your preferred MFA type <push|totp|code>")]
         public string? PreferredMfaType { get; set; }
     }
 

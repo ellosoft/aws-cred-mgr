@@ -34,8 +34,8 @@ public class OktaMfaFactorSelector : IOktaMfaFactorSelector
     {
         return simplifiedMfaName.ToLowerInvariant() switch
         {
-            "push" or "fingerprint" => "push",
-            "totp" or "code" or "app" => "token:software:totp",
+            "push" => "push",
+            "totp" or "code" => "token:software:totp",
             "token:software:totp" => "token:software:totp",
             _ => throw new NotSupportedException($"MFA type '{simplifiedMfaName}' is not yet supported")
         };
@@ -45,8 +45,8 @@ public class OktaMfaFactorSelector : IOktaMfaFactorSelector
     {
         return factor.FactorType switch
         {
-            "push" => new UserFriendlyFactor("Okta Verify (Push / Fingerprint)", factor),
-            "token:software:totp" => new UserFriendlyFactor("Okta Verify (App / TOTP Code)", factor),
+            "push" => new UserFriendlyFactor("Okta Verify (Push)", factor),
+            "token:software:totp" => new UserFriendlyFactor("Okta Verify (TOTP Code)", factor),
             _ => new UserFriendlyFactor($"[grey]{factor.FactorType} (Unsupported)[/]", factor)
         };
     }
