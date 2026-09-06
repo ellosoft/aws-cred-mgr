@@ -11,7 +11,8 @@ namespace Ellosoft.AwsCredentialsManager.Commands.Okta;
 [Examples(
     "setup",
     "setup -d https://xyz.okta.com -u john --mfa push",
-    "setup xyz_profile -d https://xyz.okta.com -u john --mfa push")]
+    "setup xyz_profile -d https://xyz.okta.com -u john --mfa push",
+    "setup -d https://xyz.okta.com -u john --mfa fastpass")]
 public class SetupOkta(IOktaLoginService loginService, IConfigManager configManager) : AsyncCommand<SetupOkta.Settings>
 {
     public class Settings : CommonSettings
@@ -30,17 +31,17 @@ public class SetupOkta(IOktaLoginService loginService, IConfigManager configMana
         public string? Username { get; set; }
 
         [CommandOption("--mfa")]
-        [Description("Your preferred MFA type <push|totp|code>")]
+        [Description("Your preferred MFA type <push|totp|code|fastpass> (fastpass uses the Okta Verify desktop app and requires Okta Identity Engine)")]
         public string? PreferredMfaType { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("Okta Setup");
 
         var oktaDomain = GetOktaDomainUrl(settings);
-        var username = settings.Username ?? await AnsiConsole.AskAsync<string>("Enter your [green]Okta[/] username:");
-        var password = await AnsiConsole.PromptAsync(new TextPrompt<string>("Enter your [green]Okta[/] password:").Secret());
+        var username = settings.Username ?? await AnsiConsole.AskAsync<string>("Enter your [green]Okta[/] username:", cancellationToken);
+        var password = await AnsiConsole.PromptAsync(new TextPrompt<string>("Enter your [green]Okta[/] password:").Secret(), cancellationToken);
 
         AnsiConsole.WriteLine();
 

@@ -58,7 +58,7 @@ public class GetRdsPassword(
         public bool ForceRenew { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         if (settings.Profile is null)
             return await HandleAdHocRequest(settings);

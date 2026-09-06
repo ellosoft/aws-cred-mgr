@@ -23,17 +23,15 @@ public class ResourceConfigurationInspector(ITypeInspector innerTypeDescriptor) 
     /// <returns></returns>
     public override IEnumerable<IPropertyDescriptor> GetProperties(Type type, object? container)
     {
-        var resourceConfiguration = container as ResourceConfiguration;
-        var hasVariables = resourceConfiguration?.HasVariables == true;
+        var properties = innerTypeDescriptor.GetProperties(type, container);
 
-        return innerTypeDescriptor.GetProperties(type, container)
-            .Select(prop =>
-            {
-                if (!hasVariables || !resourceConfiguration!.Metadata.TryGetValue(GetPropertyName(prop.Name), out var configMetadata))
-                    return prop;
+        if (container is not ResourceConfiguration { HasVariables: true } resourceConfiguration)
+            return properties;
 
-                return new VariablePropertyDescription(prop, configMetadata.VariableContent);
-            });
+        return properties.Select(prop =>
+            resourceConfiguration.Metadata.TryGetValue(GetPropertyName(prop.Name), out var configMetadata)
+                ? new VariablePropertyDescription(prop, configMetadata.VariableContent)
+                : prop);
     }
 
     private static string GetPropertyName(string name) => PascalCaseNamingConvention.Instance.Apply(name);
@@ -41,6 +39,10 @@ public class ResourceConfigurationInspector(ITypeInspector innerTypeDescriptor) 
     public override string GetEnumName(Type enumType, string name) => throw new NotSupportedException();
 
     public override string GetEnumValue(object enumValue) => throw new NotSupportedException();
+
+    public override bool HasParseMethod(Type type) => innerTypeDescriptor.HasParseMethod(type);
+
+    public override object? Parse(string value, Type expectedType) => innerTypeDescriptor.Parse(value, expectedType);
 
     private sealed class VariablePropertyDescription : IPropertyDescriptor
     {

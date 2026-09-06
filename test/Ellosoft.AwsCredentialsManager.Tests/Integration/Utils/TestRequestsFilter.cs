@@ -11,17 +11,20 @@ public class TestRequestsFilter : IAsyncActionFilter
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        var contextData = GetRequestContextList(context);
-
         var actionExecutedContext = await next();
 
-        contextData.Add(
-            new TestRequestContext
-            {
-                Request =  CloneRequest(context.HttpContext.Request),
-                Response = actionExecutedContext.HttpContext.Response,
-                RequestModel = context.ActionArguments.Values.FirstOrDefault()
-            });
+        var requestContext = new TestRequestContext
+        {
+            Request = CloneRequest(context.HttpContext.Request),
+            Response = actionExecutedContext.HttpContext.Response,
+            RequestModel = context.ActionArguments.Values.FirstOrDefault()
+        };
+
+        // requests from the same test may run concurrently (e.g. IDX polling + Okta Verify loopback)
+        lock (Requests)
+        {
+            GetRequestContextList(context).Add(requestContext);
+        }
     }
 
     private static List<TestRequestContext> GetRequestContextList(FilterContext context)

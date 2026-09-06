@@ -7,6 +7,7 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models.HttpModels;
 
 namespace Ellosoft.AwsCredentialsManager.Commands.Credentials;
@@ -48,7 +49,7 @@ public class CreateCredentialsProfile(
         public string OktaUserProfile { get; set; } = OktaConfiguration.DefaultProfileName;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var oktaAppUrl = settings.OktaAppUrl ?? await GetAwsAppUrl(settings.OktaUserProfile);
         var awsRole = settings.AwsRoleArn ?? await GetAwsRoleArn(settings.OktaUserProfile, oktaAppUrl);
@@ -75,7 +76,7 @@ public class CreateCredentialsProfile(
         if (authenticationResult?.SessionId is null)
             throw new CommandException("Unable to retrieve OKTA apps, please try again or use the '--okta-app-url' option to specify an app URL manually");
 
-        var awsAppLinks = await GetAwsLinks(authenticationResult.OktaDomain, authenticationResult.SessionId);
+        var awsAppLinks = await GetAwsLinks(authenticationResult);
 
         if (awsAppLinks.Count == 0)
             throw new CommandException("No AWS apps found in Okta, please use the '--okta-app-url' option to specify an app URL manually");
@@ -91,13 +92,17 @@ public class CreateCredentialsProfile(
         return appLink.LinkUrl;
     }
 
-    private static async Task<ICollection<AppLink>> GetAwsLinks(Uri oktaDomain, string sessionId)
+    private static async Task<ICollection<AppLink>> GetAwsLinks(AuthenticationResult authenticationResult)
     {
+        var appLinksUrl = new Uri(authenticationResult.OktaDomain, "/api/v1/users/me/appLinks");
+
         // TODO: Replace with HttpClientFactory client
         using var httpClient = new HttpClient();
 
-        var request = new HttpRequestMessage(HttpMethod.Get, new Uri(oktaDomain, "/api/v1/users/me/appLinks"));
-        request.Headers.Add("Cookie", $"sid={sessionId}");
+        var request = new HttpRequestMessage(HttpMethod.Get, appLinksUrl);
+
+        // Identity Engine (FastPass) sessions are carried by several cookies, classic sessions by the session id only
+        request.Headers.Add("Cookie", authenticationResult.SessionCookies?.GetCookieHeader(appLinksUrl) ?? $"sid={authenticationResult.SessionId}");
 
         var httpResponse = await httpClient.SendAsync(request);
         httpResponse.EnsureSuccessStatusCode();
@@ -115,13 +120,12 @@ public class CreateCredentialsProfile(
     {
         AnsiConsole.MarkupLine("Retrieving AWS roles...");
 
-        var sessionTokenResult = await oktaLogin.InteractiveLogin(oktaUserProfile);
+        var authenticationResult = await oktaLogin.InteractiveLogin(oktaUserProfile);
 
-        if (sessionTokenResult?.SessionToken is null)
+        if (authenticationResult is not { HasSession: true })
             throw new CommandException("Unable to create AWS credential profile, please try again");
 
-        var samlData = await oktaSamlService.GetAppSamlDataAsync(sessionTokenResult.OktaDomain, oktaAppUrl,
-            sessionTokenResult.SessionToken);
+        var samlData = await oktaSamlService.GetAppSamlDataAsync(authenticationResult, oktaAppUrl);
 
         var awsRoles = await awsSamlService.GetAwsRolesWithAccountName(samlData);
 

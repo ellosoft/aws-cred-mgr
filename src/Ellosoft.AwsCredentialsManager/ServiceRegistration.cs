@@ -7,6 +7,7 @@ using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.IO;
 using Ellosoft.AwsCredentialsManager.Services.Okta;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Idx;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Interactive;
 using Ellosoft.AwsCredentialsManager.Services.Platforms.MacOS.Security;
 using Ellosoft.AwsCredentialsManager.Services.Platforms.Windows.Security;
@@ -36,7 +37,14 @@ public static class ServiceRegistration
             .AddSingleton<IOktaLoginService, OktaLoginService>()
             .AddSingleton<IOktaMfaFactorSelector, OktaMfaFactorSelector>()
             .AddSingleton<IAwsOktaSessionManager, AwsOktaSessionManager>()
-            .AddSingleton<IOktaSamlService, OktaSamlService>();
+            .AddSingleton<IOktaSamlService>(_ => new OktaSamlService());
+
+        // okta identity engine (FastPass) services
+        services
+            .AddSingleton<IOktaIdxHttpClientFactory, OktaIdxHttpClientFactory>()
+            .AddSingleton<IOktaVerifyAppLauncher, OktaVerifyAppLauncher>()
+            .AddSingleton<IOktaFastPassChallengeHandler, OktaFastPassChallengeHandler>()
+            .AddSingleton<IOktaIdxAuthenticator, OktaIdxAuthenticator>();
 
         // aws related services
         services

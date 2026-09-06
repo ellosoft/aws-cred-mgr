@@ -26,7 +26,7 @@ public class ActionExecutingContextAssertions(ActionExecutingContext context)
 
         var model = context.ActionArguments.Values.OfType<TModel>().FirstOrDefault();
         model.ShouldNotBeNull();
-        modelAssertions(model!);
+        modelAssertions(model);
 
         return this;
     }

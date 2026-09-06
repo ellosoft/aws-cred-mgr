@@ -8,7 +8,7 @@ AWS Credential Manager (`aws-cred-mgr`) is a command-line interface (CLI) tool d
 
 ## Features
 
-- **Okta Authentication**: Easily setup Okta authentication for you user
+- **Okta Authentication**: Easily setup Okta authentication for you user (Okta Verify push, TOTP code or Okta FastPass)
 - **Credential Management**: Create and list AWS credentials, manage profiles with ease.
 - **RDS Token Management**: Obtain RDS passwords for your databases securely.
 
@@ -57,6 +57,42 @@ aws-cred-mgr okta setup
 
 - Simply run `aws-cred-mgr okta setup` to use interactive mode.
 - Set up with domain and username: `aws-cred-mgr okta setup -d https://xyz.okta.com -u john --mfa push`
+- Set up using Okta FastPass (Okta Verify desktop app): `aws-cred-mgr okta setup -d https://xyz.okta.com -u john --mfa fastpass`
+
+#### MFA types
+
+| `--mfa` value      | Stored as             | Behaviour                                                                                  |
+|--------------------|-----------------------|--------------------------------------------------------------------------------------------|
+| `push`             | `push`                | Sends an Okta Verify push notification to your phone                                       |
+| `totp` / `code`    | `token:software:totp` | Asks for the 6 digit code from Okta Verify                                                 |
+| `fastpass`         | `signed_nonce`        | Uses the **Okta Verify desktop app** on this machine (Okta FastPass), no phone required     |
+
+#### Okta FastPass (Okta Verify desktop app)
+
+With `--mfa fastpass` the MFA step is completed by the **Okta Verify desktop app** installed on the same machine
+(macOS and Windows), so there is no push notification or code to type: Okta Verify prompts you to approve the sign-in
+with **Touch ID / Windows Hello** (or the device PIN/password, depending on your org's policy) and signs the challenge
+with the device-bound key. This is the same phishing-resistant flow the Okta sign-in page uses.
+
+How it works:
+
+1. `aws-cred-mgr` starts an Okta Identity Engine sign-in with your username and password.
+2. Okta issues a FastPass device challenge and `aws-cred-mgr` asks Okta to open the **Okta Verify app** on this
+   device (a `com-okta-authenticator://` link, the same as the "Open Okta Verify" button on the Okta sign-in page).
+   Okta Verify comes to the foreground with the approval prompt; it does not need to be running beforehand.
+3. If Okta does not offer to open the app, the challenge is delivered to Okta Verify through its local loopback
+   server (`http://localhost:<port>`) instead, exactly like the Okta sign-in page does.
+4. Okta Verify asks you to approve (biometrics/PIN), `aws-cred-mgr` waits for Okta to confirm and then continues
+   with the AWS role selection / credential retrieval as usual.
+
+Requirements and troubleshooting:
+
+- Your Okta org must be on **Okta Identity Engine** and this device must be enrolled in Okta Verify with FastPass
+  enabled by your Okta admin (Classic Engine orgs get a clear error suggesting `push`/`totp`).
+- Okta Verify must be installed on this device; if the app does not open, make sure it is installed and try again.
+- The login times out after 2 minutes waiting for approval; simply rerun the command.
+- Run any command with the hidden `--log-level debug` option to write detailed diagnostics (including the Okta
+  responses) to `~/.aws_cred_mgr/aws-cred-mgr.log` when reporting issues.
 
 ### Credential Management
 
@@ -131,7 +167,7 @@ authentication:
     okta:
         default: # default Okta profile name, additional profiles can also be created
             okta_domain: https://xyz.okta.com/
-            preferred_mfa_type: push # also: totp | code
+            preferred_mfa_type: push # also: totp | code | fastpass (Okta Verify desktop app, stored as signed_nonce)
             auth_type: classic
 
 credentials:
