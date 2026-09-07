@@ -50,7 +50,7 @@ public sealed class OktaSetupTests(ITestOutputHelper outputHelper, TestFixture t
         var userCredentials = userCredentialsService.GetUserCredentials(_profileName);
 
         userCredentials.ShouldNotBeNull();
-        userCredentials!.Username.ShouldBe(username);
+        userCredentials.Username.ShouldBe(username);
         userCredentials.Password.ShouldBe(password);
     }
 

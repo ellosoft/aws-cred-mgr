@@ -3,6 +3,7 @@
 using Ellosoft.AwsCredentialsManager.Services.Configuration;
 using Ellosoft.AwsCredentialsManager.Services.Configuration.Models;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Exceptions;
+using Ellosoft.AwsCredentialsManager.Services.Okta.Idx;
 using Ellosoft.AwsCredentialsManager.Services.Okta.Models;
 using Ellosoft.AwsCredentialsManager.Services.Security;
 
@@ -26,7 +27,8 @@ public class OktaLoginService(
     IAnsiConsole console,
     IConfigManager configManager,
     IUserCredentialsManager userCredentialsManager,
-    IOktaClassicAuthenticator classicAuthenticator)
+    IOktaClassicAuthenticator classicAuthenticator,
+    IOktaIdxAuthenticator idxAuthenticator)
     : IOktaLoginService
 {
     public async Task<AuthenticationResult?> InteractiveLogin(string oktaProfile, bool createSession = false)
@@ -38,7 +40,8 @@ public class OktaLoginService(
         var oktaDomain = new Uri(oktaConfig.OktaDomain);
         var authResult = await Login(oktaDomain, userCredentials, preferredMfa, savedCredentials, oktaProfile);
 
-        if (!createSession || authResult is not { Authenticated: true, SessionToken: not null })
+        // Identity Engine (FastPass) logins already carry the session id, no session token exchange is needed
+        if (!createSession || authResult is not { Authenticated: true, SessionToken: not null, SessionId: null })
             return authResult;
 
         var sessionResult = await classicAuthenticator.CreateSessionAsync(oktaDomain, authResult.SessionToken);
@@ -56,7 +59,9 @@ public class OktaLoginService(
     {
         try
         {
-            var authResult = await classicAuthenticator.AuthenticateAsync(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
+            var authResult = OktaMfaFactorSelector.IsFastPass(preferredMfaType)
+                ? await idxAuthenticator.AuthenticateAsync(oktaDomain, userCredentials.Username, userCredentials.Password)
+                : await classicAuthenticator.AuthenticateAsync(oktaDomain, userCredentials.Username, userCredentials.Password, preferredMfaType);
 
             SaveUserCredentials(userProfileKey, userCredentials, savedCredentials);
 

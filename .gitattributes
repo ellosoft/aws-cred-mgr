@@ -48,4 +48,5 @@
 *.vbproj -text merge=union 
 *.fsproj -text merge=union 
 *.dbproj -text merge=union 
-*.sln -text merge=union 
+*.sln -text merge=union
+*.slnx -text

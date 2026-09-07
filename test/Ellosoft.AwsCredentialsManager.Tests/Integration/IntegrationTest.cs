@@ -18,12 +18,12 @@ public class IntegrationTest
         TestFixture = fixture;
         TestFixture.TestOutputHelper = outputHelper;
 
-        var services = new ServiceCollection();
-        ConfigureTestServices(services);
+        AppServices = new ServiceCollection();
+        ConfigureTestServices(AppServices);
 
-        services.AddAppServices();
+        AppServices.AddAppServices();
 
-        App = new TestCommandApp(services);
+        App = new TestCommandApp(AppServices);
     }
 
     protected string TestCorrelationId { get; } = Guid.NewGuid().ToString();
@@ -33,6 +33,12 @@ public class IntegrationTest
     protected TestFixture TestFixture { get; }
 
     protected TestCommandApp App { get; }
+
+    /// <summary>
+    ///     Service collection used by the command app under test. Registrations can be replaced before <see cref="TestCommandApp.Run" />
+    ///     (the service provider is built when the app runs)
+    /// </summary>
+    protected ServiceCollection AppServices { get; }
 
     private void ConfigureTestServices(ServiceCollection services)
     {

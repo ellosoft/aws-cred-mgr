@@ -11,6 +11,13 @@ public interface IOktaMfaFactorSelector
 
 public class OktaMfaFactorSelector : IOktaMfaFactorSelector
 {
+    /// <summary>
+    ///     Okta Identity Engine authenticator method used by Okta FastPass (Okta Verify desktop app)
+    /// </summary>
+    public const string FastPassFactorCode = "signed_nonce";
+
+    public static bool IsFastPass(string? factorCode) => factorCode == FastPassFactorCode;
+
     public OktaFactor GetMfaFactor(string? preferredMfaType, IEnumerable<OktaFactor> factors)
     {
         var factorOptions = factors.Select(GetUserFriendlyMfaFactor);
@@ -37,6 +44,7 @@ public class OktaMfaFactorSelector : IOktaMfaFactorSelector
             "push" => "push",
             "totp" or "code" => "token:software:totp",
             "token:software:totp" => "token:software:totp",
+            "fastpass" or "okta_verify" or FastPassFactorCode => FastPassFactorCode,
             _ => throw new NotSupportedException($"MFA type '{simplifiedMfaName}' is not yet supported")
         };
     }

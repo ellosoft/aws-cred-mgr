@@ -17,7 +17,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Ellosoft.AwsCredentialsManager.sln",
+                "${workspaceFolder}/Ellosoft.AwsCredentialsManager.slnx",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -29,7 +29,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/Ellosoft.AwsCredentialsManager.sln",
+                "${workspaceFolder}/Ellosoft.AwsCredentialsManager.slnx",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -43,7 +43,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/Ellosoft.AwsCredentialsManager.sln"
+                "${workspaceFolder}/Ellosoft.AwsCredentialsManager.slnx"
             ],
             "problemMatcher": "$msCompile"
         }

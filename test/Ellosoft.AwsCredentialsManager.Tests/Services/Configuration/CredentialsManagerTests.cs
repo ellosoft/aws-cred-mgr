@@ -33,7 +33,7 @@ public class CredentialsManagerTests
 
         result.ShouldBeTrue();
         config.ShouldNotBeNull();
-        config!.RoleArn.ShouldBe("arn:aws:iam::123:role/TestRole");
+        config.RoleArn.ShouldBe("arn:aws:iam::123:role/TestRole");
         config.OktaAppUrl.ShouldBe("https://test.okta.com/home/amazon_aws/abc/272");
         config.OktaProfile.ShouldBe("default");
     }

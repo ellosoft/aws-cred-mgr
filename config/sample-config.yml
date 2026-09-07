@@ -6,7 +6,7 @@ authentication:
   okta:
     default:
       okta_domain: https://xyz.okta.com/
-      preferred_mfa_type: push
+      preferred_mfa_type: push # push | token:software:totp | signed_nonce (Okta FastPass, Okta Verify desktop app)
       auth_type: classic
 
 credentials:

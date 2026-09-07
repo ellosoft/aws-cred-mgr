@@ -63,12 +63,15 @@ public class AwsOktaSessionManager(
 
     private async Task<AwsCredentialsData?> CreateSessionAsync(string credentialProfile, string awsProfile, CredentialsConfiguration credentialsConfig)
     {
-        var authResult = await loginService.InteractiveLogin(credentialsConfig.OktaProfile!);
+        if (credentialsConfig is not { OktaProfile: { } oktaProfile, OktaAppUrl: { } oktaAppUrl })
+            throw new InvalidOperationException($"The credential '{credentialProfile}' does not have an Okta profile and Okta app URL configured");
 
-        if (authResult?.SessionToken is null)
+        var authResult = await loginService.InteractiveLogin(oktaProfile);
+
+        if (authResult is not { HasSession: true })
             return null;
 
-        var samlData = await oktaSamlService.GetAppSamlDataAsync(authResult.OktaDomain, credentialsConfig.OktaAppUrl!, authResult.SessionToken);
+        var samlData = await oktaSamlService.GetAppSamlDataAsync(authResult, oktaAppUrl);
 
         var idp = GetRoleIdp(credentialProfile, credentialsConfig.RoleArn, samlData.SamlAssertion);
 

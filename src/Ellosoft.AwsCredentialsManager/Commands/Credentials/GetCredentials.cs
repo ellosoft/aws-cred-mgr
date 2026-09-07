@@ -33,7 +33,7 @@ public class GetCredentials(
         public bool ForceRenew { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var credential = settings.Credential ?? credentialsManager.GetCredentialNameFromUser();
 

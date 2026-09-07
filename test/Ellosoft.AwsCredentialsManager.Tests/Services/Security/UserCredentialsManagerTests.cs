@@ -45,7 +45,7 @@ public class UserCredentialsManagerTests
         var result = _manager.GetUserCredentials("test_key");
 
         result.ShouldNotBeNull();
-        result!.Username.ShouldBe("testuser");
+        result.Username.ShouldBe("testuser");
         result.Password.ShouldBe("testpass");
     }
 

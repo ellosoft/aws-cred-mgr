@@ -19,14 +19,14 @@ public class TestFixture : IAsyncLifetime
 
     public IServiceProvider Services => WebApp.Services;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         WebApp = CreateTestApp();
         WebApp.MapControllers();
         await WebApp.StartAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await Log.CloseAndFlushAsync();
         await WebApp.DisposeAsync();

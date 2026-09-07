@@ -49,12 +49,9 @@ internal static partial class CliAttributeReader
         if (aliases is null)
             return;
 
-        foreach (var alias in aliases.Aliases)
+        foreach (var alias in aliases.Aliases.Where(alias => !String.IsNullOrWhiteSpace(alias)))
         {
-            if (!String.IsNullOrWhiteSpace(alias))
-            {
-                aliasAction(alias);
-            }
+            aliasAction(alias);
         }
     }
 }

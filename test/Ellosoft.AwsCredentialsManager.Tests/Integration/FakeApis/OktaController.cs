@@ -20,6 +20,18 @@ public class OktaController : ControllerBase
         });
     }
 
+    [HttpGet("sessions/me")]
+    public IActionResult GetCurrentSession()
+    {
+        return Ok(new
+        {
+            Id = OktaIdxController.SessionId,
+            UserId = "00u1",
+            Login = "john@xyz.com",
+            Status = "ACTIVE"
+        });
+    }
+
     [HttpGet("users/me/appLinks")]
     public IActionResult GetAppLinks()
     {

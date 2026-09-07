@@ -42,7 +42,7 @@ public sealed class ConfigReaderTests : IDisposable
         var config = _configReader.Read(filePath);
 
         config.Authentication.ShouldNotBeNull();
-        config.Authentication!.Okta.ShouldContainKey("default");
+        config.Authentication.Okta.ShouldContainKey("default");
         config.Authentication.Okta["default"].OktaDomain.ShouldBe("https://test.okta.com/");
         config.Authentication.Okta["default"].PreferredMfaType.ShouldBe("push");
         config.Authentication.Okta["default"].AuthType.ShouldBe("classic");
@@ -76,7 +76,7 @@ public sealed class ConfigReaderTests : IDisposable
         var config = _configReader.Read(filePath);
 
         config.Templates.ShouldNotBeNull();
-        config.Templates!.Rds.ShouldContainKey("test_db");
+        config.Templates.Rds.ShouldContainKey("test_db");
         config.Templates.Rds["test_db"].Username.ShouldBe("test_value");
         config.Templates.Rds["test_db"].Hostname.ShouldBe("test.host");
         config.Templates.Rds["test_db"].Port.ShouldBe(5432);
