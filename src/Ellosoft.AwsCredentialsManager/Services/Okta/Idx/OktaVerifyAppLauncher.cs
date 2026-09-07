@@ -17,8 +17,21 @@ public interface IOktaVerifyAppLauncher
 
 public class OktaVerifyAppLauncher(ILogger<OktaVerifyAppLauncher> logger) : IOktaVerifyAppLauncher
 {
+    /// <summary>
+    ///     URI scheme registered by the Okta Verify desktop app (CUSTOM_URI challenge method)
+    /// </summary>
+    public const string OktaVerifyScheme = "com-okta-authenticator";
+
     public bool TryLaunch(string uri)
     {
+        // the URI comes from the Okta response: only the Okta Verify scheme may be handed to the OS URI handler
+        if (!IsOktaVerifyDeepLink(uri))
+        {
+            logger.LogWarning("Refusing to open Okta Verify: unexpected URI scheme '{Scheme}'", uri.Split(':')[0]);
+
+            return false;
+        }
+
         try
         {
             var startInfo = CreateStartInfo(uri);
@@ -41,6 +54,10 @@ public class OktaVerifyAppLauncher(ILogger<OktaVerifyAppLauncher> logger) : IOkt
             return false;
         }
     }
+
+    public static bool IsOktaVerifyDeepLink(string uri) =>
+        Uri.TryCreate(uri, UriKind.Absolute, out var parsed)
+        && string.Equals(parsed.Scheme, OktaVerifyScheme, StringComparison.OrdinalIgnoreCase);
 
     private static ProcessStartInfo CreateStartInfo(string uri)
     {

@@ -38,6 +38,7 @@ public class OktaFastPassChallengeHandler(
     private const string REASON_UNREACHABLE = "OV_UNREACHABLE_BY_LOOPBACK";
     private const string REASON_ERROR = "OV_RETURNED_ERROR";
     private const string REASON_CANCELED = "USER_CANCELED";
+    private const string DefaultLoopbackDomain = "http://localhost";
 
     private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan MaxPollInterval = TimeSpan.FromSeconds(10);
@@ -188,16 +189,25 @@ public class OktaFastPassChallengeHandler(
     /// </summary>
     private async Task<LoopbackOutcome> RunLoopbackAsync(IdxDeviceChallenge challenge, Uri oktaDomain, CancellationToken cancellationToken)
     {
+        var domain = challenge.Domain ?? DefaultLoopbackDomain;
+
+        // the domain comes from the Okta response: the challenge JWT is only ever sent to the loopback interface over plain http
+        if (!Uri.TryCreate(domain, UriKind.Absolute, out var domainUri) || domainUri.Scheme != Uri.UriSchemeHttp || !domainUri.IsLoopback)
+        {
+            logger.LogError("Ignoring Okta Verify loopback challenge for non-loopback domain {Domain}", domain);
+
+            return LoopbackOutcome.Unreachable;
+        }
+
         using var loopbackClient = httpClientFactory.CreateLoopbackClient();
 
-        var domain = challenge.Domain ?? "http://localhost";
         var probeTimeout = TimeSpan.FromMilliseconds(Math.Max(challenge.ProbeTimeoutMillis ?? 0, MinProbeTimeout.TotalMilliseconds));
         var origin = oktaDomain.GetLeftPart(UriPartial.Authority);
         var challengeBody = new JsonObject { ["challengeRequest"] = challenge.ChallengeRequest }.ToJsonString();
 
         foreach (var port in challenge.Ports)
         {
-            var baseUrl = $"{domain}:{port}";
+            var baseUrl = new UriBuilder(domainUri) { Port = port, Path = string.Empty, Query = string.Empty }.Uri.GetLeftPart(UriPartial.Authority);
 
             try
             {

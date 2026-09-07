@@ -64,7 +64,7 @@ public class IdxResponseTests
         challenge.Method.ShouldBe("LOOPBACK");
         challenge.ChallengeRequest.ShouldBe("eyJraWQ.challenge.jwt");
         challenge.Domain.ShouldBe("http://localhost");
-        challenge.Ports.ShouldBe(["8769", "65111", "65121"]);
+        challenge.Ports.ShouldBe([8769, 65111, 65121]);
         challenge.ProbeTimeoutMillis.ShouldBe(3000);
         challenge.Href.ShouldBeNull();
 
@@ -72,6 +72,42 @@ public class IdxResponseTests
         pollRemediation.Href.ShouldBe("https://xyz.okta.com/idp/idx/authenticators/poll");
         pollRemediation.Refresh.ShouldBe(4000);
         response.CancelPollingHref.ShouldBe("https://xyz.okta.com/idp/idx/authenticators/poll/cancel");
+    }
+
+    [Fact]
+    public void DeviceChallenge_ShouldIgnorePortsThatAreNotValidTcpPorts()
+    {
+        // a non-numeric "port" would otherwise end up in the loopback URL (e.g. http://localhost:8769@evil.com/ targets evil.com)
+        var payload = IdxPayloads.ChallengePollLoopback.Replace("""["8769", "65111", "65121"]""", """["8769", "8769@evil.com", 65111, "0", "70000", "abc", null]""");
+
+        var challenge = IdxResponse.Parse(payload).DeviceChallenge.ShouldNotBeNull();
+
+        challenge.Ports.ShouldBe([8769, 65111]);
+    }
+
+    [Fact]
+    public void ErrorMessages_ShouldOnlyIncludeMessagesClassifiedAsError()
+    {
+        const string PAYLOAD =
+            """
+            {
+              "version": "1.0.0",
+              "stateHandle": "02state-handle",
+              "messages": {
+                "type": "array",
+                "value": [
+                  { "message": "Informational note", "class": "INFO" },
+                  { "message": "No class at all" },
+                  { "message": "Something went wrong", "class": "ERROR" }
+                ]
+              }
+            }
+            """;
+
+        var response = IdxResponse.Parse(PAYLOAD);
+
+        response.HasErrors.ShouldBeTrue();
+        response.ErrorMessages.Select(m => m.Message).ShouldBe(["Something went wrong"]);
     }
 
     [Fact]

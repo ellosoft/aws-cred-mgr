@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Ellosoft Limited. All rights reserved.
 
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -22,7 +23,7 @@ public sealed record IdxDeviceChallenge(
     string Method,
     string? ChallengeRequest,
     string? Domain,
-    IReadOnlyList<string> Ports,
+    IReadOnlyList<int> Ports,
     int? ProbeTimeoutMillis,
     string? Href)
 {
@@ -113,7 +114,7 @@ public sealed class IdxResponse
                 Method: method,
                 ChallengeRequest: challenge["challengeRequest"]?.GetValue<string>(),
                 Domain: challenge["domain"]?.GetValue<string>(),
-                Ports: (challenge["ports"] as JsonArray ?? []).OfType<JsonNode>().Select(p => p.ToString()).ToList(),
+                Ports: (challenge["ports"] as JsonArray ?? []).OfType<JsonNode>().Select(ParsePort).OfType<int>().ToList(),
                 ProbeTimeoutMillis: challenge["probeTimeoutMillis"]?.GetValue<int>(),
                 Href: challenge["href"]?.GetValue<string>());
         }
@@ -197,13 +198,19 @@ public sealed class IdxResponse
         };
     }
 
+    /// <summary>
+    ///     Only valid TCP ports are accepted: the value is interpolated into the loopback URL, anything else could change its host
+    /// </summary>
+    private static int? ParsePort(JsonNode node) =>
+        int.TryParse(node.ToString(), NumberStyles.None, CultureInfo.InvariantCulture, out var port) && port is > 0 and <= 65535 ? port : null;
+
     private static string? FieldValue(IEnumerable<JsonObject> fields, string name) =>
         fields.FirstOrDefault(f => f["name"]?.GetValue<string>() == name)?[ValueProperty]?.GetValue<string>();
 
     private IReadOnlyList<IdxMessage> ReadErrorMessages() =>
         (_root["messages"]?[ValueProperty] as JsonArray ?? [])
         .OfType<JsonObject>()
-        .Where(m => m["class"]?.GetValue<string>() is null or "ERROR")
+        .Where(m => m["class"]?.GetValue<string>() is "ERROR")
         .Select(m => new IdxMessage(m["message"]?.GetValue<string>() ?? string.Empty, m["i18n"]?["key"]?.GetValue<string>()))
         .ToList();
 

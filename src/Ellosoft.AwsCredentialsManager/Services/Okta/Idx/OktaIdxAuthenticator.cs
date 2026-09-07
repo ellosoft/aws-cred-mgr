@@ -113,7 +113,10 @@ public class OktaIdxAuthenticator(
         if (response.GetRemediation(IdxResponse.SelectAuthenticatorRemediation) is { } selectAuthenticator)
             return await SelectAuthenticatorAsync(idxClient, response, selectAuthenticator, stateHandle, transaction, cancellationToken);
 
-        logger.LogError("Unsupported Okta Identity Engine remediation. Response: {Response}", response);
+        logger.LogError("Unsupported Okta Identity Engine remediation: {Remediations}", string.Join(", ", response.RemediationNames));
+
+        // the full response carries the live state handle, only write it to the log file when debug logging is requested
+        logger.LogDebug("Unsupported Okta Identity Engine response: {Response}", response);
 
         throw new OktaFastPassException(
             $"Okta requested a sign-in step that is not supported by this tool: {string.Join(", ", response.RemediationNames)}");

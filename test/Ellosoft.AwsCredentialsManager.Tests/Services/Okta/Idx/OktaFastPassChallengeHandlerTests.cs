@@ -142,6 +142,27 @@ public class OktaFastPassChallengeHandlerTests
         body["statusCode"].ShouldBeNull();
     }
 
+    [Theory]
+    [InlineData("http://evil.example.com")]
+    [InlineData("https://localhost")]
+    [InlineData("not a url")]
+    public async Task ExecuteAsync_Loopback_WhenChallengeDomainIsNotHttpLoopback_ShouldNotContactItAndCancelPolling(string domain)
+    {
+        _handler.PreferAppLaunch = false;
+
+        var payload = IdxPayloads.LoopbackChallenge().Replace("\"domain\": \"http://localhost\"", $"\"domain\": \"{domain}\"");
+
+        _oktaHandler
+            .OnJson(HttpMethod.Post, PollUrl, payload)
+            .OnJson(HttpMethod.Post, CancelUrl, IdxPayloads.IdentifyWithoutPassword);
+
+        var result = await _handler.ExecuteAsync(_idxClient, new Uri(OktaDomain), IdxResponse.Parse(payload), CancellationToken.None);
+
+        result.HasRemediation("launch-authenticator").ShouldBeTrue();
+        _loopbackHandler.Requests.ShouldBeEmpty();
+        JsonNode.Parse(_oktaHandler.RequestsTo(HttpMethod.Post, CancelUrl).ShouldHaveSingleItem().Body!)!["reason"]!.GetValue<string>().ShouldBe("OV_UNREACHABLE_BY_LOOPBACK");
+    }
+
     [Fact]
     public async Task ExecuteAsync_Loopback_WhenOktaVerifyReturnsError_ShouldCancelPollingWithErrorReason()
     {
