@@ -102,7 +102,7 @@ jobs:
           xcrun notarytool submit aws-cred-mgr-osx-x64.zip --apple-id $APPLE_DEV_ID --password $APPLE_DEV_PASSWORD --team-id $APPLE_TEAM_ID --wait
 
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             output-win/aws-cred-mgr-win-x64.exe
